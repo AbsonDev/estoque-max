@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Services;
+using EstoqueApp.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -22,6 +23,9 @@ builder.Services.AddDbContext<EstoqueContext>(options =>
 // Registrar serviços personalizados
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 
+// Adicionar SignalR para comunicação em tempo real
+builder.Services.AddSignalR();
+
 // Adicionar a configuração de autenticação JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -35,6 +39,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = configuration["Jwt:Issuer"],
             ValidAudience = configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+        };
+
+        // Configuração especial para SignalR com JWT
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                
+                // Se a requisição for para o hub SignalR e tiver token na query string
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/estoqueHub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -54,6 +75,9 @@ app.UseAuthorization();  // 2. Depois você autoriza
 
 // Mapear controllers
 app.MapControllers();
+
+// Mapear o Hub do SignalR
+app.MapHub<EstoqueHub>("/estoqueHub");
 
 var summaries = new[]
 {

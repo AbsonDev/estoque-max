@@ -5,6 +5,8 @@ using System.Security.Claims;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
 using EstoqueApp.Api.Services;
+using Microsoft.AspNetCore.SignalR;
+using EstoqueApp.Api.Hubs;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -15,11 +17,13 @@ namespace EstoqueApp.Api.Controllers
     {
         private readonly EstoqueContext _context;
         private readonly IPermissionService _permissionService;
+        private readonly IHubContext<EstoqueHub> _hubContext;
 
-        public DespensasController(EstoqueContext context, IPermissionService permissionService)
+        public DespensasController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext)
         {
             _context = context;
             _permissionService = permissionService;
+            _hubContext = hubContext;
         }
 
         // GET: api/despensas
@@ -153,6 +157,15 @@ namespace EstoqueApp.Api.Controllers
 
                 await transaction.CommitAsync();
 
+                // **NOTIFICAÇÃO EM TEMPO REAL**: Nova despensa criada (para o próprio usuário)
+                await _hubContext.Clients.Group($"User-{userId}")
+                    .SendAsync("DespensaCriada", new {
+                        id = despensa.Id,
+                        nome = despensa.Nome,
+                        dataCriacao = despensa.DataCriacao,
+                        meuPapel = "Dono"
+                    });
+
                 return CreatedAtAction(nameof(GetDespensa), new { id = despensa.Id }, new {
                     id = despensa.Id,
                     nome = despensa.Nome,
@@ -196,6 +209,14 @@ namespace EstoqueApp.Api.Controllers
             despensa.Nome = request.Nome;
             await _context.SaveChangesAsync();
 
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Despensa atualizada para todos os membros
+            await _hubContext.Clients.Group($"Despensa-{id}")
+                .SendAsync("DespensaAtualizada", new {
+                    id = despensa.Id,
+                    nome = despensa.Nome,
+                    dataCriacao = despensa.DataCriacao
+                });
+
             return Ok(new {
                 id = despensa.Id,
                 nome = despensa.Nome,
@@ -223,6 +244,7 @@ namespace EstoqueApp.Api.Controllers
 
             var despensa = await _context.Despensas
                 .Include(d => d.EstoqueItens)
+                .Include(d => d.Membros)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (despensa == null)
@@ -236,8 +258,21 @@ namespace EstoqueApp.Api.Controllers
                 return BadRequest("Não é possível deletar uma despensa que contém itens. Remova todos os itens primeiro.");
             }
 
+            // Buscar IDs dos membros antes de deletar
+            var membrosIds = despensa.Membros.Select(m => m.UsuarioId.ToString()).ToList();
+
             _context.Despensas.Remove(despensa);
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Despensa deletada para todos os membros
+            foreach (var membroId in membrosIds)
+            {
+                await _hubContext.Clients.Group($"User-{membroId}")
+                    .SendAsync("DespensaDeletada", new { 
+                        despensaId = id,
+                        despensaNome = despensa.Nome
+                    });
+            }
 
             return Ok(new { message = "Despensa deletada com sucesso!" });
         }
@@ -288,6 +323,10 @@ namespace EstoqueApp.Api.Controllers
                 return BadRequest("Já existe um convite pendente para este usuário.");
             }
 
+            // Buscar informações da despensa para o convite
+            var despensa = await _context.Despensas.FindAsync(id);
+            var remetente = await _context.Usuarios.FindAsync(int.Parse(userId));
+
             // Criar convite
             var convite = new ConviteDespensa
             {
@@ -300,6 +339,23 @@ namespace EstoqueApp.Api.Controllers
 
             _context.ConvitesDespensa.Add(convite);
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Novo convite recebido
+            await _hubContext.Clients.Group($"User-{destinatario.Id}")
+                .SendAsync("NovoConviteRecebido", new {
+                    conviteId = convite.Id,
+                    despensa = new {
+                        id = despensa?.Id,
+                        nome = despensa?.Nome
+                    },
+                    remetente = new {
+                        id = remetente?.Id,
+                        nome = remetente?.Nome,
+                        email = remetente?.Email
+                    },
+                    mensagem = convite.Mensagem,
+                    dataEnvio = convite.DataEnvio
+                });
 
             return Ok(new { 
                 message = "Convite enviado com sucesso!",
@@ -329,6 +385,8 @@ namespace EstoqueApp.Api.Controllers
             }
 
             var membro = await _context.MembrosDespensa
+                .Include(md => md.Usuario)
+                .Include(md => md.Despensa)
                 .FirstOrDefaultAsync(md => md.UsuarioId == membroId && md.DespensaId == id);
 
             if (membro == null)
@@ -336,8 +394,34 @@ namespace EstoqueApp.Api.Controllers
                 return NotFound("Membro não encontrado nesta despensa.");
             }
 
+            var membroInfo = new {
+                usuarioId = membro.UsuarioId,
+                nome = membro.Usuario.Nome,
+                email = membro.Usuario.Email
+            };
+
+            var despensaInfo = new {
+                id = membro.Despensa.Id,
+                nome = membro.Despensa.Nome
+            };
+
             _context.MembrosDespensa.Remove(membro);
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Membro removido
+            // Para o membro removido
+            await _hubContext.Clients.Group($"User-{membroId}")
+                .SendAsync("RemovidoDaDespensa", new {
+                    despensa = despensaInfo,
+                    removidoPor = userId
+                });
+
+            // Para todos os outros membros restantes
+            await _hubContext.Clients.Group($"Despensa-{id}")
+                .SendAsync("MembroRemovido", new {
+                    membro = membroInfo,
+                    despensa = despensaInfo
+                });
 
             return Ok(new { message = "Membro removido da despensa com sucesso!" });
         }

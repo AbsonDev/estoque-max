@@ -5,6 +5,8 @@ using System.Security.Claims;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
 using EstoqueApp.Api.Services;
+using Microsoft.AspNetCore.SignalR;
+using EstoqueApp.Api.Hubs;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -15,11 +17,13 @@ namespace EstoqueApp.Api.Controllers
     {
         private readonly EstoqueContext _context;
         private readonly IPermissionService _permissionService;
+        private readonly IHubContext<EstoqueHub> _hubContext;
 
-        public EstoqueController(EstoqueContext context, IPermissionService permissionService)
+        public EstoqueController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext)
         {
             _context = context;
             _permissionService = permissionService;
+            _hubContext = hubContext;
         }
 
         // GET: api/estoque - Lista todos os itens de todas as despensas do usuário
@@ -119,6 +123,30 @@ namespace EstoqueApp.Api.Controllers
             _context.EstoqueItens.Add(novoItem);
             await _context.SaveChangesAsync();
 
+            // Recarregar o item com as relações para envio via SignalR
+            var itemCompleto = await _context.EstoqueItens
+                .Include(e => e.Produto)
+                .Include(e => e.Despensa)
+                .FirstOrDefaultAsync(e => e.Id == novoItem.Id);
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Novo item adicionado
+            if (itemCompleto != null)
+            {
+                await _hubContext.Clients.Group($"Despensa-{request.DespensaId}")
+                    .SendAsync("EstoqueItemAdicionado", new {
+                        id = itemCompleto.Id,
+                        produto = itemCompleto.Produto.Nome,
+                        marca = itemCompleto.Produto.Marca,
+                        codigoBarras = itemCompleto.Produto.CodigoBarras,
+                        quantidade = itemCompleto.Quantidade,
+                        quantidadeMinima = itemCompleto.QuantidadeMinima,
+                        estoqueAbaixoDoMinimo = itemCompleto.Quantidade <= itemCompleto.QuantidadeMinima,
+                        dataValidade = itemCompleto.DataValidade,
+                        despensaId = itemCompleto.DespensaId,
+                        despensaNome = itemCompleto.Despensa.Nome
+                    });
+            }
+
             return Ok(new { message = "Item adicionado ao estoque com sucesso!" });
         }
 
@@ -155,6 +183,21 @@ namespace EstoqueApp.Api.Controllers
             item.DataValidade = request.DataValidade;
 
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Item atualizado
+            await _hubContext.Clients.Group($"Despensa-{item.DespensaId}")
+                .SendAsync("EstoqueItemAtualizado", new {
+                    id = item.Id,
+                    produto = item.Produto.Nome,
+                    marca = item.Produto.Marca,
+                    codigoBarras = item.Produto.CodigoBarras,
+                    quantidade = item.Quantidade,
+                    quantidadeMinima = item.QuantidadeMinima,
+                    estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima,
+                    dataValidade = item.DataValidade,
+                    despensaId = item.DespensaId,
+                    despensaNome = item.Despensa.Nome
+                });
 
             // **LÓGICA INTELIGENTE: Verificar se precisa adicionar à lista de compras**
             await VerificarEAdicionarAListaDeCompras(int.Parse(userId), item);
@@ -206,13 +249,37 @@ namespace EstoqueApp.Api.Controllers
             item.Quantidade -= request.QuantidadeConsumida;
             await _context.SaveChangesAsync();
 
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Estoque consumido
+            await _hubContext.Clients.Group($"Despensa-{item.DespensaId}")
+                .SendAsync("EstoqueItemAtualizado", new {
+                    id = item.Id,
+                    produto = item.Produto.Nome,
+                    marca = item.Produto.Marca,
+                    codigoBarras = item.Produto.CodigoBarras,
+                    quantidade = item.Quantidade,
+                    quantidadeMinima = item.QuantidadeMinima,
+                    estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima,
+                    dataValidade = item.DataValidade,
+                    despensaId = item.DespensaId,
+                    despensaNome = item.Despensa.Nome,
+                    acao = "consumido",
+                    quantidadeConsumida = request.QuantidadeConsumida
+                });
+
             // **LÓGICA INTELIGENTE: Verificar se precisa adicionar à lista de compras**
-            await VerificarEAdicionarAListaDeCompras(int.Parse(userId), item);
+            var adicionadoALista = await VerificarEAdicionarAListaDeCompras(int.Parse(userId), item);
+
+            // Se foi adicionado à lista, notificar todos os membros
+            if (adicionadoALista)
+            {
+                await NotificarMembrosListaDeComprasAtualizada(item.DespensaId);
+            }
 
             return Ok(new { 
                 message = "Estoque consumido com sucesso!",
                 quantidadeRestante = item.Quantidade,
-                estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima
+                estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima,
+                adicionadoAListaDeCompras = adicionadoALista
             });
         }
 
@@ -229,6 +296,7 @@ namespace EstoqueApp.Api.Controllers
 
             var item = await _context.EstoqueItens
                 .Include(e => e.Despensa)
+                .Include(e => e.Produto)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (item == null)
@@ -242,8 +310,21 @@ namespace EstoqueApp.Api.Controllers
                 return Forbid("Você não tem permissão para acessar esta despensa.");
             }
 
+            var despensaId = item.DespensaId;
+            var itemInfo = new {
+                id = item.Id,
+                produto = item.Produto.Nome,
+                marca = item.Produto.Marca,
+                quantidade = item.Quantidade,
+                despensaId = despensaId
+            };
+
             _context.EstoqueItens.Remove(item);
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Item removido
+            await _hubContext.Clients.Group($"Despensa-{despensaId}")
+                .SendAsync("EstoqueItemRemovido", itemInfo);
 
             return Ok(new { message = "Item removido do estoque com sucesso!" });
         }
@@ -264,7 +345,7 @@ namespace EstoqueApp.Api.Controllers
         }
 
         // **MÉTODO PRIVADO: Lógica de negócio para lista de compras inteligente**
-        private async Task VerificarEAdicionarAListaDeCompras(int userId, EstoqueItem item)
+        private async Task<bool> VerificarEAdicionarAListaDeCompras(int userId, EstoqueItem item)
         {
             // Só adiciona se o estoque estiver abaixo do mínimo
             if (item.Quantidade <= item.QuantidadeMinima)
@@ -285,7 +366,28 @@ namespace EstoqueApp.Api.Controllers
 
                     _context.ListaDeComprasItens.Add(novoItemLista);
                     await _context.SaveChangesAsync();
+                    
+                    return true; // Foi adicionado à lista
                 }
+            }
+            
+            return false; // Não foi adicionado à lista
+        }
+
+        // **MÉTODO PRIVADO: Notificar membros sobre mudanças na lista de compras**
+        private async Task NotificarMembrosListaDeComprasAtualizada(int despensaId)
+        {
+            // Buscar todos os membros da despensa
+            var membros = await _context.MembrosDespensa
+                .Where(md => md.DespensaId == despensaId)
+                .Select(md => md.UsuarioId.ToString())
+                .ToListAsync();
+
+            // Notificar todos os membros sobre a mudança na lista de compras
+            foreach (var membroId in membros)
+            {
+                await _hubContext.Clients.Group($"User-{membroId}")
+                    .SendAsync("ListaDeComprasAtualizada", new { despensaId = despensaId });
             }
         }
     }

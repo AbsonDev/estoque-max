@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
+using Microsoft.AspNetCore.SignalR;
+using EstoqueApp.Api.Hubs;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -13,10 +15,12 @@ namespace EstoqueApp.Api.Controllers
     public class ConvitesController : ControllerBase
     {
         private readonly EstoqueContext _context;
+        private readonly IHubContext<EstoqueHub> _hubContext;
 
-        public ConvitesController(EstoqueContext context)
+        public ConvitesController(EstoqueContext context, IHubContext<EstoqueHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: api/convites - Lista convites recebidos
@@ -78,6 +82,7 @@ namespace EstoqueApp.Api.Controllers
             var convite = await _context.ConvitesDespensa
                 .Include(c => c.Despensa)
                 .Include(c => c.Remetente)
+                .Include(c => c.Destinatario)
                 .FirstOrDefaultAsync(c => c.Id == id && c.DestinatarioId == int.Parse(userId));
 
             if (convite == null)
@@ -110,6 +115,49 @@ namespace EstoqueApp.Api.Controllers
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                // **NOTIFICAÇÃO EM TEMPO REAL**: Convite aceito
+                // Para o remetente do convite
+                await _hubContext.Clients.Group($"User-{convite.RemetenteId}")
+                    .SendAsync("ConviteAceito", new {
+                        conviteId = convite.Id,
+                        destinatario = new {
+                            id = convite.Destinatario.Id,
+                            nome = convite.Destinatario.Nome,
+                            email = convite.Destinatario.Email
+                        },
+                        despensa = new {
+                            id = convite.Despensa.Id,
+                            nome = convite.Despensa.Nome
+                        },
+                        dataResposta = convite.DataResposta
+                    });
+
+                // Para todos os membros da despensa (incluindo o novo membro)
+                await _hubContext.Clients.Group($"Despensa-{convite.DespensaId}")
+                    .SendAsync("NovoMembroAdicionado", new {
+                        membro = new {
+                            usuarioId = convite.Destinatario.Id,
+                            nome = convite.Destinatario.Nome,
+                            email = convite.Destinatario.Email,
+                            papel = "Membro",
+                            dataAcesso = novoMembro.DataAcesso
+                        },
+                        despensa = new {
+                            id = convite.Despensa.Id,
+                            nome = convite.Despensa.Nome
+                        }
+                    });
+
+                // Para o usuário que aceitou (nova despensa disponível)
+                await _hubContext.Clients.Group($"User-{userId}")
+                    .SendAsync("NovaDespensaDisponivel", new {
+                        despensa = new {
+                            id = convite.Despensa.Id,
+                            nome = convite.Despensa.Nome
+                        },
+                        meuPapel = "Membro"
+                    });
 
                 return Ok(new {
                     message = "Convite aceito com sucesso!",
@@ -144,6 +192,7 @@ namespace EstoqueApp.Api.Controllers
             var convite = await _context.ConvitesDespensa
                 .Include(c => c.Despensa)
                 .Include(c => c.Remetente)
+                .Include(c => c.Destinatario)
                 .FirstOrDefaultAsync(c => c.Id == id && c.DestinatarioId == int.Parse(userId));
 
             if (convite == null)
@@ -161,6 +210,23 @@ namespace EstoqueApp.Api.Controllers
             convite.DataResposta = DateTime.Now;
 
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Convite recusado
+            // Para o remetente do convite
+            await _hubContext.Clients.Group($"User-{convite.RemetenteId}")
+                .SendAsync("ConviteRecusado", new {
+                    conviteId = convite.Id,
+                    destinatario = new {
+                        id = convite.Destinatario.Id,
+                        nome = convite.Destinatario.Nome,
+                        email = convite.Destinatario.Email
+                    },
+                    despensa = new {
+                        id = convite.Despensa.Id,
+                        nome = convite.Despensa.Nome
+                    },
+                    dataResposta = convite.DataResposta
+                });
 
             return Ok(new {
                 message = "Convite recusado.",
@@ -196,6 +262,12 @@ namespace EstoqueApp.Api.Controllers
 
             _context.ConvitesDespensa.Remove(convite);
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Convite deletado (atualizar lista do usuário)
+            await _hubContext.Clients.Group($"User-{userId}")
+                .SendAsync("ConviteDeletado", new { 
+                    conviteId = id
+                });
 
             return Ok(new { message = "Convite deletado com sucesso!" });
         }

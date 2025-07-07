@@ -5,6 +5,8 @@ using System.Security.Claims;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
 using EstoqueApp.Api.Services;
+using Microsoft.AspNetCore.SignalR;
+using EstoqueApp.Api.Hubs;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -15,11 +17,13 @@ namespace EstoqueApp.Api.Controllers
     {
         private readonly EstoqueContext _context;
         private readonly IPermissionService _permissionService;
+        private readonly IHubContext<EstoqueHub> _hubContext;
 
-        public ListaDeComprasController(EstoqueContext context, IPermissionService permissionService)
+        public ListaDeComprasController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext)
         {
             _context = context;
             _permissionService = permissionService;
+            _hubContext = hubContext;
         }
 
         // GET: api/listadecompras
@@ -84,6 +88,18 @@ namespace EstoqueApp.Api.Controllers
             _context.ListaDeComprasItens.Add(novoItem);
             await _context.SaveChangesAsync();
 
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Item manual adicionado à lista
+            await _hubContext.Clients.Group($"User-{userId}")
+                .SendAsync("ListaDeComprasAtualizada", new { 
+                    acao = "itemManualAdicionado",
+                    item = new {
+                        id = novoItem.Id,
+                        descricaoManual = novoItem.DescricaoManual,
+                        quantidadeDesejada = novoItem.QuantidadeDesejada,
+                        dataCriacao = novoItem.DataCriacao
+                    }
+                });
+
             return Ok(new {
                 id = novoItem.Id,
                 descricaoManual = novoItem.DescricaoManual,
@@ -115,6 +131,8 @@ namespace EstoqueApp.Api.Controllers
             // Marcar como comprado
             item.Comprado = true;
             
+            EstoqueItem? estoqueAtualizado = null;
+            
             // Se foi fornecida uma despensa para adicionar ao estoque
             if (request.DespensaId.HasValue && item.ProdutoId.HasValue)
             {
@@ -126,12 +144,15 @@ namespace EstoqueApp.Api.Controllers
 
                 // Procurar se já existe um item do mesmo produto na despensa
                 var estoqueExistente = await _context.EstoqueItens
+                    .Include(e => e.Produto)
+                    .Include(e => e.Despensa)
                     .FirstOrDefaultAsync(e => e.DespensaId == request.DespensaId.Value && e.ProdutoId == item.ProdutoId.Value);
 
                 if (estoqueExistente != null)
                 {
                     // Atualizar quantidade existente
                     estoqueExistente.Quantidade += request.QuantidadeComprada > 0 ? request.QuantidadeComprada : item.QuantidadeDesejada;
+                    estoqueAtualizado = estoqueExistente;
                 }
                 else
                 {
@@ -145,10 +166,43 @@ namespace EstoqueApp.Api.Controllers
                     };
                     
                     _context.EstoqueItens.Add(novoEstoqueItem);
+                    await _context.SaveChangesAsync(); // Salvar para gerar o ID
+                    
+                    // Recarregar com relações
+                    estoqueAtualizado = await _context.EstoqueItens
+                        .Include(e => e.Produto)
+                        .Include(e => e.Despensa)
+                        .FirstOrDefaultAsync(e => e.Id == novoEstoqueItem.Id);
                 }
             }
 
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Item marcado como comprado
+            await _hubContext.Clients.Group($"User-{userId}")
+                .SendAsync("ListaDeComprasAtualizada", new { 
+                    acao = "itemComprado",
+                    itemId = item.Id
+                });
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Estoque atualizado (se aplicável)
+            if (estoqueAtualizado != null && request.DespensaId.HasValue)
+            {
+                await _hubContext.Clients.Group($"Despensa-{request.DespensaId.Value}")
+                    .SendAsync("EstoqueItemAtualizado", new {
+                        id = estoqueAtualizado.Id,
+                        produto = estoqueAtualizado.Produto.Nome,
+                        marca = estoqueAtualizado.Produto.Marca,
+                        codigoBarras = estoqueAtualizado.Produto.CodigoBarras,
+                        quantidade = estoqueAtualizado.Quantidade,
+                        quantidadeMinima = estoqueAtualizado.QuantidadeMinima,
+                        estoqueAbaixoDoMinimo = estoqueAtualizado.Quantidade <= estoqueAtualizado.QuantidadeMinima,
+                        dataValidade = estoqueAtualizado.DataValidade,
+                        despensaId = estoqueAtualizado.DespensaId,
+                        despensaNome = estoqueAtualizado.Despensa.Nome,
+                        acao = "compraFinalizada"
+                    });
+            }
 
             return Ok(new {
                 id = item.Id,
@@ -177,8 +231,22 @@ namespace EstoqueApp.Api.Controllers
                 return NotFound("Item não encontrado na lista de compras.");
             }
 
+            var itemInfo = new {
+                id = item.Id,
+                descricao = item.DescricaoManual,
+                produto = item.ProdutoId.HasValue ? "Produto" : "Manual"
+            };
+
             _context.ListaDeComprasItens.Remove(item);
             await _context.SaveChangesAsync();
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Item removido da lista
+            await _hubContext.Clients.Group($"User-{userId}")
+                .SendAsync("ListaDeComprasAtualizada", new { 
+                    acao = "itemRemovido",
+                    itemId = item.Id,
+                    itemInfo = itemInfo
+                });
 
             return Ok(new { message = "Item removido da lista de compras com sucesso!" });
         }
