@@ -7,6 +7,7 @@ using System.Text;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
 using EstoqueApp.Api.Dtos;
+using Google.Apis.Auth; // **NOVO: Para validação de tokens Google**
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -39,7 +40,8 @@ namespace EstoqueApp.Api.Controllers
             {
                 Nome = request.Nome,
                 Email = request.Email,
-                SenhaHash = senhaHash
+                SenhaHash = senhaHash,
+                Provider = "Email" // **ATUALIZADO: Definir o provedor**
             };
 
             _context.Usuarios.Add(novoUsuario);
@@ -55,7 +57,7 @@ namespace EstoqueApp.Api.Controllers
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email);
 
             // 2. Verificar se o usuário existe e se a senha está correta com BCrypt
-            if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash))
+            if (usuario == null || usuario.SenhaHash == null || !BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash))
             {
                 return Unauthorized("Email ou senha inválidos.");
             }
@@ -64,6 +66,67 @@ namespace EstoqueApp.Api.Controllers
             string token = GerarToken(usuario);
 
             return Ok(new { token = token });
+        }
+
+        // **NOVO: Endpoint para Login com Google**
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
+        {
+            try
+            {
+                // 1. Define as configurações de validação. A audiência DEVE ser o seu ClientId.
+                var validationSettings = new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { _config["Authentication:Google:ClientId"] }
+                };
+
+                // 2. Valida o token. Esta chamada comunica com os servidores da Google.
+                var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, validationSettings);
+
+                // 3. Procura o utilizador na base de dados pelo email extraído do token.
+                var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == payload.Email);
+
+                if (usuario == null)
+                {
+                    // 4. Se não existir, cria um novo utilizador.
+                    usuario = new Usuario
+                    {
+                        Nome = payload.Name,
+                        Email = payload.Email,
+                        SenhaHash = null, // Não tem senha, a autenticação é via Google
+                        Provider = "Google"
+                    };
+                    _context.Usuarios.Add(usuario);
+                    await _context.SaveChangesAsync();
+                }
+                else if (string.IsNullOrEmpty(usuario.Provider) || usuario.Provider != "Google")
+                {
+                    // Opcional: Lida com o caso de um utilizador com o mesmo email mas registado com senha.
+                    return BadRequest("Já existe uma conta com este email. Por favor, faça login com a sua senha.");
+                }
+
+                // 5. Gera o nosso próprio token JWT para o utilizador e envia para o cliente.
+                string nossoToken = GerarToken(usuario);
+
+                return Ok(new { 
+                    token = nossoToken,
+                    message = "Login com Google realizado com sucesso!",
+                    user = new {
+                        id = usuario.Id,
+                        nome = usuario.Nome,
+                        email = usuario.Email,
+                        provider = usuario.Provider
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Ocorre se o token for inválido, expirado ou a audiência não corresponder.
+                return Unauthorized(new { 
+                    error = "Token do Google inválido.",
+                    details = ex.Message 
+                });
+            }
         }
 
         private string GerarToken(Usuario usuario)

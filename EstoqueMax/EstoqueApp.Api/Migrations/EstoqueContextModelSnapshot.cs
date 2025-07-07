@@ -269,8 +269,10 @@ namespace EstoqueApp.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Provider")
+                        .HasColumnType("text");
+
                     b.Property<string>("SenhaHash")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");

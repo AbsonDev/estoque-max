@@ -62,7 +62,7 @@ namespace EstoqueApp.Api.Controllers
                 var despensasIds = await _permissionService.GetDespensasDoUsuario(int.Parse(userId));
 
                 query = _context.EstoqueItens
-                    .Include(e => e.Produto)
+                .Include(e => e.Produto)
                     .Include(e => e.Despensa)
                     .Where(e => despensasIds.Contains(e.DespensaId));
             }

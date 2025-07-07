@@ -18,6 +18,18 @@ builder.Services.AddOpenApi();
 // Adicionar controllers
 builder.Services.AddControllers();
 
+// **NOVO: Configurar CORS para Flutter Web**
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
+
 // Configuração do Entity Framework Core com PostgreSQL
 builder.Services.AddDbContext<EstoqueContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -75,6 +87,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// **NOVO: Usar CORS - deve vir antes de UseHttpsRedirection**
+app.UseCors();
 
 app.UseHttpsRedirection();
 

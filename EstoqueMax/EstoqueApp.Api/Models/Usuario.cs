@@ -5,7 +5,10 @@ namespace EstoqueApp.Api.Models
         public int Id { get; set; }
         public string Nome { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string SenhaHash { get; set; } = string.Empty;
+        public string? SenhaHash { get; set; } = string.Empty;
+        
+        // **NOVO: Para identificar o tipo de autenticação**
+        public string? Provider { get; set; } = "Email"; // "Google", "Email", etc.
         
         // Relacionamento com Lista de Compras
         public ICollection<ListaDeComprasItem> ListaDeCompras { get; set; } = new List<ListaDeComprasItem>();
