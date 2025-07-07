@@ -6,6 +6,7 @@ using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Services;
 using EstoqueApp.Api.Hubs;
 using EstoqueApp.Api.Services.AI;
+using EstoqueApp.Api.Services.Analytics;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -27,6 +28,9 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 // **NOVO: Registrar serviços de IA**
 builder.Services.AddScoped<PredictionService>();
 builder.Services.AddHostedService<AITrainingBackgroundService>();
+
+// **NOVO: Registrar serviços de Analytics**
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 // Adicionar SignalR para comunicação em tempo real
 builder.Services.AddSignalR();
