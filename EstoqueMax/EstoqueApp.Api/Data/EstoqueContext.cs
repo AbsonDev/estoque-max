@@ -18,6 +18,9 @@ namespace EstoqueApp.Api.Data
         // NOVOS DbSets para Partilha Familiar
         public DbSet<MembroDespensa> MembrosDespensa { get; set; }
         public DbSet<ConviteDespensa> ConvitesDespensa { get; set; }
+        
+        // DbSet para IA de Previsão de Consumo
+        public DbSet<HistoricoConsumo> HistoricosDeConsumo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +85,19 @@ namespace EstoqueApp.Api.Data
                 .HasForeignKey(l => l.ProdutoId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // **NOVO: Configuração das relações para HistoricoConsumo**
+            modelBuilder.Entity<HistoricoConsumo>()
+                .HasOne(h => h.EstoqueItem)
+                .WithMany()
+                .HasForeignKey(h => h.EstoqueItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<HistoricoConsumo>()
+                .HasOne(h => h.Usuario)
+                .WithMany()
+                .HasForeignKey(h => h.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Configuração de índices únicos
             modelBuilder.Entity<Usuario>()
                 .HasIndex(u => u.Email)
@@ -96,6 +112,15 @@ namespace EstoqueApp.Api.Data
                 .HasIndex(c => new { c.DespensaId, c.DestinatarioId, c.Estado })
                 .HasFilter("\"Estado\" = 0") // Apenas convites pendentes
                 .IsUnique();
+
+            // **NOVO: Índices para otimizar consultas da IA**
+            modelBuilder.Entity<HistoricoConsumo>()
+                .HasIndex(h => new { h.EstoqueItemId, h.DataDoConsumo })
+                .HasDatabaseName("IX_HistoricoConsumo_EstoqueItem_Data");
+
+            modelBuilder.Entity<HistoricoConsumo>()
+                .HasIndex(h => h.DataDoConsumo)
+                .HasDatabaseName("IX_HistoricoConsumo_Data");
         }
     }
 } 

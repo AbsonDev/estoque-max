@@ -5,6 +5,7 @@ using System.Text;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Services;
 using EstoqueApp.Api.Hubs;
+using EstoqueApp.Api.Services.AI;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -22,6 +23,10 @@ builder.Services.AddDbContext<EstoqueContext>(options =>
 
 // Registrar serviços personalizados
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+// **NOVO: Registrar serviços de IA**
+builder.Services.AddScoped<PredictionService>();
+builder.Services.AddHostedService<AITrainingBackgroundService>();
 
 // Adicionar SignalR para comunicação em tempo real
 builder.Services.AddSignalR();

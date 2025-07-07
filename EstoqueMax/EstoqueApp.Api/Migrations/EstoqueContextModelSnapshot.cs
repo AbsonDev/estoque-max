@@ -116,6 +116,48 @@ namespace EstoqueApp.Api.Migrations
                     b.ToTable("EstoqueItens");
                 });
 
+            modelBuilder.Entity("EstoqueApp.Api.Models.HistoricoConsumo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataDoConsumo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DiaSemanaDaConsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EstoqueItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HoraDaConsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantidadeConsumida")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantidadeRestanteAposConsumo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataDoConsumo")
+                        .HasDatabaseName("IX_HistoricoConsumo_Data");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("EstoqueItemId", "DataDoConsumo")
+                        .HasDatabaseName("IX_HistoricoConsumo_EstoqueItem_Data");
+
+                    b.ToTable("HistoricosDeConsumo");
+                });
+
             modelBuilder.Entity("EstoqueApp.Api.Models.ListaDeComprasItem", b =>
                 {
                     b.Property<int>("Id")
@@ -271,6 +313,25 @@ namespace EstoqueApp.Api.Migrations
                     b.Navigation("Despensa");
 
                     b.Navigation("Produto");
+                });
+
+            modelBuilder.Entity("EstoqueApp.Api.Models.HistoricoConsumo", b =>
+                {
+                    b.HasOne("EstoqueApp.Api.Models.EstoqueItem", "EstoqueItem")
+                        .WithMany()
+                        .HasForeignKey("EstoqueItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EstoqueApp.Api.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EstoqueItem");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.ListaDeComprasItem", b =>

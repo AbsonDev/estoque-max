@@ -7,6 +7,7 @@ using EstoqueApp.Api.Models;
 using EstoqueApp.Api.Services;
 using Microsoft.AspNetCore.SignalR;
 using EstoqueApp.Api.Hubs;
+using EstoqueApp.Api.Services.AI;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -18,12 +19,14 @@ namespace EstoqueApp.Api.Controllers
         private readonly EstoqueContext _context;
         private readonly IPermissionService _permissionService;
         private readonly IHubContext<EstoqueHub> _hubContext;
+        private readonly PredictionService _predictionService;
 
-        public EstoqueController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext)
+        public EstoqueController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext, PredictionService predictionService)
         {
             _context = context;
             _permissionService = permissionService;
             _hubContext = hubContext;
+            _predictionService = predictionService;
         }
 
         // GET: api/estoque - Lista todos os itens de todas as despensas do usuário
@@ -245,6 +248,22 @@ namespace EstoqueApp.Api.Controllers
                 return BadRequest("Quantidade consumida não pode ser maior que o estoque disponível.");
             }
 
+            var agora = DateTime.UtcNow;
+
+            // **NOVO: Registar histórico de consumo para IA**
+            var historicoConsumo = new HistoricoConsumo
+            {
+                EstoqueItemId = item.Id,
+                QuantidadeConsumida = request.QuantidadeConsumida,
+                DataDoConsumo = agora,
+                UsuarioId = int.Parse(userId),
+                QuantidadeRestanteAposConsumo = item.Quantidade - request.QuantidadeConsumida,
+                DiaSemanaDaConsumo = agora.DayOfWeek,
+                HoraDaConsumo = agora.Hour
+            };
+
+            _context.HistoricosDeConsumo.Add(historicoConsumo);
+
             // Consumir o estoque
             item.Quantidade -= request.QuantidadeConsumida;
             await _context.SaveChangesAsync();
@@ -279,7 +298,8 @@ namespace EstoqueApp.Api.Controllers
                 message = "Estoque consumido com sucesso!",
                 quantidadeRestante = item.Quantidade,
                 estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima,
-                adicionadoAListaDeCompras = adicionadoALista
+                adicionadoAListaDeCompras = adicionadoALista,
+                historicoRegistrado = true // Novo campo para confirmar que o histórico foi salvo
             });
         }
 
@@ -389,6 +409,126 @@ namespace EstoqueApp.Api.Controllers
                 await _hubContext.Clients.Group($"User-{membroId}")
                     .SendAsync("ListaDeComprasAtualizada", new { despensaId = despensaId });
             }
+        }
+
+        // GET: api/estoque/{id}/previsao - **NOVO ENDPOINT DE IA**
+        [HttpGet("{id}/previsao")]
+        public async Task<IActionResult> GetPrevisaoConsumo(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var item = await _context.EstoqueItens
+                .Include(e => e.Despensa)
+                .Include(e => e.Produto)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (item == null)
+            {
+                return NotFound("Item não encontrado.");
+            }
+
+            // Verificar permissão para acessar a despensa
+            if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), item.DespensaId))
+            {
+                return Forbid("Você não tem permissão para acessar esta despensa.");
+            }
+
+            try
+            {
+                // Obter previsão usando IA
+                var previsao = await _predictionService.ObterPrevisaoConsumoAsync(id);
+
+                var response = new {
+                    estoqueItemId = id,
+                    produto = new {
+                        nome = item.Produto.Nome,
+                        marca = item.Produto.Marca
+                    },
+                    quantidadeAtual = item.Quantidade,
+                    quantidadeMinima = item.QuantidadeMinima,
+                    diasRestantesEstimados = previsao.DiasRestantesEstimados,
+                    consumoMedioDiario = Math.Round(previsao.ConsumoMedioDiario, 2),
+                    statusConfianca = previsao.StatusConfianca,
+                    previsaoProximos7Dias = previsao.PrevisaoProximos7Dias.Select(p => Math.Round(p, 2)).ToArray(),
+                    totalRegistrosHistorico = previsao.TotalRegistrosUtilizados,
+                    alertas = GerarAlertas(previsao, item),
+                    recomendacoes = GerarRecomendacoes(previsao, item),
+                    dataUltimaAtualizacao = DateTime.UtcNow
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { 
+                    error = "Erro ao calcular previsão",
+                    message = ex.Message 
+                });
+            }
+        }
+
+        // **MÉTODO PRIVADO: Gerar alertas baseados na previsão**
+        private List<string> GerarAlertas(PredictionService.PrevisaoResultado previsao, EstoqueItem item)
+        {
+            var alertas = new List<string>();
+
+            if (previsao.DiasRestantesEstimados <= 0)
+            {
+                alertas.Add("⚠️ Produto esgotado");
+            }
+            else if (previsao.DiasRestantesEstimados <= 2)
+            {
+                alertas.Add("🚨 Crítico: Acabará em 2 dias ou menos");
+            }
+            else if (previsao.DiasRestantesEstimados <= 5)
+            {
+                alertas.Add("⚡ Atenção: Acabará em breve");
+            }
+
+            if (previsao.StatusConfianca == "Baixa" || previsao.StatusConfianca == "Dados Insuficientes")
+            {
+                alertas.Add("📊 Previsão baseada em poucos dados");
+            }
+
+            if (item.Quantidade <= item.QuantidadeMinima)
+            {
+                alertas.Add("📦 Estoque abaixo do mínimo");
+            }
+
+            return alertas;
+        }
+
+        // **MÉTODO PRIVADO: Gerar recomendações baseadas na previsão**
+        private List<string> GerarRecomendacoes(PredictionService.PrevisaoResultado previsao, EstoqueItem item)
+        {
+            var recomendacoes = new List<string>();
+
+            if (previsao.DiasRestantesEstimados <= 3 && previsao.DiasRestantesEstimados > 0)
+            {
+                recomendacoes.Add($"🛒 Comprar nos próximos 2 dias");
+            }
+            else if (previsao.DiasRestantesEstimados <= 7 && previsao.DiasRestantesEstimados > 3)
+            {
+                recomendacoes.Add($"📝 Adicionar à lista de compras da próxima semana");
+            }
+
+            if (previsao.ConsumoMedioDiario > 0)
+            {
+                var quantidadeSugerida = Math.Ceiling(previsao.ConsumoMedioDiario * 14); // 2 semanas
+                recomendacoes.Add($"💡 Sugestão: Comprar {quantidadeSugerida} unidades (2 semanas)");
+            }
+
+            if (previsao.StatusConfianca == "Baixa")
+            {
+                recomendacoes.Add("📈 Continue usando para melhorar a precisão das previsões");
+            }
+
+            return recomendacoes;
         }
     }
 

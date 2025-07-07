@@ -7,6 +7,7 @@ using EstoqueApp.Api.Models;
 using EstoqueApp.Api.Services;
 using Microsoft.AspNetCore.SignalR;
 using EstoqueApp.Api.Hubs;
+using EstoqueApp.Api.Services.AI;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -18,12 +19,14 @@ namespace EstoqueApp.Api.Controllers
         private readonly EstoqueContext _context;
         private readonly IPermissionService _permissionService;
         private readonly IHubContext<EstoqueHub> _hubContext;
+        private readonly PredictionService _predictionService;
 
-        public ListaDeComprasController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext)
+        public ListaDeComprasController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext, PredictionService predictionService)
         {
             _context = context;
             _permissionService = permissionService;
             _hubContext = hubContext;
+            _predictionService = predictionService;
         }
 
         // GET: api/listadecompras
@@ -37,6 +40,7 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
+            // Lista tradicional (itens já adicionados)
             var listaDeCompras = await _context.ListaDeComprasItens
                 .Include(l => l.Produto)
                 .Where(l => l.UsuarioId == int.Parse(userId) && !l.Comprado)
@@ -52,18 +56,201 @@ namespace EstoqueApp.Api.Controllers
                     descricaoManual = l.DescricaoManual,
                     quantidadeDesejada = l.QuantidadeDesejada,
                     comprado = l.Comprado,
-                    dataCriacao = l.DataCriacao
+                    dataCriacao = l.DataCriacao,
+                    tipo = "tradicional" // Distinguir de sugestões IA
                 })
                 .ToListAsync();
+
+            // **NOVO: Sugestões preditivas usando IA**
+            var sugestoesPreditivas = await GerarSugestoesPreditivasAsync(int.Parse(userId));
 
             var resumo = new {
                 totalItens = listaDeCompras.Count,
                 itensAutomaticos = listaDeCompras.Count(l => l.produto != null),
                 itensManuais = listaDeCompras.Count(l => l.produto == null),
-                listaDeCompras = listaDeCompras
+                listaDeCompras = listaDeCompras,
+                
+                // **NOVO: Seção de IA**
+                sugestoesPreditivas = new {
+                    totalSugestoes = sugestoesPreditivas.Count,
+                    sugestoesUrgentes = sugestoesPreditivas.Count(s => s.DiasRestantes <= 3),
+                    sugestoesModeradas = sugestoesPreditivas.Count(s => s.DiasRestantes > 3 && s.DiasRestantes <= 7),
+                    itens = sugestoesPreditivas
+                },
+                
+                dataUltimaAtualizacao = DateTime.UtcNow,
+                versaoIA = "v1.0"
             };
 
             return Ok(resumo);
+        }
+
+        // **NOVO MÉTODO: Gerar sugestões preditivas usando IA**
+        private async Task<List<SugestaoPreditiva>> GerarSugestoesPreditivasAsync(int userId)
+        {
+            try
+            {
+                // Buscar todas as despensas que o usuário tem acesso
+                var despensasIds = await _permissionService.GetDespensasDoUsuario(userId);
+
+                // Buscar itens de estoque dessas despensas
+                var itensEstoque = await _context.EstoqueItens
+                    .Include(e => e.Produto)
+                    .Include(e => e.Despensa)
+                    .Where(e => despensasIds.Contains(e.DespensaId) && e.Quantidade > 0)
+                    .ToListAsync();
+
+                var sugestoes = new List<SugestaoPreditiva>();
+
+                foreach (var item in itensEstoque)
+                {
+                    try
+                    {
+                        // Verificar se já está na lista de compras manual
+                        var jaAdicionado = await _context.ListaDeComprasItens
+                            .AnyAsync(l => l.UsuarioId == userId && l.ProdutoId == item.ProdutoId && !l.Comprado);
+
+                        if (jaAdicionado) continue; // Pular se já foi adicionado manualmente
+
+                        // Obter previsão da IA
+                        var previsao = await _predictionService.ObterPrevisaoConsumoAsync(item.Id);
+
+                        // Incluir apenas itens que a IA prevê que acabarão em breve (próximos 7 dias)
+                        if (previsao.DiasRestantesEstimados > 0 && previsao.DiasRestantesEstimados <= 7)
+                        {
+                            sugestoes.Add(new SugestaoPreditiva
+                            {
+                                EstoqueItemId = item.Id,
+                                Produto = new {
+                                    Id = item.Produto.Id,
+                                    Nome = item.Produto.Nome,
+                                    Marca = item.Produto.Marca,
+                                    CodigoBarras = item.Produto.CodigoBarras
+                                },
+                                Despensa = new {
+                                    Id = item.Despensa.Id,
+                                    Nome = item.Despensa.Nome
+                                },
+                                QuantidadeAtual = item.Quantidade,
+                                DiasRestantes = previsao.DiasRestantesEstimados,
+                                ConsumoMedioDiario = Math.Round(previsao.ConsumoMedioDiario, 2),
+                                QuantidadeSugerida = CalcularQuantidadeSugerida(previsao.ConsumoMedioDiario),
+                                Prioridade = DeterminarPrioridade(previsao.DiasRestantesEstimados),
+                                Confianca = previsao.StatusConfianca,
+                                Tipo = "preditiva",
+                                MotivoSugestao = GerarMotivoSugestao(previsao.DiasRestantesEstimados, previsao.ConsumoMedioDiario),
+                                DataPrevisao = DateTime.UtcNow
+                            });
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Log do erro mas continue processando outros itens
+                        // _logger.LogWarning(ex, "Erro ao processar previsão para item {ItemId}", item.Id);
+                    }
+                }
+
+                // Ordenar por prioridade (mais urgente primeiro)
+                return sugestoes.OrderBy(s => s.DiasRestantes).ToList();
+            }
+            catch (Exception)
+            {
+                // Em caso de erro, retornar lista vazia para não quebrar a funcionalidade principal
+                return new List<SugestaoPreditiva>();
+            }
+        }
+
+        private int CalcularQuantidadeSugerida(float consumoMedioDiario)
+        {
+            if (consumoMedioDiario <= 0) return 1;
+            
+            // Sugerir quantidade para 2 semanas
+            return (int)Math.Ceiling(consumoMedioDiario * 14);
+        }
+
+        private string DeterminarPrioridade(int diasRestantes)
+        {
+            return diasRestantes switch
+            {
+                <= 2 => "Crítica",
+                <= 5 => "Alta",
+                <= 7 => "Moderada",
+                _ => "Baixa"
+            };
+        }
+
+        private string GerarMotivoSugestao(int diasRestantes, float consumoMedio)
+        {
+            if (diasRestantes <= 2)
+                return $"🚨 Produto acabará em {diasRestantes} dia(s)";
+            else if (diasRestantes <= 5)
+                return $"⚡ Produto acabará em {diasRestantes} dias - planeje a compra";
+            else
+                return $"📅 Produto acabará em {diasRestantes} dias - adicione à próxima lista";
+        }
+
+        // **NOVO ENDPOINT: Aceitar sugestão preditiva**
+        [HttpPost("aceitar-sugestao/{estoqueItemId}")]
+        public async Task<IActionResult> AceitarSugestaoPreditiva(int estoqueItemId, [FromBody] AceitarSugestaoDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Verificar se o item existe e se o usuário tem permissão
+            var estoqueItem = await _context.EstoqueItens
+                .Include(e => e.Produto)
+                .FirstOrDefaultAsync(e => e.Id == estoqueItemId);
+
+            if (estoqueItem == null)
+            {
+                return NotFound("Item de estoque não encontrado.");
+            }
+
+            if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), estoqueItem.DespensaId))
+            {
+                return Forbid("Você não tem permissão para acessar esta despensa.");
+            }
+
+            // Verificar se já foi adicionado
+            var jaExiste = await _context.ListaDeComprasItens
+                .AnyAsync(l => l.UsuarioId == int.Parse(userId) && l.ProdutoId == estoqueItem.ProdutoId && !l.Comprado);
+
+            if (jaExiste)
+            {
+                return BadRequest("Este produto já está na sua lista de compras.");
+            }
+
+            // Adicionar à lista de compras
+            var novoItem = new ListaDeComprasItem
+            {
+                UsuarioId = int.Parse(userId),
+                ProdutoId = estoqueItem.ProdutoId,
+                QuantidadeDesejada = request.QuantidadeDesejada > 0 ? request.QuantidadeDesejada : 1,
+                DataCriacao = DateTime.UtcNow
+            };
+
+            _context.ListaDeComprasItens.Add(novoItem);
+            await _context.SaveChangesAsync();
+
+            // Notificar via SignalR
+            await _hubContext.Clients.Group($"User-{userId}")
+                .SendAsync("SugestaoPreditivaAceita", new {
+                    estoqueItemId = estoqueItemId,
+                    produto = estoqueItem.Produto.Nome,
+                    quantidadeAdicionada = novoItem.QuantidadeDesejada,
+                    novoItemId = novoItem.Id
+                });
+
+            return Ok(new {
+                message = "Sugestão aceita e adicionada à lista de compras!",
+                itemId = novoItem.Id,
+                produto = estoqueItem.Produto.Nome,
+                quantidadeDesejada = novoItem.QuantidadeDesejada
+            });
         }
 
         // POST: api/listadecompras/manual
@@ -287,7 +474,30 @@ namespace EstoqueApp.Api.Controllers
         }
     }
 
-    // DTOs
+    // **NOVO DTO**
+    public class AceitarSugestaoDto
+    {
+        public int QuantidadeDesejada { get; set; } = 1;
+    }
+
+    // **NOVA CLASSE: Para sugestões preditivas**
+    public class SugestaoPreditiva
+    {
+        public int EstoqueItemId { get; set; }
+        public object Produto { get; set; } = new object();
+        public object Despensa { get; set; } = new object();
+        public int QuantidadeAtual { get; set; }
+        public int DiasRestantes { get; set; }
+        public double ConsumoMedioDiario { get; set; }
+        public int QuantidadeSugerida { get; set; }
+        public string Prioridade { get; set; } = string.Empty;
+        public string Confianca { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string MotivoSugestao { get; set; } = string.Empty;
+        public DateTime DataPrevisao { get; set; }
+    }
+
+    // DTOs existentes
     public class AdicionarItemManualDto
     {
         public string DescricaoManual { get; set; } = string.Empty;
