@@ -14,14 +14,48 @@ namespace EstoqueApp.Api.Data
         public DbSet<Despensa> Despensas { get; set; }
         public DbSet<EstoqueItem> EstoqueItens { get; set; }
         public DbSet<ListaDeComprasItem> ListaDeComprasItens { get; set; }
+        
+        // NOVOS DbSets para Partilha Familiar
+        public DbSet<MembroDespensa> MembrosDespensa { get; set; }
+        public DbSet<ConviteDespensa> ConvitesDespensa { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Configuração da relação Despensa -> Usuario
-            modelBuilder.Entity<Despensa>()
-                .HasOne(d => d.Usuario)
-                .WithMany(u => u.Despensas)
-                .HasForeignKey(d => d.UsuarioId);
+            // Configuração da chave primária composta para MembroDespensa
+            modelBuilder.Entity<MembroDespensa>()
+                .HasKey(md => new { md.UsuarioId, md.DespensaId });
+
+            // Configuração da relação MembroDespensa -> Usuario
+            modelBuilder.Entity<MembroDespensa>()
+                .HasOne(md => md.Usuario)
+                .WithMany(u => u.AcessosDespensa)
+                .HasForeignKey(md => md.UsuarioId);
+
+            // Configuração da relação MembroDespensa -> Despensa
+            modelBuilder.Entity<MembroDespensa>()
+                .HasOne(md => md.Despensa)
+                .WithMany(d => d.Membros)
+                .HasForeignKey(md => md.DespensaId);
+
+            // Configuração da relação ConviteDespensa -> Despensa
+            modelBuilder.Entity<ConviteDespensa>()
+                .HasOne(c => c.Despensa)
+                .WithMany(d => d.Convites)
+                .HasForeignKey(c => c.DespensaId);
+
+            // Configuração da relação ConviteDespensa -> Remetente
+            modelBuilder.Entity<ConviteDespensa>()
+                .HasOne(c => c.Remetente)
+                .WithMany(u => u.ConvitesEnviados)
+                .HasForeignKey(c => c.RemetenteId)
+                .OnDelete(DeleteBehavior.Restrict); // Evitar cascade delete
+
+            // Configuração da relação ConviteDespensa -> Destinatario
+            modelBuilder.Entity<ConviteDespensa>()
+                .HasOne(c => c.Destinatario)
+                .WithMany(u => u.ConvitesRecebidos)
+                .HasForeignKey(c => c.DestinatarioId)
+                .OnDelete(DeleteBehavior.Restrict); // Evitar cascade delete
 
             // Configuração da relação EstoqueItem -> Despensa
             modelBuilder.Entity<EstoqueItem>()
@@ -46,7 +80,7 @@ namespace EstoqueApp.Api.Data
                 .HasOne(l => l.Produto)
                 .WithMany()
                 .HasForeignKey(l => l.ProdutoId)
-                .OnDelete(DeleteBehavior.SetNull); // Se produto for deletado, não deletar o item da lista
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Configuração de índices únicos
             modelBuilder.Entity<Usuario>()
@@ -55,6 +89,12 @@ namespace EstoqueApp.Api.Data
 
             modelBuilder.Entity<Produto>()
                 .HasIndex(p => p.CodigoBarras)
+                .IsUnique();
+
+            // Índice único para evitar convites duplicados
+            modelBuilder.Entity<ConviteDespensa>()
+                .HasIndex(c => new { c.DespensaId, c.DestinatarioId, c.Estado })
+                .HasFilter("\"Estado\" = 0") // Apenas convites pendentes
                 .IsUnique();
         }
     }

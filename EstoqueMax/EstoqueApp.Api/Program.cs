@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using EstoqueApp.Api.Data;
+using EstoqueApp.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -17,6 +18,9 @@ builder.Services.AddControllers();
 // Configuração do Entity Framework Core com PostgreSQL
 builder.Services.AddDbContext<EstoqueContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Registrar serviços personalizados
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 // Adicionar a configuração de autenticação JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -7,10 +7,16 @@ namespace EstoqueApp.Api.Models
         public string Email { get; set; } = string.Empty;
         public string SenhaHash { get; set; } = string.Empty;
         
-        // Relacionamento com Despensas
-        public ICollection<Despensa> Despensas { get; set; } = new List<Despensa>();
-        
         // Relacionamento com Lista de Compras
         public ICollection<ListaDeComprasItem> ListaDeCompras { get; set; } = new List<ListaDeComprasItem>();
+        
+        // NOVO: Relacionamento com Despensas via tabela de junção
+        public ICollection<MembroDespensa> AcessosDespensa { get; set; } = new List<MembroDespensa>();
+        
+        // NOVO: Convites enviados
+        public ICollection<ConviteDespensa> ConvitesEnviados { get; set; } = new List<ConviteDespensa>();
+        
+        // NOVO: Convites recebidos
+        public ICollection<ConviteDespensa> ConvitesRecebidos { get; set; } = new List<ConviteDespensa>();
     }
 } 

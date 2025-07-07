@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
+using EstoqueApp.Api.Services;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -13,10 +14,12 @@ namespace EstoqueApp.Api.Controllers
     public class DespensasController : ControllerBase
     {
         private readonly EstoqueContext _context;
+        private readonly IPermissionService _permissionService;
 
-        public DespensasController(EstoqueContext context)
+        public DespensasController(EstoqueContext context, IPermissionService permissionService)
         {
             _context = context;
+            _permissionService = permissionService;
         }
 
         // GET: api/despensas
@@ -30,13 +33,26 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
+            var despensasIds = await _permissionService.GetDespensasDoUsuario(int.Parse(userId));
+
             var despensas = await _context.Despensas
-                .Where(d => d.UsuarioId == int.Parse(userId))
+                .Include(d => d.Membros)
+                .ThenInclude(m => m.Usuario)
+                .Where(d => despensasIds.Contains(d.Id))
                 .Select(d => new {
                     id = d.Id,
                     nome = d.Nome,
                     dataCriacao = d.DataCriacao,
-                    totalItens = d.EstoqueItens.Count()
+                    totalItens = d.EstoqueItens.Count(),
+                    meuPapel = d.Membros.First(m => m.UsuarioId == int.Parse(userId)).Papel.ToString(),
+                    totalMembros = d.Membros.Count(),
+                    membros = d.Membros.Select(m => new {
+                        usuarioId = m.UsuarioId,
+                        nome = m.Usuario.Nome,
+                        email = m.Usuario.Email,
+                        papel = m.Papel.ToString(),
+                        dataAcesso = m.DataAcesso
+                    })
                 })
                 .ToListAsync();
 
@@ -54,26 +70,46 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
+            // Verificar permissão
+            if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), id))
+            {
+                return Forbid("Você não tem permissão para acessar esta despensa.");
+            }
+
             var despensa = await _context.Despensas
                 .Include(d => d.EstoqueItens)
                 .ThenInclude(e => e.Produto)
-                .FirstOrDefaultAsync(d => d.Id == id && d.UsuarioId == int.Parse(userId));
+                .Include(d => d.Membros)
+                .ThenInclude(m => m.Usuario)
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             if (despensa == null)
             {
                 return NotFound();
             }
 
+            var meuPapel = despensa.Membros.First(m => m.UsuarioId == int.Parse(userId)).Papel;
+
             return Ok(new {
                 id = despensa.Id,
                 nome = despensa.Nome,
                 dataCriacao = despensa.DataCriacao,
                 totalItens = despensa.EstoqueItens.Count,
+                meuPapel = meuPapel.ToString(),
+                sounDono = meuPapel == PapelDespensa.Dono,
+                membros = despensa.Membros.Select(m => new {
+                    usuarioId = m.UsuarioId,
+                    nome = m.Usuario.Nome,
+                    email = m.Usuario.Email,
+                    papel = m.Papel.ToString(),
+                    dataAcesso = m.DataAcesso
+                }),
                 itens = despensa.EstoqueItens.Select(e => new {
                     id = e.Id,
                     produto = e.Produto.Nome,
                     marca = e.Produto.Marca,
                     quantidade = e.Quantidade,
+                    quantidadeMinima = e.QuantidadeMinima,
                     dataValidade = e.DataValidade
                 })
             });
@@ -90,22 +126,47 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
-            var despensa = new Despensa
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                Nome = request.Nome,
-                UsuarioId = int.Parse(userId),
-                DataCriacao = DateTime.Now
-            };
+                // Criar a despensa
+                var despensa = new Despensa
+                {
+                    Nome = request.Nome,
+                    DataCriacao = DateTime.Now
+                };
 
-            _context.Despensas.Add(despensa);
-            await _context.SaveChangesAsync();
+                _context.Despensas.Add(despensa);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetDespensa), new { id = despensa.Id }, new {
-                id = despensa.Id,
-                nome = despensa.Nome,
-                dataCriacao = despensa.DataCriacao,
-                totalItens = 0
-            });
+                // Adicionar o criador como dono
+                var membroDono = new MembroDespensa
+                {
+                    UsuarioId = int.Parse(userId),
+                    DespensaId = despensa.Id,
+                    Papel = PapelDespensa.Dono,
+                    DataAcesso = DateTime.Now
+                };
+
+                _context.MembrosDespensa.Add(membroDono);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return CreatedAtAction(nameof(GetDespensa), new { id = despensa.Id }, new {
+                    id = despensa.Id,
+                    nome = despensa.Nome,
+                    dataCriacao = despensa.DataCriacao,
+                    totalItens = 0,
+                    meuPapel = "Dono",
+                    totalMembros = 1
+                });
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         // PUT: api/despensas/{id}
@@ -119,8 +180,13 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
-            var despensa = await _context.Despensas
-                .FirstOrDefaultAsync(d => d.Id == id && d.UsuarioId == int.Parse(userId));
+            // Verificar se é dono (apenas dono pode alterar o nome)
+            if (!await _permissionService.IsDonoDespensa(int.Parse(userId), id))
+            {
+                return Forbid("Apenas o dono pode alterar o nome da despensa.");
+            }
+
+            var despensa = await _context.Despensas.FindAsync(id);
 
             if (despensa == null)
             {
@@ -149,9 +215,15 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
+            // Verificar se é dono (apenas dono pode deletar)
+            if (!await _permissionService.IsDonoDespensa(int.Parse(userId), id))
+            {
+                return Forbid("Apenas o dono pode deletar a despensa.");
+            }
+
             var despensa = await _context.Despensas
                 .Include(d => d.EstoqueItens)
-                .FirstOrDefaultAsync(d => d.Id == id && d.UsuarioId == int.Parse(userId));
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             if (despensa == null)
             {
@@ -169,11 +241,117 @@ namespace EstoqueApp.Api.Controllers
 
             return Ok(new { message = "Despensa deletada com sucesso!" });
         }
+
+        // POST: api/despensas/{id}/convidar
+        [HttpPost("{id}/convidar")]
+        public async Task<IActionResult> ConvidarMembro(int id, [FromBody] ConvidarMembroDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Verificar se pode convidar (apenas dono)
+            if (!await _permissionService.PodeConvidarParaDespensa(int.Parse(userId), id))
+            {
+                return Forbid("Apenas o dono pode convidar novos membros.");
+            }
+
+            // Verificar se o destinatário existe
+            var destinatario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Email == request.EmailDestinatario);
+
+            if (destinatario == null)
+            {
+                return NotFound("Usuário com este email não encontrado.");
+            }
+
+            // Verificar se o usuário já é membro
+            var jaMembro = await _context.MembrosDespensa
+                .AnyAsync(md => md.UsuarioId == destinatario.Id && md.DespensaId == id);
+
+            if (jaMembro)
+            {
+                return BadRequest("Este usuário já é membro desta despensa.");
+            }
+
+            // Verificar se já existe convite pendente
+            var convitePendente = await _context.ConvitesDespensa
+                .AnyAsync(c => c.DespensaId == id && 
+                              c.DestinatarioId == destinatario.Id && 
+                              c.Estado == EstadoConvite.Pendente);
+
+            if (convitePendente)
+            {
+                return BadRequest("Já existe um convite pendente para este usuário.");
+            }
+
+            // Criar convite
+            var convite = new ConviteDespensa
+            {
+                DespensaId = id,
+                RemetenteId = int.Parse(userId),
+                DestinatarioId = destinatario.Id,
+                Mensagem = request.Mensagem,
+                DataEnvio = DateTime.Now
+            };
+
+            _context.ConvitesDespensa.Add(convite);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { 
+                message = "Convite enviado com sucesso!",
+                conviteId = convite.Id,
+                destinatario = new {
+                    nome = destinatario.Nome,
+                    email = destinatario.Email
+                }
+            });
+        }
+
+        // DELETE: api/despensas/{id}/membros/{membroId}
+        [HttpDelete("{id}/membros/{membroId}")]
+        public async Task<IActionResult> RemoverMembro(int id, int membroId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Verificar se pode remover
+            if (!await _permissionService.PodeRemoverMembroDespensa(int.Parse(userId), id, membroId))
+            {
+                return Forbid("Você não tem permissão para remover este membro.");
+            }
+
+            var membro = await _context.MembrosDespensa
+                .FirstOrDefaultAsync(md => md.UsuarioId == membroId && md.DespensaId == id);
+
+            if (membro == null)
+            {
+                return NotFound("Membro não encontrado nesta despensa.");
+            }
+
+            _context.MembrosDespensa.Remove(membro);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Membro removido da despensa com sucesso!" });
+        }
     }
 
     // DTOs
     public class CriarDespensaDto
     {
         public string Nome { get; set; } = string.Empty;
+    }
+
+    public class ConvidarMembroDto
+    {
+        public string EmailDestinatario { get; set; } = string.Empty;
+        public string? Mensagem { get; set; }
     }
 } 

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
+using EstoqueApp.Api.Services;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -13,10 +14,12 @@ namespace EstoqueApp.Api.Controllers
     public class ListaDeComprasController : ControllerBase
     {
         private readonly EstoqueContext _context;
+        private readonly IPermissionService _permissionService;
 
-        public ListaDeComprasController(EstoqueContext context)
+        public ListaDeComprasController(EstoqueContext context, IPermissionService permissionService)
         {
             _context = context;
+            _permissionService = permissionService;
         }
 
         // GET: api/listadecompras
@@ -115,34 +118,33 @@ namespace EstoqueApp.Api.Controllers
             // Se foi fornecida uma despensa para adicionar ao estoque
             if (request.DespensaId.HasValue && item.ProdutoId.HasValue)
             {
-                // Verificar se a despensa pertence ao usuário
-                var despensa = await _context.Despensas
-                    .FirstOrDefaultAsync(d => d.Id == request.DespensaId.Value && d.UsuarioId == int.Parse(userId));
-
-                if (despensa != null)
+                // Verificar se o usuário tem permissão para acessar a despensa
+                if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), request.DespensaId.Value))
                 {
-                    // Procurar se já existe um item do mesmo produto na despensa
-                    var estoqueExistente = await _context.EstoqueItens
-                        .FirstOrDefaultAsync(e => e.DespensaId == request.DespensaId.Value && e.ProdutoId == item.ProdutoId.Value);
+                    return Forbid("Você não tem permissão para acessar a despensa especificada.");
+                }
 
-                    if (estoqueExistente != null)
+                // Procurar se já existe um item do mesmo produto na despensa
+                var estoqueExistente = await _context.EstoqueItens
+                    .FirstOrDefaultAsync(e => e.DespensaId == request.DespensaId.Value && e.ProdutoId == item.ProdutoId.Value);
+
+                if (estoqueExistente != null)
+                {
+                    // Atualizar quantidade existente
+                    estoqueExistente.Quantidade += request.QuantidadeComprada > 0 ? request.QuantidadeComprada : item.QuantidadeDesejada;
+                }
+                else
+                {
+                    // Criar novo item no estoque
+                    var novoEstoqueItem = new EstoqueItem
                     {
-                        // Atualizar quantidade existente
-                        estoqueExistente.Quantidade += request.QuantidadeComprada > 0 ? request.QuantidadeComprada : item.QuantidadeDesejada;
-                    }
-                    else
-                    {
-                        // Criar novo item no estoque
-                        var novoEstoqueItem = new EstoqueItem
-                        {
-                            DespensaId = request.DespensaId.Value,
-                            ProdutoId = item.ProdutoId.Value,
-                            Quantidade = request.QuantidadeComprada > 0 ? request.QuantidadeComprada : item.QuantidadeDesejada,
-                            DataValidade = request.DataValidade
-                        };
-                        
-                        _context.EstoqueItens.Add(novoEstoqueItem);
-                    }
+                        DespensaId = request.DespensaId.Value,
+                        ProdutoId = item.ProdutoId.Value,
+                        Quantidade = request.QuantidadeComprada > 0 ? request.QuantidadeComprada : item.QuantidadeDesejada,
+                        DataValidade = request.DataValidade
+                    };
+                    
+                    _context.EstoqueItens.Add(novoEstoqueItem);
                 }
             }
 

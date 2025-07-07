@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using EstoqueApp.Api.Data;
 using EstoqueApp.Api.Models;
+using EstoqueApp.Api.Services;
 
 namespace EstoqueApp.Api.Controllers
 {
@@ -13,10 +14,12 @@ namespace EstoqueApp.Api.Controllers
     public class EstoqueController : ControllerBase
     {
         private readonly EstoqueContext _context;
+        private readonly IPermissionService _permissionService;
 
-        public EstoqueController(EstoqueContext context)
+        public EstoqueController(EstoqueContext context, IPermissionService permissionService)
         {
             _context = context;
+            _permissionService = permissionService;
         }
 
         // GET: api/estoque - Lista todos os itens de todas as despensas do usuário
@@ -31,15 +34,30 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
-            var query = _context.EstoqueItens
-                .Include(e => e.Produto)
-                .Include(e => e.Despensa)
-                .Where(e => e.Despensa.UsuarioId == int.Parse(userId));
+            IQueryable<EstoqueItem> query;
 
-            // Se foi especificada uma despensa, filtrar por ela
             if (despensaId.HasValue)
             {
-                query = query.Where(e => e.DespensaId == despensaId.Value);
+                // Verificar permissão para a despensa específica
+                if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), despensaId.Value))
+                {
+                    return Forbid("Você não tem permissão para acessar esta despensa.");
+                }
+
+                query = _context.EstoqueItens
+                    .Include(e => e.Produto)
+                    .Include(e => e.Despensa)
+                    .Where(e => e.DespensaId == despensaId.Value);
+            }
+            else
+            {
+                // Buscar todas as despensas que o usuário tem acesso
+                var despensasIds = await _permissionService.GetDespensasDoUsuario(int.Parse(userId));
+
+                query = _context.EstoqueItens
+                    .Include(e => e.Produto)
+                    .Include(e => e.Despensa)
+                    .Where(e => despensasIds.Contains(e.DespensaId));
             }
 
             var estoque = await query.ToListAsync();
@@ -76,13 +94,10 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
-            // Verificar se a despensa existe e pertence ao usuário
-            var despensa = await _context.Despensas
-                .FirstOrDefaultAsync(d => d.Id == request.DespensaId && d.UsuarioId == int.Parse(userId));
-
-            if (despensa == null)
+            // Verificar permissão para acessar a despensa
+            if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), request.DespensaId))
             {
-                return NotFound("Despensa não encontrada ou não pertence ao usuário.");
+                return Forbid("Você não tem permissão para acessar esta despensa.");
             }
 
             // Verificar se o produto existe
@@ -121,11 +136,17 @@ namespace EstoqueApp.Api.Controllers
             var item = await _context.EstoqueItens
                 .Include(e => e.Despensa)
                 .Include(e => e.Produto)
-                .FirstOrDefaultAsync(e => e.Id == id && e.Despensa.UsuarioId == int.Parse(userId));
+                .FirstOrDefaultAsync(e => e.Id == id);
 
             if (item == null)
             {
-                return NotFound("Item não encontrado ou não pertence ao usuário.");
+                return NotFound("Item não encontrado.");
+            }
+
+            // Verificar permissão para acessar a despensa
+            if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), item.DespensaId))
+            {
+                return Forbid("Você não tem permissão para acessar esta despensa.");
             }
 
             // Atualizar os dados do item
@@ -158,11 +179,17 @@ namespace EstoqueApp.Api.Controllers
             var item = await _context.EstoqueItens
                 .Include(e => e.Despensa)
                 .Include(e => e.Produto)
-                .FirstOrDefaultAsync(e => e.Id == id && e.Despensa.UsuarioId == int.Parse(userId));
+                .FirstOrDefaultAsync(e => e.Id == id);
 
             if (item == null)
             {
-                return NotFound("Item não encontrado ou não pertence ao usuário.");
+                return NotFound("Item não encontrado.");
+            }
+
+            // Verificar permissão para acessar a despensa
+            if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), item.DespensaId))
+            {
+                return Forbid("Você não tem permissão para acessar esta despensa.");
             }
 
             if (request.QuantidadeConsumida <= 0)
@@ -202,11 +229,17 @@ namespace EstoqueApp.Api.Controllers
 
             var item = await _context.EstoqueItens
                 .Include(e => e.Despensa)
-                .FirstOrDefaultAsync(e => e.Id == id && e.Despensa.UsuarioId == int.Parse(userId));
+                .FirstOrDefaultAsync(e => e.Id == id);
 
             if (item == null)
             {
-                return NotFound("Item não encontrado ou não pertence ao usuário.");
+                return NotFound("Item não encontrado.");
+            }
+
+            // Verificar permissão para acessar a despensa
+            if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), item.DespensaId))
+            {
+                return Forbid("Você não tem permissão para acessar esta despensa.");
             }
 
             _context.EstoqueItens.Remove(item);
