@@ -13,6 +13,10 @@ namespace EstoqueApp.Api.Models
         public Produto Produto { get; set; } = null!;
         
         public int Quantidade { get; set; }
+        
+        // NOVA PROPRIEDADE - Funcionalidade de Lista de Compras Inteligente
+        public int QuantidadeMinima { get; set; } = 1; // Padrão de 1
+        
         public DateTime? DataValidade { get; set; }
     }
 } 

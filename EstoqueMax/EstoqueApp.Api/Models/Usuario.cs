@@ -9,5 +9,8 @@ namespace EstoqueApp.Api.Models
         
         // Relacionamento com Despensas
         public ICollection<Despensa> Despensas { get; set; } = new List<Despensa>();
+        
+        // Relacionamento com Lista de Compras
+        public ICollection<ListaDeComprasItem> ListaDeCompras { get; set; } = new List<ListaDeComprasItem>();
     }
 } 

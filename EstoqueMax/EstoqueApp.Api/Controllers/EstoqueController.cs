@@ -54,6 +54,8 @@ namespace EstoqueApp.Api.Controllers
                     marca = e.Produto.Marca,
                     codigoBarras = e.Produto.CodigoBarras,
                     quantidade = e.Quantidade,
+                    quantidadeMinima = e.QuantidadeMinima,
+                    estoqueAbaixoDoMinimo = e.Quantidade <= e.QuantidadeMinima,
                     dataValidade = e.DataValidade,
                     despensa = new {
                         id = e.Despensa.Id,
@@ -95,6 +97,7 @@ namespace EstoqueApp.Api.Controllers
                 DespensaId = request.DespensaId,
                 ProdutoId = request.ProdutoId,
                 Quantidade = request.Quantidade,
+                QuantidadeMinima = request.QuantidadeMinima > 0 ? request.QuantidadeMinima : 1,
                 DataValidade = request.DataValidade
             };
 
@@ -117,6 +120,7 @@ namespace EstoqueApp.Api.Controllers
 
             var item = await _context.EstoqueItens
                 .Include(e => e.Despensa)
+                .Include(e => e.Produto)
                 .FirstOrDefaultAsync(e => e.Id == id && e.Despensa.UsuarioId == int.Parse(userId));
 
             if (item == null)
@@ -124,12 +128,65 @@ namespace EstoqueApp.Api.Controllers
                 return NotFound("Item não encontrado ou não pertence ao usuário.");
             }
 
+            // Atualizar os dados do item
             item.Quantidade = request.Quantidade;
+            item.QuantidadeMinima = request.QuantidadeMinima > 0 ? request.QuantidadeMinima : item.QuantidadeMinima;
             item.DataValidade = request.DataValidade;
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Item atualizado com sucesso!" });
+            // **LÓGICA INTELIGENTE: Verificar se precisa adicionar à lista de compras**
+            await VerificarEAdicionarAListaDeCompras(int.Parse(userId), item);
+
+            return Ok(new { 
+                message = "Item atualizado com sucesso!",
+                estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima
+            });
+        }
+
+        // POST: api/estoque/{id}/consumir - Consome quantidade do estoque
+        [HttpPost("{id}/consumir")]
+        public async Task<IActionResult> ConsumirEstoque(int id, [FromBody] ConsumirEstoqueDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var item = await _context.EstoqueItens
+                .Include(e => e.Despensa)
+                .Include(e => e.Produto)
+                .FirstOrDefaultAsync(e => e.Id == id && e.Despensa.UsuarioId == int.Parse(userId));
+
+            if (item == null)
+            {
+                return NotFound("Item não encontrado ou não pertence ao usuário.");
+            }
+
+            if (request.QuantidadeConsumida <= 0)
+            {
+                return BadRequest("Quantidade consumida deve ser maior que zero.");
+            }
+
+            if (request.QuantidadeConsumida > item.Quantidade)
+            {
+                return BadRequest("Quantidade consumida não pode ser maior que o estoque disponível.");
+            }
+
+            // Consumir o estoque
+            item.Quantidade -= request.QuantidadeConsumida;
+            await _context.SaveChangesAsync();
+
+            // **LÓGICA INTELIGENTE: Verificar se precisa adicionar à lista de compras**
+            await VerificarEAdicionarAListaDeCompras(int.Parse(userId), item);
+
+            return Ok(new { 
+                message = "Estoque consumido com sucesso!",
+                quantidadeRestante = item.Quantidade,
+                estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima
+            });
         }
 
         // DELETE: api/estoque/{id} - Remove um item do estoque
@@ -172,6 +229,32 @@ namespace EstoqueApp.Api.Controllers
                 message = "Usuário autenticado com sucesso!"
             });
         }
+
+        // **MÉTODO PRIVADO: Lógica de negócio para lista de compras inteligente**
+        private async Task VerificarEAdicionarAListaDeCompras(int userId, EstoqueItem item)
+        {
+            // Só adiciona se o estoque estiver abaixo do mínimo
+            if (item.Quantidade <= item.QuantidadeMinima)
+            {
+                // Verificar se o item já não está na lista de compras do usuário
+                var itemJaNaLista = await _context.ListaDeComprasItens
+                    .AnyAsync(l => l.UsuarioId == userId && l.ProdutoId == item.ProdutoId && !l.Comprado);
+
+                if (!itemJaNaLista)
+                {
+                    var novoItemLista = new ListaDeComprasItem
+                    {
+                        UsuarioId = userId,
+                        ProdutoId = item.ProdutoId,
+                        QuantidadeDesejada = item.QuantidadeMinima,
+                        DataCriacao = DateTime.Now
+                    };
+
+                    _context.ListaDeComprasItens.Add(novoItemLista);
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
     }
 
     // DTOs atualizados
@@ -180,12 +263,19 @@ namespace EstoqueApp.Api.Controllers
         public int DespensaId { get; set; } // Agora é obrigatório especificar a despensa
         public int ProdutoId { get; set; }
         public int Quantidade { get; set; }
+        public int QuantidadeMinima { get; set; } = 1;
         public DateTime? DataValidade { get; set; }
     }
 
     public class AtualizarEstoqueDto
     {
         public int Quantidade { get; set; }
+        public int QuantidadeMinima { get; set; } = 1;
         public DateTime? DataValidade { get; set; }
+    }
+
+    public class ConsumirEstoqueDto
+    {
+        public int QuantidadeConsumida { get; set; }
     }
 } 

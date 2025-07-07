@@ -13,6 +13,7 @@ namespace EstoqueApp.Api.Data
         public DbSet<Produto> Produtos { get; set; }
         public DbSet<Despensa> Despensas { get; set; }
         public DbSet<EstoqueItem> EstoqueItens { get; set; }
+        public DbSet<ListaDeComprasItem> ListaDeComprasItens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +34,19 @@ namespace EstoqueApp.Api.Data
                 .HasOne(e => e.Produto)
                 .WithMany()
                 .HasForeignKey(e => e.ProdutoId);
+
+            // Configuração da relação ListaDeComprasItem -> Usuario
+            modelBuilder.Entity<ListaDeComprasItem>()
+                .HasOne(l => l.Usuario)
+                .WithMany(u => u.ListaDeCompras)
+                .HasForeignKey(l => l.UsuarioId);
+
+            // Configuração da relação ListaDeComprasItem -> Produto (opcional)
+            modelBuilder.Entity<ListaDeComprasItem>()
+                .HasOne(l => l.Produto)
+                .WithMany()
+                .HasForeignKey(l => l.ProdutoId)
+                .OnDelete(DeleteBehavior.SetNull); // Se produto for deletado, não deletar o item da lista
 
             // Configuração de índices únicos
             modelBuilder.Entity<Usuario>()
