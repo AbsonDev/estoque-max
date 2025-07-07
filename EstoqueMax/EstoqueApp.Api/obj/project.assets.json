@@ -3236,11 +3236,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/absondutragalvao/Abson Projects/EstoqueMax/EstoqueApp.Api/EstoqueApp.Api.csproj",
+      "projectUniqueName": "/Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/EstoqueApp.Api.csproj",
       "projectName": "EstoqueApp.Api",
-      "projectPath": "/Users/absondutragalvao/Abson Projects/EstoqueMax/EstoqueApp.Api/EstoqueApp.Api.csproj",
+      "projectPath": "/Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/EstoqueApp.Api.csproj",
       "packagesPath": "/Users/absondutragalvao/.nuget/packages/",
-      "outputPath": "/Users/absondutragalvao/Abson Projects/EstoqueMax/EstoqueApp.Api/obj/",
+      "outputPath": "/Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/absondutragalvao/.nuget/NuGet/NuGet.Config"

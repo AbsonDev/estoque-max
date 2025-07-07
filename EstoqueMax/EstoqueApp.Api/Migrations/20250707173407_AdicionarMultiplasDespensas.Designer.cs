@@ -3,6 +3,7 @@ using System;
 using EstoqueApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EstoqueApp.Api.Migrations
 {
     [DbContext(typeof(EstoqueContext))]
-    partial class EstoqueContextModelSnapshot : ModelSnapshot
+    [Migration("20250707173407_AdicionarMultiplasDespensas")]
+    partial class AdicionarMultiplasDespensas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

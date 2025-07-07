@@ -9,7 +9,7 @@ namespace EstoqueApp.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // <-- MÁGICA ACONTECE AQUI
+    [Authorize]
     public class EstoqueController : ControllerBase
     {
         private readonly EstoqueContext _context;
@@ -19,11 +19,10 @@ namespace EstoqueApp.Api.Controllers
             _context = context;
         }
 
-        // Este endpoint só pode ser acessado por usuários autenticados
+        // GET: api/estoque - Lista todos os itens de todas as despensas do usuário
         [HttpGet]
-        public async Task<IActionResult> GetEstoque()
+        public async Task<IActionResult> GetEstoque([FromQuery] int? despensaId = null)
         {
-            // Como pegar o ID do usuário logado a partir do token:
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userName = User.FindFirst(ClaimTypes.Name)?.Value;
 
@@ -32,15 +31,22 @@ namespace EstoqueApp.Api.Controllers
                 return Unauthorized();
             }
 
-            // Buscar o estoque para este usuário
-            var estoque = await _context.EstoqueItens
+            var query = _context.EstoqueItens
                 .Include(e => e.Produto)
-                .Include(e => e.Usuario)
-                .Where(e => e.UsuarioId == int.Parse(userId))
-                .ToListAsync();
+                .Include(e => e.Despensa)
+                .Where(e => e.Despensa.UsuarioId == int.Parse(userId));
+
+            // Se foi especificada uma despensa, filtrar por ela
+            if (despensaId.HasValue)
+            {
+                query = query.Where(e => e.DespensaId == despensaId.Value);
+            }
+
+            var estoque = await query.ToListAsync();
 
             return Ok(new { 
                 usuario = userName,
+                despensaId = despensaId,
                 totalItens = estoque.Count,
                 estoque = estoque.Select(e => new {
                     id = e.Id,
@@ -48,11 +54,16 @@ namespace EstoqueApp.Api.Controllers
                     marca = e.Produto.Marca,
                     codigoBarras = e.Produto.CodigoBarras,
                     quantidade = e.Quantidade,
-                    dataValidade = e.DataValidade
+                    dataValidade = e.DataValidade,
+                    despensa = new {
+                        id = e.Despensa.Id,
+                        nome = e.Despensa.Nome
+                    }
                 })
             });
         }
 
+        // POST: api/estoque - Adiciona item a uma despensa específica
         [HttpPost]
         public async Task<IActionResult> AdicionarAoEstoque([FromBody] AdicionarEstoqueDto request)
         {
@@ -61,6 +72,15 @@ namespace EstoqueApp.Api.Controllers
             if (userId == null)
             {
                 return Unauthorized();
+            }
+
+            // Verificar se a despensa existe e pertence ao usuário
+            var despensa = await _context.Despensas
+                .FirstOrDefaultAsync(d => d.Id == request.DespensaId && d.UsuarioId == int.Parse(userId));
+
+            if (despensa == null)
+            {
+                return NotFound("Despensa não encontrada ou não pertence ao usuário.");
             }
 
             // Verificar se o produto existe
@@ -72,7 +92,7 @@ namespace EstoqueApp.Api.Controllers
 
             var novoItem = new EstoqueItem
             {
-                UsuarioId = int.Parse(userId),
+                DespensaId = request.DespensaId,
                 ProdutoId = request.ProdutoId,
                 Quantidade = request.Quantidade,
                 DataValidade = request.DataValidade
@@ -82,6 +102,60 @@ namespace EstoqueApp.Api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Item adicionado ao estoque com sucesso!" });
+        }
+
+        // PUT: api/estoque/{id} - Atualiza um item do estoque
+        [HttpPut("{id}")]
+        public async Task<IActionResult> AtualizarEstoque(int id, [FromBody] AtualizarEstoqueDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var item = await _context.EstoqueItens
+                .Include(e => e.Despensa)
+                .FirstOrDefaultAsync(e => e.Id == id && e.Despensa.UsuarioId == int.Parse(userId));
+
+            if (item == null)
+            {
+                return NotFound("Item não encontrado ou não pertence ao usuário.");
+            }
+
+            item.Quantidade = request.Quantidade;
+            item.DataValidade = request.DataValidade;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Item atualizado com sucesso!" });
+        }
+
+        // DELETE: api/estoque/{id} - Remove um item do estoque
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> RemoverDoEstoque(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var item = await _context.EstoqueItens
+                .Include(e => e.Despensa)
+                .FirstOrDefaultAsync(e => e.Id == id && e.Despensa.UsuarioId == int.Parse(userId));
+
+            if (item == null)
+            {
+                return NotFound("Item não encontrado ou não pertence ao usuário.");
+            }
+
+            _context.EstoqueItens.Remove(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Item removido do estoque com sucesso!" });
         }
 
         [HttpGet("usuario-info")]
@@ -100,10 +174,17 @@ namespace EstoqueApp.Api.Controllers
         }
     }
 
-    // DTO para adicionar item ao estoque
+    // DTOs atualizados
     public class AdicionarEstoqueDto
     {
+        public int DespensaId { get; set; } // Agora é obrigatório especificar a despensa
         public int ProdutoId { get; set; }
+        public int Quantidade { get; set; }
+        public DateTime? DataValidade { get; set; }
+    }
+
+    public class AtualizarEstoqueDto
+    {
         public int Quantidade { get; set; }
         public DateTime? DataValidade { get; set; }
     }

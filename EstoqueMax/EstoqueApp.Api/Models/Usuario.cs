@@ -6,5 +6,8 @@ namespace EstoqueApp.Api.Models
         public string Nome { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string SenhaHash { get; set; } = string.Empty;
+        
+        // Relacionamento com Despensas
+        public ICollection<Despensa> Despensas { get; set; } = new List<Despensa>();
     }
 } 
