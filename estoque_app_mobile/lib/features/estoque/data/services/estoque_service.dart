@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import '../../../../core/exceptions/api_exception.dart';
 import '../../../../core/services/api_service.dart';
 import '../models/estoque_item.dart';
 import '../models/produto.dart';
@@ -9,145 +8,237 @@ class EstoqueService {
 
   EstoqueService(this._apiService);
 
-  // Buscar estoque
-  Future<List<EstoqueItem>> getEstoque({int? despensaId}) async {
+  // Obtém todos os itens de estoque de uma despensa
+  Future<List<EstoqueItem>> getEstoqueDespensa(int despensaId) async {
     try {
-      final params = <String, dynamic>{};
-      if (despensaId != null) {
-        params['despensaId'] = despensaId;
-      }
-
-      final response = await _apiService.get('/estoque', queryParameters: params);
+      final response = await _apiService._dio.get('/despensas/$despensaId/estoque');
       
-      if (response.data['estoque'] != null) {
-        return (response.data['estoque'] as List)
-            .map((item) => EstoqueItem.fromJson(item))
-            .toList();
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((item) => EstoqueItem.fromJson(item)).toList();
+      } else {
+        throw Exception('Erro ao carregar estoque: ${response.statusMessage}');
       }
-      
-      return [];
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao buscar estoque: ${e.toString()}');
-    }
-  }
-
-  // Adicionar item ao estoque
-  Future<void> adicionarAoEstoque(AdicionarEstoqueDto dto) async {
-    try {
-      await _apiService.post('/estoque', data: dto.toJson());
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao adicionar item: ${e.toString()}');
-    }
-  }
-
-  // Atualizar item do estoque
-  Future<void> atualizarEstoque(int id, AtualizarEstoqueDto dto) async {
-    try {
-      await _apiService.put('/estoque/$id', data: dto.toJson());
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao atualizar item: ${e.toString()}');
-    }
-  }
-
-  // Consumir item do estoque
-  Future<void> consumirEstoque(int id, ConsumirEstoqueDto dto) async {
-    try {
-      await _apiService.post('/estoque/$id/consumir', data: dto.toJson());
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao consumir item: ${e.toString()}');
-    }
-  }
-
-  // Remover item do estoque
-  Future<void> removerDoEstoque(int id) async {
-    try {
-      await _apiService.delete('/estoque/$id');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao remover item: ${e.toString()}');
-    }
-  }
-
-  // Buscar produtos
-  Future<List<Produto>> getProdutos({String? busca}) async {
-    try {
-      final params = <String, dynamic>{};
-      if (busca != null && busca.isNotEmpty) {
-        params['busca'] = busca;
-      }
-
-      final response = await _apiService.get('/produtos', queryParameters: params);
-      
-      if (response.data != null) {
-        return (response.data as List)
-            .map((produto) => Produto.fromJson(produto))
-            .toList();
-      }
-      
-      return [];
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao buscar produtos: ${e.toString()}');
-    }
-  }
-
-  // Criar produto
-  Future<Produto> criarProduto(CriarProdutoDto dto) async {
-    try {
-      final response = await _apiService.post('/produtos', data: dto.toJson());
-      return Produto.fromJson(response.data);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao criar produto: ${e.toString()}');
-    }
-  }
-
-  // Atualizar produto
-  Future<Produto> atualizarProduto(int id, AtualizarProdutoDto dto) async {
-    try {
-      final response = await _apiService.put('/produtos/$id', data: dto.toJson());
-      return Produto.fromJson(response.data);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao atualizar produto: ${e.toString()}');
-    }
-  }
-
-  // Deletar produto
-  Future<void> deletarProduto(int id) async {
-    try {
-      await _apiService.delete('/produtos/$id');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    } catch (e) {
-      throw ApiException('Erro inesperado ao deletar produto: ${e.toString()}');
-    }
-  }
-
-  // Buscar produto por código de barras
-  Future<Produto?> buscarProdutoPorCodigoBarras(String codigoBarras) async {
-    try {
-      final response = await _apiService.get('/produtos/codigo-barras/$codigoBarras');
-      return Produto.fromJson(response.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        return null;
+        throw Exception('Despensa não encontrada');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Acesso negado');
+      } else {
+        throw Exception('Erro de conexão: ${e.message}');
       }
-      throw ApiException.fromDioException(e);
     } catch (e) {
-      throw ApiException('Erro inesperado ao buscar produto: ${e.toString()}');
+      throw Exception('Erro inesperado: $e');
     }
+  }
+
+  // Busca produtos disponíveis
+  Future<List<Produto>> buscarProdutos({String? query}) async {
+    try {
+      final response = await _apiService._dio.get(
+        '/produtos',
+        queryParameters: query != null ? {'search': query} : null,
+      );
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((item) => Produto.fromJson(item)).toList();
+      } else {
+        throw Exception('Erro ao buscar produtos: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw Exception('Erro de conexão: ${e.message}');
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  // Adiciona um item ao estoque
+  Future<EstoqueItem> adicionarItem(int despensaId, AdicionarItemRequest request) async {
+    try {
+      final response = await _apiService._dio.post(
+        '/despensas/$despensaId/estoque',
+        data: request.toJson(),
+      );
+      
+      if (response.statusCode == 201) {
+        return EstoqueItem.fromJson(response.data);
+      } else {
+        throw Exception('Erro ao adicionar item: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw Exception('Dados inválidos');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Acesso negado');
+      } else if (e.response?.statusCode == 404) {
+        throw Exception('Despensa não encontrada');
+      } else {
+        throw Exception('Erro de conexão: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  // Atualiza um item do estoque
+  Future<EstoqueItem> atualizarItem(int itemId, AtualizarItemRequest request) async {
+    try {
+      final response = await _apiService._dio.put(
+        '/estoque/$itemId',
+        data: request.toJson(),
+      );
+      
+      if (response.statusCode == 200) {
+        return EstoqueItem.fromJson(response.data);
+      } else {
+        throw Exception('Erro ao atualizar item: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw Exception('Dados inválidos');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Acesso negado');
+      } else if (e.response?.statusCode == 404) {
+        throw Exception('Item não encontrado');
+      } else {
+        throw Exception('Erro de conexão: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  // Consome um item do estoque
+  Future<EstoqueItem> consumirItem(int itemId, ConsumirItemRequest request) async {
+    try {
+      final response = await _apiService._dio.post(
+        '/estoque/$itemId/consumir',
+        data: request.toJson(),
+      );
+      
+      if (response.statusCode == 200) {
+        return EstoqueItem.fromJson(response.data);
+      } else {
+        throw Exception('Erro ao consumir item: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw Exception('Quantidade inválida');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Acesso negado');
+      } else if (e.response?.statusCode == 404) {
+        throw Exception('Item não encontrado');
+      } else {
+        throw Exception('Erro de conexão: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  // Remove um item do estoque
+  Future<void> removerItem(int itemId) async {
+    try {
+      final response = await _apiService._dio.delete('/estoque/$itemId');
+      
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Erro ao remover item: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 403) {
+        throw Exception('Acesso negado');
+      } else if (e.response?.statusCode == 404) {
+        throw Exception('Item não encontrado');
+      } else {
+        throw Exception('Erro de conexão: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  // Obtém detalhes de um item específico
+  Future<EstoqueItem> getItemDetalhes(int itemId) async {
+    try {
+      final response = await _apiService._dio.get('/estoque/$itemId');
+      
+      if (response.statusCode == 200) {
+        return EstoqueItem.fromJson(response.data);
+      } else {
+        throw Exception('Erro ao carregar item: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw Exception('Item não encontrado');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Acesso negado');
+      } else {
+        throw Exception('Erro de conexão: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+}
+
+// Models para requests
+class AdicionarItemRequest {
+  final int produtoId;
+  final double quantidade;
+  final String? observacoes;
+  final DateTime? dataValidade;
+
+  AdicionarItemRequest({
+    required this.produtoId,
+    required this.quantidade,
+    this.observacoes,
+    this.dataValidade,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'produtoId': produtoId,
+      'quantidade': quantidade,
+      'observacoes': observacoes,
+      'dataValidade': dataValidade?.toIso8601String(),
+    };
+  }
+}
+
+class AtualizarItemRequest {
+  final double? quantidade;
+  final String? observacoes;
+  final DateTime? dataValidade;
+
+  AtualizarItemRequest({
+    this.quantidade,
+    this.observacoes,
+    this.dataValidade,
+  });
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    if (quantidade != null) data['quantidade'] = quantidade;
+    if (observacoes != null) data['observacoes'] = observacoes;
+    if (dataValidade != null) data['dataValidade'] = dataValidade!.toIso8601String();
+    return data;
+  }
+}
+
+class ConsumirItemRequest {
+  final double quantidadeConsumida;
+  final String? observacoes;
+
+  ConsumirItemRequest({
+    required this.quantidadeConsumida,
+    this.observacoes,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'quantidadeConsumida': quantidadeConsumida,
+      'observacoes': observacoes,
+    };
   }
 } 

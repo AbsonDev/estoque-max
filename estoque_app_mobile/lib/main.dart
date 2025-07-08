@@ -8,11 +8,20 @@ import 'features/auth/data/auth_event.dart';
 import 'features/auth/data/auth_state.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
-import 'features/auth/presentation/screens/home_screen.dart';
 import 'features/despensas/data/services/despensas_service.dart';
 import 'features/despensas/presentation/bloc/despensas_bloc.dart';
 import 'features/despensas/presentation/screens/despensas_screen.dart';
 import 'features/despensas/presentation/screens/despensa_detalhes_screen.dart';
+import 'features/estoque/data/services/estoque_service.dart';
+import 'features/estoque/presentation/bloc/estoque_bloc.dart';
+import 'features/lista_compras/data/services/lista_compras_service.dart';
+import 'features/lista_compras/presentation/bloc/lista_compras_bloc.dart';
+import 'features/analytics/data/services/analytics_service.dart';
+import 'features/analytics/presentation/bloc/analytics_bloc.dart';
+import 'features/subscription/data/services/subscription_service.dart';
+import 'features/subscription/presentation/bloc/subscription_bloc.dart';
+import 'features/navigation/main_navigation_screen.dart';
+import 'core/services/signalr_service.dart';
 
 void main() {
   runApp(const EstoqueMaxApp());
@@ -37,6 +46,21 @@ class EstoqueMaxApp extends StatelessWidget {
         RepositoryProvider<DespensasService>(
           create: (context) => DespensasService(context.read<ApiService>()),
         ),
+        RepositoryProvider<EstoqueService>(
+          create: (context) => EstoqueService(context.read<ApiService>()),
+        ),
+        RepositoryProvider<ListaComprasService>(
+          create: (context) => ListaComprasService(context.read<ApiService>()),
+        ),
+        RepositoryProvider<AnalyticsService>(
+          create: (context) => AnalyticsService(context.read<ApiService>()),
+        ),
+        RepositoryProvider<SubscriptionService>(
+          create: (context) => SubscriptionService(context.read<ApiService>()),
+        ),
+        RepositoryProvider<SignalRService>(
+          create: (context) => SignalRService(context.read<ApiService>()),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -49,6 +73,18 @@ class EstoqueMaxApp extends StatelessWidget {
           BlocProvider<DespensasBloc>(
             create: (context) => DespensasBloc(context.read<DespensasService>()),
           ),
+          BlocProvider<EstoqueBloc>(
+            create: (context) => EstoqueBloc(context.read<EstoqueService>()),
+          ),
+          BlocProvider<ListaComprasBloc>(
+            create: (context) => ListaComprasBloc(context.read<ListaComprasService>()),
+          ),
+          BlocProvider<AnalyticsBloc>(
+            create: (context) => AnalyticsBloc(context.read<AnalyticsService>()),
+          ),
+          BlocProvider<SubscriptionBloc>(
+            create: (context) => SubscriptionBloc(context.read<SubscriptionService>()),
+          ),
         ],
         child: MaterialApp(
           title: 'EstoqueMax',
@@ -59,15 +95,14 @@ class EstoqueMaxApp extends StatelessWidget {
             '/': (context) => const AuthWrapper(),
             '/login': (context) => const LoginScreen(),
             '/register': (context) => const RegisterScreen(),
-            '/home': (context) => const HomeScreen(),
+            '/home': (context) => const MainNavigationScreen(),
             '/despensas': (context) => const DespensasScreen(),
             '/despensa-detalhes': (context) {
               final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
               
               if (args == null) {
-                // Se não há argumentos, volta para a lista de despensas
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.of(context).pushReplacementNamed('/despensas');
+                  Navigator.of(context).pushReplacementNamed('/home');
                 });
                 return const Scaffold(
                   body: Center(child: CircularProgressIndicator()),
@@ -76,9 +111,8 @@ class EstoqueMaxApp extends StatelessWidget {
               
               final despensaId = args['despensaId'];
               if (despensaId == null || despensaId is! int) {
-                // Se o ID é inválido, volta para a lista de despensas
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.of(context).pushReplacementNamed('/despensas');
+                  Navigator.of(context).pushReplacementNamed('/home');
                 });
                 return const Scaffold(
                   body: Center(child: CircularProgressIndicator()),
@@ -119,7 +153,7 @@ class AuthWrapper extends StatelessWidget {
           if (state is AuthLoading || state is AuthInitial) {
             return const SplashScreen();
           } else if (state is AuthAuthenticated) {
-            return const HomeScreen();
+            return const MainNavigationScreen();
           } else {
             return const LoginScreen();
           }

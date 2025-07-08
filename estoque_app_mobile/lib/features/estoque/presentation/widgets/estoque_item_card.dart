@@ -1,181 +1,296 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/estoque_item.dart';
 
 class EstoqueItemCard extends StatelessWidget {
   final EstoqueItem item;
-  final VoidCallback? onTap;
-  final VoidCallback? onConsumirPressed;
-  final VoidCallback? onEditPressed;
-  final VoidCallback? onDeletePressed;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onConsume;
+  final VoidCallback onDelete;
 
   const EstoqueItemCard({
     super.key,
     required this.item,
-    this.onTap,
-    this.onConsumirPressed,
-    this.onEditPressed,
-    this.onDeletePressed,
+    required this.onTap,
+    required this.onEdit,
+    required this.onConsume,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Slidable(
+        key: ValueKey(item.id),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          children: [
+            SlidableAction(
+              onPressed: (_) => onConsume(),
+              backgroundColor: AppTheme.success,
+              foregroundColor: Colors.white,
+              icon: Icons.remove_circle_outline,
+              label: 'Consumir',
+            ),
+            SlidableAction(
+              onPressed: (_) => onEdit(),
+              backgroundColor: AppTheme.warning,
+              foregroundColor: Colors.white,
+              icon: Icons.edit,
+              label: 'Editar',
+            ),
+            SlidableAction(
+              onPressed: (_) => onDelete(),
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+              icon: Icons.delete,
+              label: 'Remover',
+            ),
+          ],
+        ),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Color(item.statusColor).withOpacity(0.3),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header com nome e status
+                Row(
+                  children: [
+                    // Ícone da categoria
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Color(item.statusColor).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          item.produto.iconeCategoria,
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    
+                    // Nome e marca
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.produto.nome,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (item.produto.marca != null)
+                            Text(
+                              item.produto.marca!,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Color(item.statusColor),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _getStatusText(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Informações principais
+                Row(
+                  children: [
+                    // Quantidade
+                    Expanded(
+                      child: _buildInfoItem(
+                        context,
+                        icon: Icons.inventory_2,
+                        label: 'Quantidade',
+                        value: '${item.quantidade.toStringAsFixed(item.quantidade.truncateToDouble() == item.quantidade ? 0 : 1)} ${item.produto.unidadeMedida}',
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    
+                    // Validade
+                    if (item.dataValidade != null)
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          icon: Icons.schedule,
+                          label: 'Validade',
+                          value: DateFormat('dd/MM/yyyy').format(item.dataValidade!),
+                          color: _getValidityColor(),
+                        ),
+                      ),
+                  ],
+                ),
+                
+                // Observações
+                if (item.observacoes != null && item.observacoes!.isNotEmpty)
+                  Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.background,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppTheme.divider,
+                          ),
+                        ),
+                        child: Text(
+                          item.observacoes!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                
+                // Alertas
+                if (item.isVencido || item.isVencendoEm7Dias || item.isQuantidadeBaixa || item.isEmFalta)
+                  Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          if (item.isVencido)
+                            _buildAlertChip(
+                              context,
+                              icon: Icons.warning,
+                              label: 'Vencido',
+                              color: AppTheme.error,
+                            ),
+                          if (item.isVencendoEm7Dias)
+                            _buildAlertChip(
+                              context,
+                              icon: Icons.schedule,
+                              label: 'Vencendo em ${item.diasParaVencimento} dias',
+                              color: Colors.orange,
+                            ),
+                          if (item.isEmFalta)
+                            _buildAlertChip(
+                              context,
+                              icon: Icons.remove_circle,
+                              label: 'Em falta',
+                              color: AppTheme.error,
+                            ),
+                          if (item.isQuantidadeBaixa && !item.isEmFalta)
+                            _buildAlertChip(
+                              context,
+                              icon: Icons.trending_down,
+                              label: 'Baixo estoque',
+                              color: AppTheme.warning,
+                            ),
+                          if (item.precisaComprar)
+                            _buildAlertChip(
+                              context,
+                              icon: Icons.shopping_cart,
+                              label: 'Precisa comprar',
+                              color: AppTheme.secondary,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+    ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.2, end: 0);
+  }
+
+  Widget _buildInfoItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: color,
+          size: 16,
+        ),
+        const SizedBox(width: 4),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabeçalho
-              Row(
-                children: [
-                  _buildProductIcon(),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.produtoNome,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                        if (item.produtoMarca != null)
-                          Text(
-                            item.produtoMarca!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  _buildQuantityBadge(),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // Informações
-              Row(
-                children: [
-                  _buildInfoChip(
-                    icon: Icons.home_outlined,
-                    label: item.despensaNome,
-                    color: AppTheme.textSecondary,
-                  ),
-                  const SizedBox(width: 8),
-                  if (item.dataValidade != null)
-                    _buildInfoChip(
-                      icon: Icons.calendar_month_outlined,
-                      label: _formatDate(item.dataValidade!),
-                      color: _getDateColor(),
-                    ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // Alertas
-              if (_hasAlerts())
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: _buildAlerts(),
-                  ),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.textSecondary,
                 ),
-
-              // Ações
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      icon: Icons.remove_circle_outline,
-                      label: 'Consumir',
-                      onPressed: onConsumirPressed,
-                      isPrimary: false,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildActionButton(
-                      icon: Icons.edit_outlined,
-                      label: 'Editar',
-                      onPressed: onEditPressed,
-                      isPrimary: true,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _buildMenuButton(context),
-                ],
+              ),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildProductIcon() {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(
-        Icons.inventory_2_outlined,
-        color: AppTheme.primaryColor,
-        size: 24,
-      ),
-    );
-  }
-
-  Widget _buildQuantityBadge() {
-    final color = item.precisaRepor ? AppTheme.error : AppTheme.success;
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            item.precisaRepor ? Icons.warning_outlined : Icons.check_circle_outline,
-            size: 16,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '${item.quantidade}',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoChip({
+  Widget _buildAlertChip(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required Color color,
@@ -184,133 +299,25 @@ class EstoqueItemCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback? onPressed,
-    required bool isPrimary,
-  }) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: isPrimary ? AppTheme.primaryColor : AppTheme.textSecondary,
-        side: BorderSide(
-          color: isPrimary ? AppTheme.primaryColor : AppTheme.textSecondary.withOpacity(0.3),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuButton(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.more_vert,
-        color: AppTheme.textSecondary,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      onSelected: (value) {
-        switch (value) {
-          case 'delete':
-            onDeletePressed?.call();
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline, color: AppTheme.error),
-              const SizedBox(width: 8),
-              Text('Excluir', style: TextStyle(color: AppTheme.error)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  bool _hasAlerts() {
-    return item.estaVencido || item.venceEm7Dias || item.precisaRepor;
-  }
-
-  List<Widget> _buildAlerts() {
-    final alerts = <Widget>[];
-
-    if (item.estaVencido) {
-      alerts.add(_buildAlertChip(
-        'Vencido',
-        Icons.dangerous,
-        AppTheme.error,
-      ));
-    } else if (item.venceEm7Dias) {
-      alerts.add(_buildAlertChip(
-        'Vence em 7 dias',
-        Icons.warning,
-        Colors.orange,
-      ));
-    }
-
-    if (item.precisaRepor) {
-      alerts.add(_buildAlertChip(
-        'Baixo estoque',
-        Icons.inventory_outlined,
-        AppTheme.warning,
-      ));
-    }
-
-    return alerts;
-  }
-
-  Widget _buildAlertChip(String text, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
+          Icon(
+            icon,
+            color: color,
+            size: 12,
+          ),
           const SizedBox(width: 4),
           Text(
-            text,
-            style: TextStyle(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w500,
-              fontSize: 11,
             ),
           ),
         ],
@@ -318,16 +325,17 @@ class EstoqueItemCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  String _getStatusText() {
+    if (item.isVencido) return 'Vencido';
+    if (item.isVencendoEm7Dias) return 'Vencendo';
+    if (item.isEmFalta) return 'Em Falta';
+    if (item.isQuantidadeBaixa) return 'Baixo';
+    return 'Normal';
   }
 
-  Color _getDateColor() {
-    if (item.dataValidade == null) return AppTheme.textSecondary;
-    
-    if (item.estaVencido) return AppTheme.error;
-    if (item.venceEm7Dias) return Colors.orange;
-    
+  Color _getValidityColor() {
+    if (item.isVencido) return AppTheme.error;
+    if (item.isVencendoEm7Dias) return Colors.orange;
     return AppTheme.textSecondary;
   }
 } 

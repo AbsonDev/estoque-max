@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../data/models/estoque_item.dart';
-import '../../data/models/produto.dart';
+import '../../data/services/estoque_service.dart';
 
 abstract class EstoqueEvent extends Equatable {
   const EstoqueEvent();
@@ -9,116 +8,96 @@ abstract class EstoqueEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// Eventos de Estoque
-class CarregarEstoque extends EstoqueEvent {
-  final int? despensaId;
+class LoadEstoque extends EstoqueEvent {
+  final int despensaId;
 
-  const CarregarEstoque({this.despensaId});
+  const LoadEstoque(this.despensaId);
 
   @override
   List<Object?> get props => [despensaId];
 }
 
-class AdicionarItemEstoque extends EstoqueEvent {
-  final AdicionarEstoqueDto dto;
+class RefreshEstoque extends EstoqueEvent {
+  final int despensaId;
 
-  const AdicionarItemEstoque(this.dto);
-
-  @override
-  List<Object?> get props => [dto];
-}
-
-class AtualizarItemEstoque extends EstoqueEvent {
-  final int id;
-  final AtualizarEstoqueDto dto;
-
-  const AtualizarItemEstoque(this.id, this.dto);
+  const RefreshEstoque(this.despensaId);
 
   @override
-  List<Object?> get props => [id, dto];
+  List<Object?> get props => [despensaId];
 }
 
-class ConsumirItemEstoque extends EstoqueEvent {
-  final int id;
-  final ConsumirEstoqueDto dto;
+class SearchProdutos extends EstoqueEvent {
+  final String query;
 
-  const ConsumirItemEstoque(this.id, this.dto);
+  const SearchProdutos(this.query);
 
   @override
-  List<Object?> get props => [id, dto];
+  List<Object?> get props => [query];
 }
 
-class RemoverItemEstoque extends EstoqueEvent {
-  final int id;
+class AddItemToEstoque extends EstoqueEvent {
+  final int despensaId;
+  final AdicionarItemRequest request;
 
-  const RemoverItemEstoque(this.id);
+  const AddItemToEstoque(this.despensaId, this.request);
 
   @override
-  List<Object?> get props => [id];
+  List<Object?> get props => [despensaId, request];
 }
 
-class FiltrarEstoque extends EstoqueEvent {
-  final String? filtro;
-  final bool? apenasVencidos;
-  final bool? apenasBaixoEstoque;
+class UpdateEstoqueItem extends EstoqueEvent {
+  final int itemId;
+  final AtualizarItemRequest request;
 
-  const FiltrarEstoque({
-    this.filtro,
-    this.apenasVencidos,
-    this.apenasBaixoEstoque,
-  });
+  const UpdateEstoqueItem(this.itemId, this.request);
 
   @override
-  List<Object?> get props => [filtro, apenasVencidos, apenasBaixoEstoque];
+  List<Object?> get props => [itemId, request];
 }
 
-// Eventos de Produtos
-class CarregarProdutos extends EstoqueEvent {
-  final String? busca;
+class ConsumeEstoqueItem extends EstoqueEvent {
+  final int itemId;
+  final ConsumirItemRequest request;
 
-  const CarregarProdutos({this.busca});
+  const ConsumeEstoqueItem(this.itemId, this.request);
 
   @override
-  List<Object?> get props => [busca];
+  List<Object?> get props => [itemId, request];
 }
 
-class CriarProduto extends EstoqueEvent {
-  final CriarProdutoDto dto;
+class RemoveEstoqueItem extends EstoqueEvent {
+  final int itemId;
 
-  const CriarProduto(this.dto);
+  const RemoveEstoqueItem(this.itemId);
 
   @override
-  List<Object?> get props => [dto];
+  List<Object?> get props => [itemId];
 }
 
-class AtualizarProduto extends EstoqueEvent {
-  final int id;
-  final AtualizarProdutoDto dto;
+class EstoqueItemUpdatedRealTime extends EstoqueEvent {
+  final Map<String, dynamic> data;
 
-  const AtualizarProduto(this.id, this.dto);
+  const EstoqueItemUpdatedRealTime(this.data);
 
   @override
-  List<Object?> get props => [id, dto];
+  List<Object?> get props => [data];
 }
 
-class DeletarProduto extends EstoqueEvent {
-  final int id;
+class FilterEstoque extends EstoqueEvent {
+  final String filter;
 
-  const DeletarProduto(this.id);
+  const FilterEstoque(this.filter);
 
   @override
-  List<Object?> get props => [id];
+  List<Object?> get props => [filter];
 }
 
-class BuscarProdutoPorCodigoBarras extends EstoqueEvent {
-  final String codigoBarras;
+class SortEstoque extends EstoqueEvent {
+  final String sortBy;
+  final bool ascending;
 
-  const BuscarProdutoPorCodigoBarras(this.codigoBarras);
+  const SortEstoque(this.sortBy, this.ascending);
 
   @override
-  List<Object?> get props => [codigoBarras];
-}
-
-class LimparProdutoEncontrado extends EstoqueEvent {}
-
-class LimparErroEstoque extends EstoqueEvent {} 
+  List<Object?> get props => [sortBy, ascending];
+} 
