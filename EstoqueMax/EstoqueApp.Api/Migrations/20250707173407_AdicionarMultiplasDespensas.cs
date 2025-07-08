@@ -42,7 +42,7 @@ namespace EstoqueApp.Api.Migrations
             // 2. Criar uma despensa padrão para cada usuário que já tem itens no estoque
             migrationBuilder.Sql(@"
                 INSERT INTO ""Despensas"" (""Nome"", ""DataCriacao"", ""UsuarioId"")
-                SELECT DISTINCT 'Despensa Principal', NOW(), ""UsuarioId""
+                SELECT DISTINCT 'Despensa Principal', datetime('now'), ""UsuarioId""
                 FROM ""EstoqueItens""
                 WHERE ""UsuarioId"" IS NOT NULL;
             ");

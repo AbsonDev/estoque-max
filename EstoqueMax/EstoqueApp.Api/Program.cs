@@ -7,13 +7,42 @@ using EstoqueApp.Api.Services;
 using EstoqueApp.Api.Hubs;
 using EstoqueApp.Api.Services.AI;
 using EstoqueApp.Api.Services.Analytics;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "EstoqueMax API", Version = "v1" });
+    
+    // Configuração para JWT Bearer Authentication
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 // Adicionar controllers
 builder.Services.AddControllers();
@@ -30,9 +59,20 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Configuração do Entity Framework Core com PostgreSQL
+// Configuração do Entity Framework Core - SQLite para desenvolvimento, PostgreSQL para produção
 builder.Services.AddDbContext<EstoqueContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        // Use SQLite para desenvolvimento
+        options.UseSqlite(builder.Configuration.GetConnectionString("SQLiteConnection") ?? "Data Source=EstoqueMax.db");
+    }
+    else
+    {
+        // Use PostgreSQL para produção
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+});
 
 // Registrar serviços personalizados
 builder.Services.AddScoped<IPermissionService, PermissionService>();
@@ -85,7 +125,12 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "EstoqueMax API v1");
+        c.RoutePrefix = "swagger";
+    });
 }
 
 // **NOVO: Usar CORS - deve vir antes de UseHttpsRedirection**
