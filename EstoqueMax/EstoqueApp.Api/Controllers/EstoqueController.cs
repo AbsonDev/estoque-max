@@ -203,11 +203,18 @@ namespace EstoqueApp.Api.Controllers
                 });
 
             // **LÓGICA INTELIGENTE: Verificar se precisa adicionar à lista de compras**
-            await VerificarEAdicionarAListaDeCompras(int.Parse(userId), item);
+            var mudancaNaLista = await VerificarEGerenciarListaDeCompras(int.Parse(userId), item);
+            
+            // Se houve mudança na lista, notificar todos os membros
+            if (mudancaNaLista)
+            {
+                await NotificarMembrosListaDeComprasAtualizada(item.DespensaId);
+            }
 
             return Ok(new { 
                 message = "Item atualizado com sucesso!",
-                estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima
+                estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima,
+                mudancaNaListaDeCompras = mudancaNaLista
             });
         }
 
@@ -286,10 +293,10 @@ namespace EstoqueApp.Api.Controllers
                 });
 
             // **LÓGICA INTELIGENTE: Verificar se precisa adicionar à lista de compras**
-            var adicionadoALista = await VerificarEAdicionarAListaDeCompras(int.Parse(userId), item);
+            var mudancaNaLista = await VerificarEGerenciarListaDeCompras(int.Parse(userId), item);
 
             // Se foi adicionado à lista, notificar todos os membros
-            if (adicionadoALista)
+            if (mudancaNaLista)
             {
                 await NotificarMembrosListaDeComprasAtualizada(item.DespensaId);
             }
@@ -298,7 +305,7 @@ namespace EstoqueApp.Api.Controllers
                 message = "Estoque consumido com sucesso!",
                 quantidadeRestante = item.Quantidade,
                 estoqueAbaixoDoMinimo = item.Quantidade <= item.QuantidadeMinima,
-                adicionadoAListaDeCompras = adicionadoALista,
+                adicionadoAListaDeCompras = mudancaNaLista,
                 historicoRegistrado = true // Novo campo para confirmar que o histórico foi salvo
             });
         }
@@ -364,34 +371,62 @@ namespace EstoqueApp.Api.Controllers
             });
         }
 
-        // **MÉTODO PRIVADO: Lógica de negócio para lista de compras inteligente**
-        private async Task<bool> VerificarEAdicionarAListaDeCompras(int userId, EstoqueItem item)
+        // **MÉTODO PRIVADO CORRIGIDO: Lógica completa para lista de compras inteligente**
+        private async Task<bool> VerificarEGerenciarListaDeCompras(int userId, EstoqueItem item)
         {
-            // Só adiciona se o estoque estiver abaixo do mínimo
+            bool mudancaRealizada = false;
+            
+            // É preciso obter o ID do "dono" ou de uma referência de utilizador da despensa para a lista de compras
+            var despensa = await _context.Despensas.Include(d => d.Membros).FirstOrDefaultAsync(d => d.Id == item.DespensaId);
+            if (despensa == null) return false;
+
+            var donoDaDespensa = despensa.Membros.FirstOrDefault(m => m.Papel == PapelDespensa.Dono);
+            if (donoDaDespensa == null) return false; // Toda despensa deve ter um dono
+            
+            int proprietarioListaId = donoDaDespensa.UsuarioId;
+
+            // **CENÁRIO 1: Estoque ABAIXO do mínimo - ADICIONAR à lista**
             if (item.Quantidade <= item.QuantidadeMinima)
             {
-                // Verificar se o item já não está na lista de compras do usuário
+                // Verificar se o item já não está na lista de compras do proprietário
                 var itemJaNaLista = await _context.ListaDeComprasItens
-                    .AnyAsync(l => l.UsuarioId == userId && l.ProdutoId == item.ProdutoId && !l.Comprado);
+                    .AnyAsync(l => l.UsuarioId == proprietarioListaId && l.ProdutoId == item.ProdutoId && !l.Comprado);
 
                 if (!itemJaNaLista)
                 {
                     var novoItemLista = new ListaDeComprasItem
                     {
-                        UsuarioId = userId,
+                        UsuarioId = proprietarioListaId,
                         ProdutoId = item.ProdutoId,
-                        QuantidadeDesejada = item.QuantidadeMinima,
-                        DataCriacao = DateTime.Now
+                        QuantidadeDesejada = Math.Max(item.QuantidadeMinima * 2, 1), // Sugerir comprar o dobro do mínimo
+                        DataCriacao = DateTime.UtcNow
                     };
 
                     _context.ListaDeComprasItens.Add(novoItemLista);
                     await _context.SaveChangesAsync();
                     
-                    return true; // Foi adicionado à lista
+                    mudancaRealizada = true;
+                    Console.WriteLine($"✅ Item {item.Produto.Nome} ADICIONADO à lista de compras");
+                }
+            }
+            // **CENÁRIO 2: Estoque ACIMA do mínimo - REMOVER da lista (se estiver)**
+            else if (item.Quantidade > item.QuantidadeMinima)
+            {
+                // Buscar item não comprado na lista de compras
+                var itemNaLista = await _context.ListaDeComprasItens
+                    .FirstOrDefaultAsync(l => l.UsuarioId == proprietarioListaId && l.ProdutoId == item.ProdutoId && !l.Comprado);
+
+                if (itemNaLista != null)
+                {
+                    _context.ListaDeComprasItens.Remove(itemNaLista);
+                    await _context.SaveChangesAsync();
+                    
+                    mudancaRealizada = true;
+                    Console.WriteLine($"🗑️ Item {item.Produto.Nome} REMOVIDO da lista de compras");
                 }
             }
             
-            return false; // Não foi adicionado à lista
+            return mudancaRealizada;
         }
 
         // **MÉTODO PRIVADO: Notificar membros sobre mudanças na lista de compras**
