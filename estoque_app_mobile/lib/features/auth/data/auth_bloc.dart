@@ -35,8 +35,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final isValidToken = await _apiService.validateToken();
 
         if (isValidToken) {
-          final user = await _apiService.getProfile();
-          emit(AuthAuthenticated(user));
+          // Como não temos endpoint /auth/profile, consideramos autenticado apenas com token
+          emit(AuthAuthenticated(null)); // Sem dados do usuário por enquanto
         } else {
           emit(AuthUnauthenticated());
         }
@@ -61,6 +61,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       final response = await _apiService.login(loginRequest);
+      // Login tradicional não retorna user, só token
       emit(AuthAuthenticated(response.user));
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
@@ -101,9 +102,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Primeiro, faz logout de qualquer conta Google anterior
       await _googleSignIn.signOut();
 
-      // Inicia o processo de login com Google usando a nova API
-      final GoogleSignInAccount? googleUser = await _googleSignIn
-          .authenticate();
+      // Inicia o processo de login com Google
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
         // Usuario cancelou o login
@@ -111,8 +111,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      // Obtém o token de autenticação (sem await aqui)
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      // Obtém o token de autenticação - removendo await desnecessário
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
         throw Exception('Não foi possível obter o token do Google');

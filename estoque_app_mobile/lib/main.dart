@@ -9,6 +9,10 @@ import 'features/auth/data/auth_state.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/home_screen.dart';
+import 'features/despensas/data/services/despensas_service.dart';
+import 'features/despensas/presentation/bloc/despensas_bloc.dart';
+import 'features/despensas/presentation/screens/despensas_screen.dart';
+import 'features/despensas/presentation/screens/despensa_detalhes_screen.dart';
 
 void main() {
   runApp(const EstoqueMaxApp());
@@ -24,29 +28,68 @@ class EstoqueMaxApp extends StatelessWidget {
         RepositoryProvider<ApiService>(create: (context) => ApiService()),
         RepositoryProvider<GoogleSignIn>(
           create: (context) {
-            final googleSignIn = GoogleSignIn.instance;
-            googleSignIn.initialize(
-              clientId:
-                  '265016365851-63o4nec9jujr8eelujrimjb4667ghobi.apps.googleusercontent.com',
+            return GoogleSignIn(
+              clientId: '265016365851-63o4nec9jujr8eelujrimjb4667ghobi.apps.googleusercontent.com',
+              scopes: ['email', 'profile'],
             );
-            return googleSignIn;
           },
         ),
+        RepositoryProvider<DespensasService>(
+          create: (context) => DespensasService(context.read<ApiService>()),
+        ),
       ],
-      child: BlocProvider(
-        create: (context) => AuthBloc(
-          apiService: context.read<ApiService>(),
-          googleSignIn: context.read<GoogleSignIn>(),
-        )..add(AuthStarted()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (context) => AuthBloc(
+              apiService: context.read<ApiService>(),
+              googleSignIn: context.read<GoogleSignIn>(),
+            )..add(AuthStarted()),
+          ),
+          BlocProvider<DespensasBloc>(
+            create: (context) => DespensasBloc(context.read<DespensasService>()),
+          ),
+        ],
         child: MaterialApp(
           title: 'EstoqueMax',
           theme: AppTheme.lightTheme,
           debugShowCheckedModeBanner: false,
-          home: const AuthWrapper(),
+          initialRoute: '/',
           routes: {
+            '/': (context) => const AuthWrapper(),
             '/login': (context) => const LoginScreen(),
             '/register': (context) => const RegisterScreen(),
             '/home': (context) => const HomeScreen(),
+            '/despensas': (context) => const DespensasScreen(),
+            '/despensa-detalhes': (context) {
+              final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+              
+              if (args == null) {
+                // Se não há argumentos, volta para a lista de despensas
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Navigator.of(context).pushReplacementNamed('/despensas');
+                });
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              
+              final despensaId = args['despensaId'];
+              if (despensaId == null || despensaId is! int) {
+                // Se o ID é inválido, volta para a lista de despensas
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Navigator.of(context).pushReplacementNamed('/despensas');
+                });
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              
+              return DespensaDetalhesScreen(
+                despensaId: despensaId,
+                despensaNome: args['despensaNome'] as String?,
+              );
+            },
           },
         ),
       ),

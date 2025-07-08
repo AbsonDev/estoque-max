@@ -21,6 +21,11 @@ namespace EstoqueApp.Api.Data
         
         // DbSet para IA de Previsão de Consumo
         public DbSet<HistoricoConsumo> HistoricosDeConsumo { get; set; }
+        
+        // NOVOS DbSets para sistema de assinaturas melhorado
+        public DbSet<SubscricaoStripe> AssinaturasStripe { get; set; }
+        public DbSet<PagamentoHistorico> PagamentosHistorico { get; set; }
+        public DbSet<WebhookEvent> WebhookEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -121,6 +126,48 @@ namespace EstoqueApp.Api.Data
             modelBuilder.Entity<HistoricoConsumo>()
                 .HasIndex(h => h.DataDoConsumo)
                 .HasDatabaseName("IX_HistoricoConsumo_Data");
+
+            // **NOVO: Configurações para sistema de assinaturas**
+            
+            // Configuração da relação SubscricaoStripe -> Usuario
+            modelBuilder.Entity<SubscricaoStripe>()
+                .HasOne(s => s.Usuario)
+                .WithMany(u => u.Assinaturas)
+                .HasForeignKey(s => s.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configuração da relação PagamentoHistorico -> SubscricaoStripe
+            modelBuilder.Entity<PagamentoHistorico>()
+                .HasOne(p => p.SubscricaoStripe)
+                .WithMany(s => s.Pagamentos)
+                .HasForeignKey(p => p.SubscricaoStripeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Índices únicos para controle de duplicatas
+            modelBuilder.Entity<SubscricaoStripe>()
+                .HasIndex(s => s.StripeSubscriptionId)
+                .IsUnique();
+
+            modelBuilder.Entity<PagamentoHistorico>()
+                .HasIndex(p => p.StripeInvoiceId)
+                .IsUnique();
+
+            modelBuilder.Entity<WebhookEvent>()
+                .HasIndex(w => w.StripeEventId)
+                .IsUnique();
+
+            // Índices para performance
+            modelBuilder.Entity<SubscricaoStripe>()
+                .HasIndex(s => new { s.UsuarioId, s.Status })
+                .HasDatabaseName("IX_SubscricaoStripe_Usuario_Status");
+
+            modelBuilder.Entity<PagamentoHistorico>()
+                .HasIndex(p => new { p.SubscricaoStripeId, p.DataPagamento })
+                .HasDatabaseName("IX_PagamentoHistorico_Subscricao_Data");
+
+            modelBuilder.Entity<WebhookEvent>()
+                .HasIndex(w => new { w.EventType, w.ProcessadoEm })
+                .HasDatabaseName("IX_WebhookEvent_Type_Processed");
         }
     }
 } 

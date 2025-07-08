@@ -13,7 +13,7 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
-  final User user;
+  final User? user; // Tornando opcional
 
   const AuthAuthenticated(this.user);
 
@@ -35,7 +35,7 @@ class AuthError extends AuthState {
 class AuthGoogleSignInProgress extends AuthState {}
 
 class AuthRegistrationSuccess extends AuthState {
-  final User user;
+  final User? user; // Tornando opcional
 
   const AuthRegistrationSuccess(this.user);
 

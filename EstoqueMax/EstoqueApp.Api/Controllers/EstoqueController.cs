@@ -18,13 +18,20 @@ namespace EstoqueApp.Api.Controllers
     {
         private readonly EstoqueContext _context;
         private readonly IPermissionService _permissionService;
+        private readonly ISubscriptionService _subscriptionService;
         private readonly IHubContext<EstoqueHub> _hubContext;
         private readonly PredictionService _predictionService;
 
-        public EstoqueController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext, PredictionService predictionService)
+        public EstoqueController(
+            EstoqueContext context, 
+            IPermissionService permissionService, 
+            ISubscriptionService subscriptionService,
+            IHubContext<EstoqueHub> hubContext, 
+            PredictionService predictionService)
         {
             _context = context;
             _permissionService = permissionService;
+            _subscriptionService = subscriptionService;
             _hubContext = hubContext;
             _predictionService = predictionService;
         }
@@ -471,6 +478,18 @@ namespace EstoqueApp.Api.Controllers
             if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), item.DespensaId))
             {
                 return Forbid("Você não tem permissão para acessar esta despensa.");
+            }
+
+            // **VERIFICAÇÃO DE PLANO: Funcionalidades de IA são apenas para Premium**
+            if (!await _subscriptionService.UsuarioTemAcessoAIAsync(int.Parse(userId)))
+            {
+                return new ObjectResult(new {
+                    error = "Funcionalidade Premium necessária",
+                    message = "As previsões de IA são uma funcionalidade Premium. Faça upgrade para obter análises inteligentes sobre o consumo dos seus produtos.",
+                    upgradeRequired = true,
+                    currentPlan = "Free",
+                    feature = "Previsões de IA"
+                }) { StatusCode = 402 }; // Payment Required
             }
 
             try

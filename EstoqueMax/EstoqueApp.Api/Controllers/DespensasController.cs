@@ -17,12 +17,18 @@ namespace EstoqueApp.Api.Controllers
     {
         private readonly EstoqueContext _context;
         private readonly IPermissionService _permissionService;
+        private readonly ISubscriptionService _subscriptionService;
         private readonly IHubContext<EstoqueHub> _hubContext;
 
-        public DespensasController(EstoqueContext context, IPermissionService permissionService, IHubContext<EstoqueHub> hubContext)
+        public DespensasController(
+            EstoqueContext context, 
+            IPermissionService permissionService, 
+            ISubscriptionService subscriptionService,
+            IHubContext<EstoqueHub> hubContext)
         {
             _context = context;
             _permissionService = permissionService;
+            _subscriptionService = subscriptionService;
             _hubContext = hubContext;
         }
 
@@ -128,6 +134,18 @@ namespace EstoqueApp.Api.Controllers
             if (userId == null)
             {
                 return Unauthorized();
+            }
+
+            // **VERIFICAÇÃO DE PLANO: Usuários Free têm limite de 3 despensas**
+            if (!await _subscriptionService.UsuarioPodeCriarMaisDespensasAsync(int.Parse(userId)))
+            {
+                return new ObjectResult(new {
+                    error = "Limite de despensas atingido",
+                    message = "Você atingiu o limite de 3 despensas do plano gratuito. Faça upgrade para Premium para criar despensas ilimitadas.",
+                    upgradeRequired = true,
+                    currentPlan = "Free",
+                    limit = 3
+                }) { StatusCode = 402 }; // Payment Required
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -286,6 +304,18 @@ namespace EstoqueApp.Api.Controllers
             if (userId == null)
             {
                 return Unauthorized();
+            }
+
+            // **VERIFICAÇÃO DE PLANO: Apenas usuários Premium podem enviar convites**
+            if (!await _subscriptionService.UsuarioPodeEnviarConvitesAsync(int.Parse(userId)))
+            {
+                return new ObjectResult(new {
+                    error = "Funcionalidade Premium necessária",
+                    message = "A partilha familiar é uma funcionalidade Premium. Faça upgrade para convidar membros para as suas despensas.",
+                    upgradeRequired = true,
+                    currentPlan = "Free",
+                    feature = "Partilha Familiar"
+                }) { StatusCode = 402 }; // Payment Required
             }
 
             // Verificar se pode convidar (apenas dono)

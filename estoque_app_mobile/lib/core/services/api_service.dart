@@ -5,14 +5,14 @@ import '../models/auth_requests.dart';
 
 class AuthResponse {
   final String token;
-  final User user;
+  final User? user;
 
-  const AuthResponse({required this.token, required this.user});
+  const AuthResponse({required this.token, this.user});
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       token: json['token'] as String,
-      user: User.fromJson(json['user'] as Map<String, dynamic>),
+      user: json['user'] != null ? User.fromJson(json['user'] as Map<String, dynamic>) : null,
     );
   }
 }
@@ -86,9 +86,11 @@ class ApiService {
       final response = await _dio.post('/auth/login', data: request.toJson());
 
       if (response.statusCode == 200) {
-        final authResponse = AuthResponse.fromJson(response.data);
-        await saveToken(authResponse.token);
-        return authResponse;
+        final token = response.data['token'] as String;
+        await saveToken(token);
+        
+        // Backend não retorna user no login, então retornamos apenas o token
+        return AuthResponse(token: token);
       } else {
         throw Exception('Erro no login: ${response.statusMessage}');
       }
@@ -105,24 +107,33 @@ class ApiService {
     }
   }
 
-  // Registro
+  // Registro - ENDPOINT CORRIGIDO
   Future<AuthResponse> register(RegisterRequest request) async {
     try {
       final response = await _dio.post(
-        '/auth/register',
+        '/auth/registrar', // CORRIGIDO: era /auth/register
         data: request.toJson(),
       );
 
-      if (response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(response.data);
-        await saveToken(authResponse.token);
-        return authResponse;
+      if (response.statusCode == 200) { // CORRIGIDO: backend retorna 200, não 201
+        // Backend retorna apenas message no registro, não token
+        // Apenas confirma que o registro foi bem-sucedido
+        
+        // Após registro bem-sucedido, fazemos login automaticamente
+        final loginRequest = LoginRequest(
+          email: request.email,
+          senha: request.senha,
+        );
+        
+        return await login(loginRequest);
       } else {
         throw Exception('Erro no registro: ${response.statusMessage}');
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 400) {
-        final errorMessage = e.response?.data['message'] ?? 'Dados inválidos';
+        final errorMessage = e.response?.data is Map 
+          ? e.response?.data['message'] ?? 'Usuário já existe.'
+          : 'Usuário já existe.';
         throw Exception(errorMessage);
       } else if (e.response?.statusCode == 409) {
         throw Exception('Email já está em uso');
@@ -143,9 +154,16 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        final authResponse = AuthResponse.fromJson(response.data);
-        await saveToken(authResponse.token);
-        return authResponse;
+        final token = response.data['token'] as String;
+        await saveToken(token);
+        
+        // Backend retorna user no login Google
+        User? user;
+        if (response.data['user'] != null) {
+          user = User.fromJson(response.data['user'] as Map<String, dynamic>);
+        }
+        
+        return AuthResponse(token: token, user: user);
       } else {
         throw Exception('Erro no login com Google: ${response.statusMessage}');
       }
@@ -167,39 +185,36 @@ class ApiService {
     await removeToken();
   }
 
-  // Obter perfil do usuário
-  Future<User> getProfile() async {
-    try {
-      final response = await _dio.get('/auth/profile');
-
-      if (response.statusCode == 200) {
-        return User.fromJson(response.data);
-      } else {
-        throw Exception('Erro ao obter perfil: ${response.statusMessage}');
-      }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        await removeToken();
-        throw Exception('Sessão expirada');
-      } else {
-        throw Exception('Erro de conexão: ${e.message}');
-      }
-    } catch (e) {
-      throw Exception('Erro inesperado: $e');
-    }
-  }
-
-  // Verificar se o token ainda é válido
+  // REMOVIDO: Endpoint /auth/profile não existe no backend
+  // Se precisar de dados do usuário, pode implementar um endpoint no backend
+  // ou armazenar os dados do usuário localmente após o login
+  
+  // REMOVIDO: Endpoint /auth/validate-token não existe no backend
+  // Validação do token agora é feita apenas verificando se existe no storage
   Future<bool> validateToken() async {
     try {
       final token = await getToken();
-      if (token == null) return false;
-
-      final response = await _dio.get('/auth/validate-token');
-      return response.statusCode == 200;
+      return token != null;
     } catch (e) {
       await removeToken();
       return false;
     }
+  }
+
+  // Métodos HTTP genéricos para outras funcionalidades
+  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+    return await _dio.get(path, queryParameters: queryParameters);
+  }
+
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await _dio.post(path, data: data, queryParameters: queryParameters);
+  }
+
+  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await _dio.put(path, data: data, queryParameters: queryParameters);
+  }
+
+  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await _dio.delete(path, data: data, queryParameters: queryParameters);
   }
 }

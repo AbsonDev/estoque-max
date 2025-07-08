@@ -1,5 +1,11 @@
 namespace EstoqueApp.Api.Models
 {
+    public enum TipoDePlano
+    {
+        Free,
+        Premium
+    }
+
     public class Usuario
     {
         public int Id { get; set; }
@@ -9,6 +15,10 @@ namespace EstoqueApp.Api.Models
         
         // **NOVO: Para identificar o tipo de autenticação**
         public string? Provider { get; set; } = "Email"; // "Google", "Email", etc.
+        
+        // **NOVO: Campos de assinatura para modelo Freemium**
+        public TipoDePlano Plano { get; set; } = TipoDePlano.Free;
+        public DateTime? DataExpiracaoAssinatura { get; set; }
         
         // Relacionamento com Lista de Compras
         public ICollection<ListaDeComprasItem> ListaDeCompras { get; set; } = new List<ListaDeComprasItem>();
@@ -21,5 +31,8 @@ namespace EstoqueApp.Api.Models
         
         // NOVO: Convites recebidos
         public ICollection<ConviteDespensa> ConvitesRecebidos { get; set; } = new List<ConviteDespensa>();
+        
+        // NOVO: Relacionamento com assinaturas Stripe
+        public ICollection<SubscricaoStripe> Assinaturas { get; set; } = new List<SubscricaoStripe>();
     }
 } 

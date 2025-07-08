@@ -12,6 +12,9 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
+// Configurar o cliente Stripe
+Stripe.StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
+
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -74,8 +77,12 @@ builder.Services.AddDbContext<EstoqueContext>(options =>
     }
 });
 
+// Adicionar cache em memória
+builder.Services.AddMemoryCache();
+
 // Registrar serviços personalizados
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
 // **NOVO: Registrar serviços de IA**
 builder.Services.AddScoped<PredictionService>();

@@ -184,3 +184,6 @@ C:\Users\ovg19\Documents\projetos\estoque-max\EstoqueMax\EstoqueApp.Api\bin\Debu
 C:\Users\ovg19\Documents\projetos\estoque-max\EstoqueMax\EstoqueApp.Api\bin\Debug\net8.0\runtimes\win-arm64\native\e_sqlite3.dll
 C:\Users\ovg19\Documents\projetos\estoque-max\EstoqueMax\EstoqueApp.Api\bin\Debug\net8.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\ovg19\Documents\projetos\estoque-max\EstoqueMax\EstoqueApp.Api\bin\Debug\net8.0\runtimes\win-x86\native\e_sqlite3.dll
+C:\Users\ovg19\Documents\projetos\estoque-max\EstoqueMax\EstoqueApp.Api\bin\Debug\net8.0\Stripe.net.dll
+C:\Users\ovg19\Documents\projetos\estoque-max\EstoqueMax\EstoqueApp.Api\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
+C:\Users\ovg19\Documents\projetos\estoque-max\EstoqueMax\EstoqueApp.Api\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
