@@ -79,21 +79,21 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Estoque',
+              'Estoque',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
+                color: AppTheme.textPrimary,
+              ),
+            ),
                 const SizedBox(height: 4),
-                Text(
+              Text(
                   'Gerencie seus itens',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
+                  color: AppTheme.textSecondary,
                 ),
-              ],
-            ),
+              ),
+          ],
+        ),
           ),
           
           // Busca
@@ -190,27 +190,27 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
 
   Widget _buildContent() {
     return BlocConsumer<EstoqueBloc, EstoqueState>(
-      listener: (context, state) {
-        if (state is EstoqueError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppTheme.error,
+        listener: (context, state) {
+          if (state is EstoqueError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppTheme.error,
               behavior: SnackBarBehavior.floating,
-            ),
-          );
-        } else if (state is EstoqueOperationSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppTheme.success,
+              ),
+            );
+          } else if (state is EstoqueOperationSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppTheme.success,
               behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      },
-      builder: (context, state) {
-        if (state is EstoqueLoading) {
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is EstoqueLoading) {
           return const EstoqueLoadingSkeleton();
         }
         
@@ -253,49 +253,49 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
                   );
                 },
               ),
-            ),
-          );
-        }
-        
-        if (state is EstoqueError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: AppTheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Erro ao carregar estoque',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppTheme.textPrimary,
+              ),
+            );
+          }
+
+          if (state is EstoqueError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: AppTheme.error,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  state.message,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
+                  const SizedBox(height: 16),
+                  Text(
+                    'Erro ao carregar estoque',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: AppTheme.textPrimary,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppTheme.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 const SizedBox(height: 16),
-                ElevatedButton(
+                  ElevatedButton(
                   onPressed: () {
                     context.read<EstoqueBloc>().add(LoadEstoque(_selectedDespensaId));
                   },
-                  child: const Text('Tentar novamente'),
-                ),
-              ],
-            ),
-          );
-        }
-        
-        return const SizedBox.shrink();
-      },
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
     );
   }
 
@@ -365,11 +365,11 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
       builder: (context) => AlertDialog(
         title: Text(item.produto.nome),
         content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Text('Quantidade: ${item.quantidade} ${item.produto.unidadeMedida}'),
-            if (item.dataValidade != null)
+                if (item.dataValidade != null)
               Text('Validade: ${item.dataValidade!.day}/${item.dataValidade!.month}/${item.dataValidade!.year}'),
             if (item.observacoes != null)
               Text('Observações: ${item.observacoes}'),

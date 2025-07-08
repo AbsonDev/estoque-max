@@ -54,12 +54,12 @@ class EstoqueItemCard extends StatelessWidget {
           ],
         ),
         child: GestureDetector(
-          onTap: onTap,
+        onTap: onTap,
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: Color(item.statusColor).withOpacity(0.3),
                 width: 2,
@@ -72,12 +72,12 @@ class EstoqueItemCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                 // Header com nome e status
-                Row(
-                  children: [
+              Row(
+                children: [
                     // Ícone da categoria
                     Container(
                       width: 40,
@@ -93,32 +93,32 @@ class EstoqueItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                  const SizedBox(width: 12),
                     
                     // Nome e marca
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
                             item.produto.nome,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
+                            color: AppTheme.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (item.produto.marca != null)
-                            Text(
+                          Text(
                               item.produto.marca!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppTheme.textSecondary,
-                              ),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.textSecondary,
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
+                  ),
                     
                     // Status badge
                     Container(
@@ -135,11 +135,11 @@ class EstoqueItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ],
-                ),
-                
-                const SizedBox(height: 12),
-                
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
                 // Informações principais
                 Row(
                   children: [
@@ -171,7 +171,7 @@ class EstoqueItemCard extends StatelessWidget {
                 // Observações
                 if (item.observacoes != null && item.observacoes!.isNotEmpty)
                   Column(
-                    children: [
+                children: [
                       const SizedBox(height: 8),
                       Container(
                         width: double.infinity,
@@ -240,12 +240,12 @@ class EstoqueItemCard extends StatelessWidget {
                             ),
                         ],
                       ),
-                    ],
-                  ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
         ),
+      ),
       ),
     ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.2, end: 0);
   }
@@ -258,10 +258,10 @@ class EstoqueItemCard extends StatelessWidget {
     required Color color,
   }) {
     return Row(
-      children: [
+        children: [
         Icon(
           icon,
-          color: color,
+                color: color,
           size: 16,
         ),
         const SizedBox(width: 4),

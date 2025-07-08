@@ -1,149 +1,57 @@
 import 'package:equatable/equatable.dart';
 
-class SubscriptionStatus extends Equatable {
-  final String planId;
-  final String planName;
-  final bool isActive;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final String status;
-  final double price;
-  final String currency;
-  final String billingInterval;
-  final List<String> features;
-  final bool cancelAtPeriodEnd;
-  final DateTime? cancelDate;
-  final bool isTrialPeriod;
-  final DateTime? trialEndDate;
-
-  const SubscriptionStatus({
-    required this.planId,
-    required this.planName,
-    required this.isActive,
-    this.startDate,
-    this.endDate,
-    required this.status,
-    required this.price,
-    required this.currency,
-    required this.billingInterval,
-    required this.features,
-    required this.cancelAtPeriodEnd,
-    this.cancelDate,
-    required this.isTrialPeriod,
-    this.trialEndDate,
-  });
-
-  factory SubscriptionStatus.fromJson(Map<String, dynamic> json) {
-    return SubscriptionStatus(
-      planId: json['planId'] ?? '',
-      planName: json['planName'] ?? '',
-      isActive: json['isActive'] ?? false,
-      startDate: json['startDate'] != null
-          ? DateTime.parse(json['startDate'])
-          : null,
-      endDate: json['endDate'] != null
-          ? DateTime.parse(json['endDate'])
-          : null,
-      status: json['status'] ?? '',
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      currency: json['currency'] ?? 'BRL',
-      billingInterval: json['billingInterval'] ?? 'month',
-      features: List<String>.from(json['features'] ?? []),
-      cancelAtPeriodEnd: json['cancelAtPeriodEnd'] ?? false,
-      cancelDate: json['cancelDate'] != null
-          ? DateTime.parse(json['cancelDate'])
-          : null,
-      isTrialPeriod: json['isTrialPeriod'] ?? false,
-      trialEndDate: json['trialEndDate'] != null
-          ? DateTime.parse(json['trialEndDate'])
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'planId': planId,
-      'planName': planName,
-      'isActive': isActive,
-      'startDate': startDate?.toIso8601String(),
-      'endDate': endDate?.toIso8601String(),
-      'status': status,
-      'price': price,
-      'currency': currency,
-      'billingInterval': billingInterval,
-      'features': features,
-      'cancelAtPeriodEnd': cancelAtPeriodEnd,
-      'cancelDate': cancelDate?.toIso8601String(),
-      'isTrialPeriod': isTrialPeriod,
-      'trialEndDate': trialEndDate?.toIso8601String(),
-    };
-  }
-
-  @override
-  List<Object?> get props => [
-    planId, planName, isActive, startDate, endDate, status, price, currency,
-    billingInterval, features, cancelAtPeriodEnd, cancelDate, isTrialPeriod, trialEndDate,
-  ];
-}
-
-class SubscriptionPlan extends Equatable {
+class SubscriptionTier extends Equatable {
   final String id;
   final String name;
   final String description;
   final double price;
   final String currency;
-  final String billingInterval;
+  final String period;
   final List<String> features;
-  final bool isPopular;
-  final bool isCurrentPlan;
-  final String? stripeProductId;
+  final bool isActive;
   final int maxDespensas;
-  final int maxItensEstoque;
-  final int maxMembrosPorDespensa;
+  final int maxMembros;
+  final int maxItens;
   final bool hasAnalytics;
-  final bool hasAISuggestions;
+  final bool hasAIPredictions;
   final bool hasExport;
-  final bool hasSupport;
+  final bool hasScanner;
 
-  const SubscriptionPlan({
+  const SubscriptionTier({
     required this.id,
     required this.name,
     required this.description,
     required this.price,
     required this.currency,
-    required this.billingInterval,
+    required this.period,
     required this.features,
-    required this.isPopular,
-    required this.isCurrentPlan,
-    this.stripeProductId,
+    required this.isActive,
     required this.maxDespensas,
-    required this.maxItensEstoque,
-    required this.maxMembrosPorDespensa,
+    required this.maxMembros,
+    required this.maxItens,
     required this.hasAnalytics,
-    required this.hasAISuggestions,
+    required this.hasAIPredictions,
     required this.hasExport,
-    required this.hasSupport,
+    required this.hasScanner,
   });
 
-  factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
-    return SubscriptionPlan(
+  factory SubscriptionTier.fromJson(Map<String, dynamic> json) {
+    return SubscriptionTier(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      currency: json['currency'] ?? 'BRL',
-      billingInterval: json['billingInterval'] ?? 'month',
+      price: (json['price'] ?? 0.0).toDouble(),
+      currency: json['currency'] ?? 'EUR',
+      period: json['period'] ?? 'monthly',
       features: List<String>.from(json['features'] ?? []),
-      isPopular: json['isPopular'] ?? false,
-      isCurrentPlan: json['isCurrentPlan'] ?? false,
-      stripeProductId: json['stripeProductId'],
+      isActive: json['isActive'] ?? false,
       maxDespensas: json['maxDespensas'] ?? 0,
-      maxItensEstoque: json['maxItensEstoque'] ?? 0,
-      maxMembrosPorDespensa: json['maxMembrosPorDespensa'] ?? 0,
+      maxMembros: json['maxMembros'] ?? 0,
+      maxItens: json['maxItens'] ?? 0,
       hasAnalytics: json['hasAnalytics'] ?? false,
-      hasAISuggestions: json['hasAISuggestions'] ?? false,
+      hasAIPredictions: json['hasAIPredictions'] ?? false,
       hasExport: json['hasExport'] ?? false,
-      hasSupport: json['hasSupport'] ?? false,
+      hasScanner: json['hasScanner'] ?? false,
     );
   }
 
@@ -154,198 +62,305 @@ class SubscriptionPlan extends Equatable {
       'description': description,
       'price': price,
       'currency': currency,
-      'billingInterval': billingInterval,
+      'period': period,
       'features': features,
-      'isPopular': isPopular,
-      'isCurrentPlan': isCurrentPlan,
-      'stripeProductId': stripeProductId,
+      'isActive': isActive,
       'maxDespensas': maxDespensas,
-      'maxItensEstoque': maxItensEstoque,
-      'maxMembrosPorDespensa': maxMembrosPorDespensa,
+      'maxMembros': maxMembros,
+      'maxItens': maxItens,
       'hasAnalytics': hasAnalytics,
-      'hasAISuggestions': hasAISuggestions,
+      'hasAIPredictions': hasAIPredictions,
       'hasExport': hasExport,
-      'hasSupport': hasSupport,
+      'hasScanner': hasScanner,
     };
   }
 
   @override
   List<Object?> get props => [
-    id, name, description, price, currency, billingInterval, features, isPopular,
-    isCurrentPlan, stripeProductId, maxDespensas, maxItensEstoque, maxMembrosPorDespensa,
-    hasAnalytics, hasAISuggestions, hasExport, hasSupport,
+    id, name, description, price, currency, period, features, isActive,
+    maxDespensas, maxMembros, maxItens, hasAnalytics, hasAIPredictions,
+    hasExport, hasScanner,
   ];
 }
 
-class SubscriptionHistory extends Equatable {
+class UserSubscription extends Equatable {
   final String id;
-  final String planName;
-  final double amount;
-  final String currency;
-  final DateTime date;
+  final String userId;
+  final String tierName;
   final String status;
-  final String? invoiceUrl;
-  final String? description;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final DateTime? trialEndDate;
+  final bool isActive;
+  final bool isTrial;
+  final bool willRenew;
+  final String? revenueId;
+  final String? productId;
+  final SubscriptionTier tier;
 
-  const SubscriptionHistory({
+  const UserSubscription({
     required this.id,
-    required this.planName,
-    required this.amount,
-    required this.currency,
-    required this.date,
+    required this.userId,
+    required this.tierName,
     required this.status,
-    this.invoiceUrl,
-    this.description,
+    this.startDate,
+    this.endDate,
+    this.trialEndDate,
+    required this.isActive,
+    required this.isTrial,
+    required this.willRenew,
+    this.revenueId,
+    this.productId,
+    required this.tier,
   });
 
-  factory SubscriptionHistory.fromJson(Map<String, dynamic> json) {
-    return SubscriptionHistory(
+  factory UserSubscription.fromJson(Map<String, dynamic> json) {
+    return UserSubscription(
       id: json['id'] ?? '',
-      planName: json['planName'] ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      currency: json['currency'] ?? 'BRL',
-      date: DateTime.parse(json['date']),
+      userId: json['userId'] ?? '',
+      tierName: json['tierName'] ?? '',
       status: json['status'] ?? '',
-      invoiceUrl: json['invoiceUrl'],
-      description: json['description'],
+      startDate: json['startDate'] != null
+          ? DateTime.parse(json['startDate'])
+          : null,
+      endDate: json['endDate'] != null
+          ? DateTime.parse(json['endDate'])
+          : null,
+      trialEndDate: json['trialEndDate'] != null
+          ? DateTime.parse(json['trialEndDate'])
+          : null,
+      isActive: json['isActive'] ?? false,
+      isTrial: json['isTrial'] ?? false,
+      willRenew: json['willRenew'] ?? false,
+      revenueId: json['revenueId'],
+      productId: json['productId'],
+      tier: SubscriptionTier.fromJson(json['tier'] ?? {}),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'planName': planName,
-      'amount': amount,
-      'currency': currency,
-      'date': date.toIso8601String(),
+      'userId': userId,
+      'tierName': tierName,
       'status': status,
-      'invoiceUrl': invoiceUrl,
-      'description': description,
-    };
-  }
-
-  @override
-  List<Object?> get props => [id, planName, amount, currency, date, status, invoiceUrl, description];
-}
-
-class SubscriptionAnalytics extends Equatable {
-  final int totalDespensas;
-  final int totalItensEstoque;
-  final int totalMembros;
-  final double totalGasto;
-  final int limiteDespensas;
-  final int limiteItensEstoque;
-  final int limiteMembros;
-  final DateTime? proximoVencimento;
-  final List<String> featuresUsadas;
-  final List<String> featuresDisponiveis;
-
-  const SubscriptionAnalytics({
-    required this.totalDespensas,
-    required this.totalItensEstoque,
-    required this.totalMembros,
-    required this.totalGasto,
-    required this.limiteDespensas,
-    required this.limiteItensEstoque,
-    required this.limiteMembros,
-    this.proximoVencimento,
-    required this.featuresUsadas,
-    required this.featuresDisponiveis,
-  });
-
-  factory SubscriptionAnalytics.fromJson(Map<String, dynamic> json) {
-    return SubscriptionAnalytics(
-      totalDespensas: json['totalDespensas'] ?? 0,
-      totalItensEstoque: json['totalItensEstoque'] ?? 0,
-      totalMembros: json['totalMembros'] ?? 0,
-      totalGasto: (json['totalGasto'] as num?)?.toDouble() ?? 0.0,
-      limiteDespensas: json['limiteDespensas'] ?? 0,
-      limiteItensEstoque: json['limiteItensEstoque'] ?? 0,
-      limiteMembros: json['limiteMembros'] ?? 0,
-      proximoVencimento: json['proximoVencimento'] != null
-          ? DateTime.parse(json['proximoVencimento'])
-          : null,
-      featuresUsadas: List<String>.from(json['featuresUsadas'] ?? []),
-      featuresDisponiveis: List<String>.from(json['featuresDisponiveis'] ?? []),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'totalDespensas': totalDespensas,
-      'totalItensEstoque': totalItensEstoque,
-      'totalMembros': totalMembros,
-      'totalGasto': totalGasto,
-      'limiteDespensas': limiteDespensas,
-      'limiteItensEstoque': limiteItensEstoque,
-      'limiteMembros': limiteMembros,
-      'proximoVencimento': proximoVencimento?.toIso8601String(),
-      'featuresUsadas': featuresUsadas,
-      'featuresDisponiveis': featuresDisponiveis,
+      'startDate': startDate?.toIso8601String(),
+      'endDate': endDate?.toIso8601String(),
+      'trialEndDate': trialEndDate?.toIso8601String(),
+      'isActive': isActive,
+      'isTrial': isTrial,
+      'willRenew': willRenew,
+      'revenueId': revenueId,
+      'productId': productId,
+      'tier': tier.toJson(),
     };
   }
 
   @override
   List<Object?> get props => [
-    totalDespensas, totalItensEstoque, totalMembros, totalGasto, limiteDespensas,
-    limiteItensEstoque, limiteMembros, proximoVencimento, featuresUsadas, featuresDisponiveis,
+    id, userId, tierName, status, startDate, endDate, trialEndDate,
+    isActive, isTrial, willRenew, revenueId, productId, tier,
   ];
 }
 
-class FeatureComparison extends Equatable {
-  final String feature;
-  final String freeValue;
-  final String premiumValue;
-  final String description;
+class UsageLimits extends Equatable {
+  final int usedDespensas;
+  final int usedMembros;
+  final int usedItens;
+  final int maxDespensas;
+  final int maxMembros;
+  final int maxItens;
 
-  const FeatureComparison({
-    required this.feature,
-    required this.freeValue,
-    required this.premiumValue,
-    required this.description,
+  const UsageLimits({
+    required this.usedDespensas,
+    required this.usedMembros,
+    required this.usedItens,
+    required this.maxDespensas,
+    required this.maxMembros,
+    required this.maxItens,
   });
 
-  factory FeatureComparison.fromJson(Map<String, dynamic> json) {
-    return FeatureComparison(
+  factory UsageLimits.fromJson(Map<String, dynamic> json) {
+    return UsageLimits(
+      usedDespensas: json['usedDespensas'] ?? 0,
+      usedMembros: json['usedMembros'] ?? 0,
+      usedItens: json['usedItens'] ?? 0,
+      maxDespensas: json['maxDespensas'] ?? 0,
+      maxMembros: json['maxMembros'] ?? 0,
+      maxItens: json['maxItens'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'usedDespensas': usedDespensas,
+      'usedMembros': usedMembros,
+      'usedItens': usedItens,
+      'maxDespensas': maxDespensas,
+      'maxMembros': maxMembros,
+      'maxItens': maxItens,
+    };
+  }
+
+  bool get canAddDespensa => usedDespensas < maxDespensas;
+  bool get canAddMembro => usedMembros < maxMembros;
+  bool get canAddItem => usedItens < maxItens;
+
+  double get despensaUsagePercentage => maxDespensas > 0 ? (usedDespensas / maxDespensas) : 0;
+  double get membroUsagePercentage => maxMembros > 0 ? (usedMembros / maxMembros) : 0;
+  double get itemUsagePercentage => maxItens > 0 ? (usedItens / maxItens) : 0;
+
+  @override
+  List<Object?> get props => [
+    usedDespensas, usedMembros, usedItens,
+    maxDespensas, maxMembros, maxItens,
+  ];
+}
+
+class FeatureAccess extends Equatable {
+  final bool hasAnalytics;
+  final bool hasAIPredictions;
+  final bool hasExport;
+  final bool hasScanner;
+  final bool hasAdvancedFilters;
+  final bool hasCustomCategories;
+  final bool hasPrioritySupport;
+
+  const FeatureAccess({
+    required this.hasAnalytics,
+    required this.hasAIPredictions,
+    required this.hasExport,
+    required this.hasScanner,
+    required this.hasAdvancedFilters,
+    required this.hasCustomCategories,
+    required this.hasPrioritySupport,
+  });
+
+  factory FeatureAccess.fromJson(Map<String, dynamic> json) {
+    return FeatureAccess(
+      hasAnalytics: json['hasAnalytics'] ?? false,
+      hasAIPredictions: json['hasAIPredictions'] ?? false,
+      hasExport: json['hasExport'] ?? false,
+      hasScanner: json['hasScanner'] ?? false,
+      hasAdvancedFilters: json['hasAdvancedFilters'] ?? false,
+      hasCustomCategories: json['hasCustomCategories'] ?? false,
+      hasPrioritySupport: json['hasPrioritySupport'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'hasAnalytics': hasAnalytics,
+      'hasAIPredictions': hasAIPredictions,
+      'hasExport': hasExport,
+      'hasScanner': hasScanner,
+      'hasAdvancedFilters': hasAdvancedFilters,
+      'hasCustomCategories': hasCustomCategories,
+      'hasPrioritySupport': hasPrioritySupport,
+    };
+  }
+
+  @override
+  List<Object?> get props => [
+    hasAnalytics, hasAIPredictions, hasExport, hasScanner,
+    hasAdvancedFilters, hasCustomCategories, hasPrioritySupport,
+  ];
+}
+
+class PaywallInfo extends Equatable {
+  final String feature;
+  final String title;
+  final String description;
+  final String requiredTier;
+  final String buttonText;
+  final String icon;
+
+  const PaywallInfo({
+    required this.feature,
+    required this.title,
+    required this.description,
+    required this.requiredTier,
+    required this.buttonText,
+    required this.icon,
+  });
+
+  factory PaywallInfo.fromJson(Map<String, dynamic> json) {
+    return PaywallInfo(
       feature: json['feature'] ?? '',
-      freeValue: json['freeValue'] ?? '',
-      premiumValue: json['premiumValue'] ?? '',
+      title: json['title'] ?? '',
       description: json['description'] ?? '',
+      requiredTier: json['requiredTier'] ?? '',
+      buttonText: json['buttonText'] ?? '',
+      icon: json['icon'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'feature': feature,
-      'freeValue': freeValue,
-      'premiumValue': premiumValue,
+      'title': title,
       'description': description,
+      'requiredTier': requiredTier,
+      'buttonText': buttonText,
+      'icon': icon,
     };
   }
 
   @override
-  List<Object?> get props => [feature, freeValue, premiumValue, description];
+  List<Object?> get props => [
+    feature, title, description, requiredTier, buttonText, icon,
+  ];
 }
 
-// Helper extensions
-extension SubscriptionStatusExtensions on SubscriptionStatus {
-  bool get isFree => planId == 'free';
-  bool get isPremium => planId == 'premium';
-  bool get isExpired => endDate != null && endDate!.isBefore(DateTime.now());
-  bool get isTrialActive => isTrialPeriod && trialEndDate != null && trialEndDate!.isAfter(DateTime.now());
-  
-  int get daysUntilExpiry {
-    if (endDate == null) return -1;
-    return endDate!.difference(DateTime.now()).inDays;
-  }
-}
+// Predefined tiers
+class SubscriptionTiers {
+  static const SubscriptionTier free = SubscriptionTier(
+    id: 'free',
+    name: 'Gratuito',
+    description: 'Perfeito para começar',
+    price: 0.0,
+    currency: 'EUR',
+    period: 'forever',
+    features: [
+      '2 despensas',
+      '5 membros por despensa',
+      '100 itens',
+      'Funcionalidades básicas',
+    ],
+    isActive: true,
+    maxDespensas: 2,
+    maxMembros: 5,
+    maxItens: 100,
+    hasAnalytics: false,
+    hasAIPredictions: false,
+    hasExport: false,
+    hasScanner: false,
+  );
 
-extension SubscriptionPlanExtensions on SubscriptionPlan {
-  bool get isFree => id == 'free';
-  bool get isPremium => id == 'premium';
-  
-  String get formattedPrice {
-    if (price == 0) return 'Grátis';
-    return 'R\$ ${price.toStringAsFixed(2)}${billingInterval == 'month' ? '/mês' : '/ano'}';
-  }
+  static const SubscriptionTier premium = SubscriptionTier(
+    id: 'premium',
+    name: 'Premium',
+    description: 'Para famílias e uso avançado',
+    price: 4.99,
+    currency: 'EUR',
+    period: 'monthly',
+    features: [
+      'Despensas ilimitadas',
+      'Membros ilimitados',
+      'Itens ilimitados',
+      'Analytics completos',
+      'Previsões de IA',
+      'Exportação de dados',
+      'Scanner de código de barras',
+      'Suporte prioritário',
+    ],
+    isActive: true,
+    maxDespensas: -1, // unlimited
+    maxMembros: -1,
+    maxItens: -1,
+    hasAnalytics: true,
+    hasAIPredictions: true,
+    hasExport: true,
+    hasScanner: true,
+  );
 } 

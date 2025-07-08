@@ -128,12 +128,12 @@ class EstoqueLoaded extends EstoqueState {
   @override
   List<Object?> get props => [
         items,
-        produtos,
+    produtos,
         currentFilter,
         currentSort,
         sortAscending,
         currentDespensaId,
-      ];
+  ];
 }
 
 class EstoqueError extends EstoqueState {

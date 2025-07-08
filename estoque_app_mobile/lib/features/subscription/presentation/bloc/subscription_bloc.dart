@@ -1,261 +1,287 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../data/models/subscription_models.dart';
 import '../../data/services/subscription_service.dart';
 
 // Events
 abstract class SubscriptionEvent extends Equatable {
-  @override
-  List<Object?> get props => [];
-}
-
-class LoadSubscriptionStatus extends SubscriptionEvent {}
-
-class LoadAvailablePlans extends SubscriptionEvent {}
-
-class LoadFeatureComparison extends SubscriptionEvent {}
-
-class LoadSubscriptionAnalytics extends SubscriptionEvent {}
-
-class LoadSubscriptionHistory extends SubscriptionEvent {}
-
-class CreateCheckoutSession extends SubscriptionEvent {
-  final String planId;
-
-  CreateCheckoutSession({required this.planId});
+  const SubscriptionEvent();
 
   @override
-  List<Object?> get props => [planId];
+  List<Object> get props => [];
 }
 
-class CreateCustomerPortalSession extends SubscriptionEvent {}
+class LoadSubscriptionData extends SubscriptionEvent {}
+
+class LoadAvailableTiers extends SubscriptionEvent {}
+
+class LoadUsageLimits extends SubscriptionEvent {}
+
+class LoadFeatureAccess extends SubscriptionEvent {}
+
+class PurchaseSubscription extends SubscriptionEvent {
+  final Package package;
+
+  const PurchaseSubscription({required this.package});
+
+  @override
+  List<Object> get props => [package];
+}
+
+class RestorePurchases extends SubscriptionEvent {}
 
 class CancelSubscription extends SubscriptionEvent {}
 
-class UpgradeSubscription extends SubscriptionEvent {
-  final String planId;
-
-  UpgradeSubscription({required this.planId});
-
-  @override
-  List<Object?> get props => [planId];
-}
+class ReactivateSubscription extends SubscriptionEvent {}
 
 class CheckFeatureAccess extends SubscriptionEvent {
   final String feature;
 
-  CheckFeatureAccess({required this.feature});
+  const CheckFeatureAccess({required this.feature});
 
   @override
-  List<Object?> get props => [feature];
+  List<Object> get props => [feature];
 }
 
-class RefreshSubscriptionData extends SubscriptionEvent {}
+class StartFreeTrial extends SubscriptionEvent {}
+
+class LoadPaywallInfo extends SubscriptionEvent {
+  final String feature;
+
+  const LoadPaywallInfo({required this.feature});
+
+  @override
+  List<Object> get props => [feature];
+}
+
+class LoadBillingHistory extends SubscriptionEvent {}
 
 // States
 abstract class SubscriptionState extends Equatable {
+  const SubscriptionState();
+
   @override
-  List<Object?> get props => [];
+  List<Object> get props => [];
 }
 
 class SubscriptionInitial extends SubscriptionState {}
 
 class SubscriptionLoading extends SubscriptionState {}
 
-class SubscriptionStatusLoaded extends SubscriptionState {
-  final SubscriptionStatus status;
+class SubscriptionLoaded extends SubscriptionState {
+  final UserSubscription subscription;
+  final List<SubscriptionTier> availableTiers;
+  final UsageLimits usageLimits;
+  final FeatureAccess featureAccess;
 
-  SubscriptionStatusLoaded(this.status);
-
-  @override
-  List<Object?> get props => [status];
-}
-
-class SubscriptionPlansLoaded extends SubscriptionState {
-  final List<SubscriptionPlan> plans;
-
-  SubscriptionPlansLoaded(this.plans);
-
-  @override
-  List<Object?> get props => [plans];
-}
-
-class SubscriptionAnalyticsLoaded extends SubscriptionState {
-  final SubscriptionAnalytics analytics;
-
-  SubscriptionAnalyticsLoaded(this.analytics);
+  const SubscriptionLoaded({
+    required this.subscription,
+    required this.availableTiers,
+    required this.usageLimits,
+    required this.featureAccess,
+  });
 
   @override
-  List<Object?> get props => [analytics];
-}
-
-class SubscriptionHistoryLoaded extends SubscriptionState {
-  final List<SubscriptionHistory> history;
-
-  SubscriptionHistoryLoaded(this.history);
-
-  @override
-  List<Object?> get props => [history];
-}
-
-class FeatureComparisonLoaded extends SubscriptionState {
-  final List<FeatureComparison> features;
-
-  FeatureComparisonLoaded(this.features);
-
-  @override
-  List<Object?> get props => [features];
-}
-
-class CheckoutSessionCreated extends SubscriptionState {
-  final String url;
-
-  CheckoutSessionCreated(this.url);
-
-  @override
-  List<Object?> get props => [url];
-}
-
-class CustomerPortalSessionCreated extends SubscriptionState {
-  final String url;
-
-  CustomerPortalSessionCreated(this.url);
-
-  @override
-  List<Object?> get props => [url];
-}
-
-class SubscriptionCancelled extends SubscriptionState {}
-
-class SubscriptionUpgraded extends SubscriptionState {}
-
-class FeatureAccessChecked extends SubscriptionState {
-  final String feature;
-  final bool hasAccess;
-
-  FeatureAccessChecked(this.feature, this.hasAccess);
-
-  @override
-  List<Object?> get props => [feature, hasAccess];
+  List<Object> get props => [subscription, availableTiers, usageLimits, featureAccess];
 }
 
 class SubscriptionError extends SubscriptionState {
   final String message;
 
-  SubscriptionError(this.message);
+  const SubscriptionError({required this.message});
 
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [message];
 }
 
-class SubscriptionProcessing extends SubscriptionState {}
+class SubscriptionPurchasing extends SubscriptionState {}
+
+class SubscriptionPurchased extends SubscriptionState {
+  final CustomerInfo customerInfo;
+
+  const SubscriptionPurchased({required this.customerInfo});
+
+  @override
+  List<Object> get props => [customerInfo];
+}
+
+class SubscriptionRestored extends SubscriptionState {
+  final CustomerInfo customerInfo;
+
+  const SubscriptionRestored({required this.customerInfo});
+
+  @override
+  List<Object> get props => [customerInfo];
+}
+
+class SubscriptionCanceled extends SubscriptionState {}
+
+class SubscriptionReactivated extends SubscriptionState {}
+
+class FeatureAccessChecked extends SubscriptionState {
+  final String feature;
+  final bool hasAccess;
+
+  const FeatureAccessChecked({
+    required this.feature,
+    required this.hasAccess,
+  });
+
+  @override
+  List<Object> get props => [feature, hasAccess];
+}
+
+class PaywallInfoLoaded extends SubscriptionState {
+  final PaywallInfo paywallInfo;
+
+  const PaywallInfoLoaded({required this.paywallInfo});
+
+  @override
+  List<Object> get props => [paywallInfo];
+}
+
+class FreeTrialStarted extends SubscriptionState {}
+
+class BillingHistoryLoaded extends SubscriptionState {
+  final List<Map<String, dynamic>> billingHistory;
+
+  const BillingHistoryLoaded({required this.billingHistory});
+
+  @override
+  List<Object> get props => [billingHistory];
+}
 
 // BLoC
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   final SubscriptionService _subscriptionService;
 
   SubscriptionBloc(this._subscriptionService) : super(SubscriptionInitial()) {
-    on<LoadSubscriptionStatus>(_onLoadSubscriptionStatus);
-    on<LoadAvailablePlans>(_onLoadAvailablePlans);
-    on<LoadFeatureComparison>(_onLoadFeatureComparison);
-    on<LoadSubscriptionAnalytics>(_onLoadSubscriptionAnalytics);
-    on<LoadSubscriptionHistory>(_onLoadSubscriptionHistory);
-    on<CreateCheckoutSession>(_onCreateCheckoutSession);
-    on<CreateCustomerPortalSession>(_onCreateCustomerPortalSession);
+    on<LoadSubscriptionData>(_onLoadSubscriptionData);
+    on<LoadAvailableTiers>(_onLoadAvailableTiers);
+    on<LoadUsageLimits>(_onLoadUsageLimits);
+    on<LoadFeatureAccess>(_onLoadFeatureAccess);
+    on<PurchaseSubscription>(_onPurchaseSubscription);
+    on<RestorePurchases>(_onRestorePurchases);
     on<CancelSubscription>(_onCancelSubscription);
-    on<UpgradeSubscription>(_onUpgradeSubscription);
+    on<ReactivateSubscription>(_onReactivateSubscription);
     on<CheckFeatureAccess>(_onCheckFeatureAccess);
-    on<RefreshSubscriptionData>(_onRefreshSubscriptionData);
+    on<StartFreeTrial>(_onStartFreeTrial);
+    on<LoadPaywallInfo>(_onLoadPaywallInfo);
+    on<LoadBillingHistory>(_onLoadBillingHistory);
   }
 
-  Future<void> _onLoadSubscriptionStatus(
-    LoadSubscriptionStatus event,
+  Future<void> _onLoadSubscriptionData(
+    LoadSubscriptionData event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionLoading());
-      final status = await _subscriptionService.getSubscriptionStatus();
-      emit(SubscriptionStatusLoaded(status));
+      final subscription = await _subscriptionService.getCurrentSubscription();
+      final availableTiers = await _subscriptionService.getAvailableTiers();
+      final usageLimits = await _subscriptionService.getUsageLimits();
+      final featureAccess = await _subscriptionService.getFeatureAccess();
+
+      emit(SubscriptionLoaded(
+        subscription: subscription,
+        availableTiers: availableTiers,
+        usageLimits: usageLimits,
+        featureAccess: featureAccess,
+      ));
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
-  Future<void> _onLoadAvailablePlans(
-    LoadAvailablePlans event,
+  Future<void> _onLoadAvailableTiers(
+    LoadAvailableTiers event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionLoading());
-      final plans = await _subscriptionService.getAvailablePlans();
-      emit(SubscriptionPlansLoaded(plans));
+      final availableTiers = await _subscriptionService.getAvailableTiers();
+      // Preserva outros dados se existirem
+      if (state is SubscriptionLoaded) {
+        final current = state as SubscriptionLoaded;
+        emit(SubscriptionLoaded(
+          subscription: current.subscription,
+          availableTiers: availableTiers,
+          usageLimits: current.usageLimits,
+          featureAccess: current.featureAccess,
+        ));
+      }
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
-  Future<void> _onLoadFeatureComparison(
-    LoadFeatureComparison event,
+  Future<void> _onLoadUsageLimits(
+    LoadUsageLimits event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionLoading());
-      final features = await _subscriptionService.getFeatureComparison();
-      emit(FeatureComparisonLoaded(features));
+      final usageLimits = await _subscriptionService.getUsageLimits();
+      // Preserva outros dados se existirem
+      if (state is SubscriptionLoaded) {
+        final current = state as SubscriptionLoaded;
+        emit(SubscriptionLoaded(
+          subscription: current.subscription,
+          availableTiers: current.availableTiers,
+          usageLimits: usageLimits,
+          featureAccess: current.featureAccess,
+        ));
+      }
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
-  Future<void> _onLoadSubscriptionAnalytics(
-    LoadSubscriptionAnalytics event,
+  Future<void> _onLoadFeatureAccess(
+    LoadFeatureAccess event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionLoading());
-      final analytics = await _subscriptionService.getSubscriptionAnalytics();
-      emit(SubscriptionAnalyticsLoaded(analytics));
+      final featureAccess = await _subscriptionService.getFeatureAccess();
+      // Preserva outros dados se existirem
+      if (state is SubscriptionLoaded) {
+        final current = state as SubscriptionLoaded;
+        emit(SubscriptionLoaded(
+          subscription: current.subscription,
+          availableTiers: current.availableTiers,
+          usageLimits: current.usageLimits,
+          featureAccess: featureAccess,
+        ));
+      }
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
-  Future<void> _onLoadSubscriptionHistory(
-    LoadSubscriptionHistory event,
+  Future<void> _onPurchaseSubscription(
+    PurchaseSubscription event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionPurchasing());
     try {
-      emit(SubscriptionLoading());
-      final history = await _subscriptionService.getSubscriptionHistory();
-      emit(SubscriptionHistoryLoaded(history));
+      final customerInfo = await _subscriptionService.purchasePackage(event.package);
+      emit(SubscriptionPurchased(customerInfo: customerInfo));
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
-  Future<void> _onCreateCheckoutSession(
-    CreateCheckoutSession event,
+  Future<void> _onRestorePurchases(
+    RestorePurchases event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionProcessing());
-      final url = await _subscriptionService.createCheckoutSession(event.planId);
-      emit(CheckoutSessionCreated(url));
+      final customerInfo = await _subscriptionService.restorePurchases();
+      emit(SubscriptionRestored(customerInfo: customerInfo));
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
-    }
-  }
-
-  Future<void> _onCreateCustomerPortalSession(
-    CreateCustomerPortalSession event,
-    Emitter<SubscriptionState> emit,
-  ) async {
-    try {
-      emit(SubscriptionProcessing());
-      final url = await _subscriptionService.createCustomerPortalSession();
-      emit(CustomerPortalSessionCreated(url));
-    } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
@@ -263,25 +289,25 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     CancelSubscription event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionProcessing());
       await _subscriptionService.cancelSubscription();
-      emit(SubscriptionCancelled());
+      emit(SubscriptionCanceled());
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
-  Future<void> _onUpgradeSubscription(
-    UpgradeSubscription event,
+  Future<void> _onReactivateSubscription(
+    ReactivateSubscription event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionProcessing());
-      await _subscriptionService.upgradeSubscription(event.planId);
-      emit(SubscriptionUpgraded());
+      await _subscriptionService.reactivateSubscription();
+      emit(SubscriptionReactivated());
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
@@ -290,23 +316,52 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     Emitter<SubscriptionState> emit,
   ) async {
     try {
-      final hasAccess = await _subscriptionService.checkFeatureAccess(event.feature);
-      emit(FeatureAccessChecked(event.feature, hasAccess));
+      final hasAccess = await _subscriptionService.hasFeatureAccess(event.feature);
+      emit(FeatureAccessChecked(
+        feature: event.feature,
+        hasAccess: hasAccess,
+      ));
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 
-  Future<void> _onRefreshSubscriptionData(
-    RefreshSubscriptionData event,
+  Future<void> _onStartFreeTrial(
+    StartFreeTrial event,
     Emitter<SubscriptionState> emit,
   ) async {
+    emit(SubscriptionLoading());
     try {
-      emit(SubscriptionLoading());
-      final status = await _subscriptionService.getSubscriptionStatus();
-      emit(SubscriptionStatusLoaded(status));
+      await _subscriptionService.startFreeTrial();
+      emit(FreeTrialStarted());
     } catch (e) {
-      emit(SubscriptionError(e.toString()));
+      emit(SubscriptionError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onLoadPaywallInfo(
+    LoadPaywallInfo event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    emit(SubscriptionLoading());
+    try {
+      final paywallInfo = await _subscriptionService.getPaywallInfo(event.feature);
+      emit(PaywallInfoLoaded(paywallInfo: paywallInfo));
+    } catch (e) {
+      emit(SubscriptionError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onLoadBillingHistory(
+    LoadBillingHistory event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    emit(SubscriptionLoading());
+    try {
+      final billingHistory = await _subscriptionService.getBillingHistory();
+      emit(BillingHistoryLoaded(billingHistory: billingHistory));
+    } catch (e) {
+      emit(SubscriptionError(message: e.toString()));
     }
   }
 } 

@@ -28,7 +28,7 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     try {
       final items = await _estoqueService.getEstoqueDespensa(event.despensaId);
       final produtos = await _estoqueService.buscarProdutos();
-
+      
       emit(EstoqueLoaded(
         items: items,
         produtos: produtos,
@@ -50,8 +50,8 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
           items: items,
           currentDespensaId: event.despensaId,
         ));
-      } catch (e) {
-        emit(EstoqueError(e.toString()));
+    } catch (e) {
+      emit(EstoqueError(e.toString()));
       }
     } else {
       add(LoadEstoque(event.despensaId));
