@@ -21,6 +21,8 @@ import 'features/analytics/presentation/bloc/analytics_bloc.dart';
 import 'features/subscription/data/services/subscription_service.dart';
 import 'features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'features/navigation/main_navigation_screen.dart';
+import 'features/landing/presentation/screens/landing_screen.dart';
+import 'features/auth/presentation/widgets/auth_wrapper.dart';
 import 'core/services/signalr_service.dart';
 
 void main() {
@@ -38,7 +40,8 @@ class EstoqueMaxApp extends StatelessWidget {
         RepositoryProvider<GoogleSignIn>(
           create: (context) {
             return GoogleSignIn(
-              clientId: '265016365851-63o4nec9jujr8eelujrimjb4667ghobi.apps.googleusercontent.com',
+              clientId:
+                  '265016365851-63o4nec9jujr8eelujrimjb4667ghobi.apps.googleusercontent.com',
               scopes: ['email', 'profile'],
             );
           },
@@ -71,60 +74,70 @@ class EstoqueMaxApp extends StatelessWidget {
             )..add(AuthStarted()),
           ),
           BlocProvider<DespensasBloc>(
-            create: (context) => DespensasBloc(context.read<DespensasService>()),
+            create: (context) => DespensasBloc(
+              context.read<DespensasService>(),
+              context.read<SignalRService>(),
+            ),
           ),
           BlocProvider<EstoqueBloc>(
             create: (context) => EstoqueBloc(context.read<EstoqueService>()),
           ),
           BlocProvider<ListaComprasBloc>(
-            create: (context) => ListaComprasBloc(context.read<ListaComprasService>()),
+            create: (context) =>
+                ListaComprasBloc(context.read<ListaComprasService>()),
           ),
           BlocProvider<AnalyticsBloc>(
-            create: (context) => AnalyticsBloc(context.read<AnalyticsService>()),
+            create: (context) =>
+                AnalyticsBloc(context.read<AnalyticsService>()),
           ),
           BlocProvider<SubscriptionBloc>(
-            create: (context) => SubscriptionBloc(context.read<SubscriptionService>()),
+            create: (context) =>
+                SubscriptionBloc(context.read<SubscriptionService>()),
           ),
         ],
-        child: MaterialApp(
-          title: 'EstoqueMax',
-          theme: AppTheme.lightTheme,
-          debugShowCheckedModeBanner: false,
-          initialRoute: '/',
-          routes: {
-            '/': (context) => const AuthWrapper(),
-            '/login': (context) => const LoginScreen(),
-            '/register': (context) => const RegisterScreen(),
-            '/home': (context) => const MainNavigationScreen(),
-            '/despensas': (context) => const DespensasScreen(),
-            '/despensa-detalhes': (context) {
-              final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-              
-              if (args == null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.of(context).pushReplacementNamed('/home');
-                });
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
+        child: Builder(
+          builder: (context) => MaterialApp(
+            title: 'EstoqueMax',
+            theme: AppTheme.getLightTheme(context),
+            debugShowCheckedModeBanner: false,
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const AuthWrapper(),
+              '/login': (context) => const LoginScreen(),
+              '/register': (context) => const RegisterScreen(),
+              '/home': (context) => const MainNavigationScreen(),
+              '/despensas': (context) => const DespensasScreen(),
+              '/despensa-detalhes': (context) {
+                final args =
+                    ModalRoute.of(context)?.settings.arguments
+                        as Map<String, dynamic>?;
+
+                if (args == null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.of(context).pushReplacementNamed('/home');
+                  });
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final despensaId = args['despensaId'];
+                if (despensaId == null || despensaId is! int) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.of(context).pushReplacementNamed('/home');
+                  });
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                return DespensaDetalhesScreen(
+                  despensaId: despensaId,
+                  despensaNome: args['despensaNome'] as String?,
                 );
-              }
-              
-              final despensaId = args['despensaId'];
-              if (despensaId == null || despensaId is! int) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.of(context).pushReplacementNamed('/home');
-                });
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              
-              return DespensaDetalhesScreen(
-                despensaId: despensaId,
-                despensaNome: args['despensaNome'] as String?,
-              );
+              },
             },
-          },
+          ),
         ),
       ),
     );
