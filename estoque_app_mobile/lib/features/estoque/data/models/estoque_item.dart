@@ -1,117 +1,91 @@
 import 'package:equatable/equatable.dart';
-import 'produto.dart';
 
 class EstoqueItem extends Equatable {
   final int id;
-  final int despensaId;
-  final int produtoId;
-  final Produto produto;
+  final String produto;
+  final String? marca;
+  final String? codigoBarras;
   final double quantidade;
   final double quantidadeMinima;
-  final String? observacoes;
+  final bool estoqueAbaixoDoMinimo;
   final DateTime? dataValidade;
-  final DateTime dataAdicao;
-  final DateTime ultimaAtualizacao;
-  final bool ativo;
-  final bool precisaComprar;
-  final int? diasParaVencimento;
-  final String status;
+  final Map<String, dynamic> despensa;
 
   const EstoqueItem({
     required this.id,
-    required this.despensaId,
-    required this.produtoId,
     required this.produto,
+    this.marca,
+    this.codigoBarras,
     required this.quantidade,
     required this.quantidadeMinima,
-    this.observacoes,
+    required this.estoqueAbaixoDoMinimo,
     this.dataValidade,
-    required this.dataAdicao,
-    required this.ultimaAtualizacao,
-    required this.ativo,
-    required this.precisaComprar,
-    this.diasParaVencimento,
-    required this.status,
+    required this.despensa,
   });
 
   factory EstoqueItem.fromJson(Map<String, dynamic> json) {
     return EstoqueItem(
-      id: json['id'] as int,
-      despensaId: json['despensaId'] as int,
-      produtoId: json['produtoId'] as int,
-      produto: Produto.fromJson(json['produto'] as Map<String, dynamic>),
-      quantidade: (json['quantidade'] as num).toDouble(),
-      quantidadeMinima: (json['quantidadeMinima'] as num).toDouble(),
-      observacoes: json['observacoes'] as String?,
-      dataValidade: json['dataValidade'] != null 
-          ? DateTime.parse(json['dataValidade'] as String)
+      id: json['id'] as int? ?? 0,
+      produto: json['produto'] as String? ?? 'Produto não informado',
+      marca: json['marca'] as String?,
+      codigoBarras: json['codigoBarras'] as String?,
+      quantidade: (json['quantidade'] as num?)?.toDouble() ?? 0.0,
+      quantidadeMinima: (json['quantidadeMinima'] as num?)?.toDouble() ?? 1.0,
+      estoqueAbaixoDoMinimo: json['estoqueAbaixoDoMinimo'] as bool? ?? false,
+      dataValidade: json['dataValidade'] != null
+          ? DateTime.tryParse(json['dataValidade'] as String)
           : null,
-      dataAdicao: DateTime.parse(json['dataAdicao'] as String),
-      ultimaAtualizacao: DateTime.parse(json['ultimaAtualizacao'] as String),
-      ativo: json['ativo'] as bool,
-      precisaComprar: json['precisaComprar'] as bool,
-      diasParaVencimento: json['diasParaVencimento'] as int?,
-      status: json['status'] as String,
+      despensa: json['despensa'] as Map<String, dynamic>? ?? {},
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'despensaId': despensaId,
-      'produtoId': produtoId,
-      'produto': produto.toJson(),
+      'produto': produto,
+      'marca': marca,
+      'codigoBarras': codigoBarras,
       'quantidade': quantidade,
       'quantidadeMinima': quantidadeMinima,
-      'observacoes': observacoes,
+      'estoqueAbaixoDoMinimo': estoqueAbaixoDoMinimo,
       'dataValidade': dataValidade?.toIso8601String(),
-      'dataAdicao': dataAdicao.toIso8601String(),
-      'ultimaAtualizacao': ultimaAtualizacao.toIso8601String(),
-      'ativo': ativo,
-      'precisaComprar': precisaComprar,
-      'diasParaVencimento': diasParaVencimento,
-      'status': status,
+      'despensa': despensa,
     };
   }
 
   EstoqueItem copyWith({
     int? id,
-    int? despensaId,
-    int? produtoId,
-    Produto? produto,
+    String? produto,
+    String? marca,
+    String? codigoBarras,
     double? quantidade,
     double? quantidadeMinima,
-    String? observacoes,
+    bool? estoqueAbaixoDoMinimo,
     DateTime? dataValidade,
-    DateTime? dataAdicao,
-    DateTime? ultimaAtualizacao,
-    bool? ativo,
-    bool? precisaComprar,
-    int? diasParaVencimento,
-    String? status,
+    Map<String, dynamic>? despensa,
   }) {
     return EstoqueItem(
       id: id ?? this.id,
-      despensaId: despensaId ?? this.despensaId,
-      produtoId: produtoId ?? this.produtoId,
       produto: produto ?? this.produto,
+      marca: marca ?? this.marca,
+      codigoBarras: codigoBarras ?? this.codigoBarras,
       quantidade: quantidade ?? this.quantidade,
       quantidadeMinima: quantidadeMinima ?? this.quantidadeMinima,
-      observacoes: observacoes ?? this.observacoes,
+      estoqueAbaixoDoMinimo:
+          estoqueAbaixoDoMinimo ?? this.estoqueAbaixoDoMinimo,
       dataValidade: dataValidade ?? this.dataValidade,
-      dataAdicao: dataAdicao ?? this.dataAdicao,
-      ultimaAtualizacao: ultimaAtualizacao ?? this.ultimaAtualizacao,
-      ativo: ativo ?? this.ativo,
-      precisaComprar: precisaComprar ?? this.precisaComprar,
-      diasParaVencimento: diasParaVencimento ?? this.diasParaVencimento,
-      status: status ?? this.status,
+      despensa: despensa ?? this.despensa,
     );
   }
 
   // Helpers para status
-  bool get isVencido => diasParaVencimento != null && diasParaVencimento! < 0;
-  bool get isVencendoEm7Dias => diasParaVencimento != null && diasParaVencimento! <= 7 && diasParaVencimento! > 0;
-  bool get isQuantidadeBaixa => quantidade <= quantidadeMinima;
+  bool get isVencido =>
+      dataValidade != null && dataValidade!.isBefore(DateTime.now());
+  bool get isVencendoEm7Dias =>
+      dataValidade != null &&
+      dataValidade!.isBefore(DateTime.now().add(const Duration(days: 7))) &&
+      dataValidade!.isAfter(DateTime.now());
+  bool get isQuantidadeBaixa => estoqueAbaixoDoMinimo;
   bool get isEmFalta => quantidade == 0;
 
   // Cor baseada no status
@@ -131,23 +105,22 @@ class EstoqueItem extends Equatable {
     return statusColors['normal']!;
   }
 
+  // Helper para nome da despensa
+  String get despensaNome => despensa['nome'] as String? ?? 'Despensa';
+  int get despensaId => despensa['id'] as int? ?? 0;
+
   @override
   List<Object?> get props => [
-        id,
-        despensaId,
-        produtoId,
-        produto,
-        quantidade,
-        quantidadeMinima,
-        observacoes,
-        dataValidade,
-        dataAdicao,
-        ultimaAtualizacao,
-        ativo,
-        precisaComprar,
-        diasParaVencimento,
-        status,
-      ];
+    id,
+    produto,
+    marca,
+    codigoBarras,
+    quantidade,
+    quantidadeMinima,
+    estoqueAbaixoDoMinimo,
+    dataValidade,
+    despensa,
+  ];
 }
 
 class AdicionarEstoqueDto {
@@ -199,13 +172,9 @@ class AtualizarEstoqueDto {
 class ConsumirEstoqueDto {
   final int quantidadeConsumida;
 
-  const ConsumirEstoqueDto({
-    required this.quantidadeConsumida,
-  });
+  const ConsumirEstoqueDto({required this.quantidadeConsumida});
 
   Map<String, dynamic> toJson() {
-    return {
-      'quantidadeConsumida': quantidadeConsumida,
-    };
+    return {'quantidadeConsumida': quantidadeConsumida};
   }
-} 
+}

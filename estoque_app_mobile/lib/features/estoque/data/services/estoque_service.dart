@@ -11,11 +11,37 @@ class EstoqueService {
   // Obtém todos os itens de estoque de uma despensa
   Future<List<EstoqueItem>> getEstoqueDespensa(int despensaId) async {
     try {
-      final response = await _apiService.get('/despensas/$despensaId/estoque');
+      final response = await _apiService.get(
+        '/estoque',
+        queryParameters: {'despensaId': despensaId},
+      );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((item) => EstoqueItem.fromJson(item)).toList();
+        final dynamic responseData = response.data;
+
+        // Se a resposta for null, retorna lista vazia
+        if (responseData == null) {
+          return [];
+        }
+
+        // Se a resposta for uma lista direta
+        if (responseData is List) {
+          return responseData
+              .map((item) => EstoqueItem.fromJson(item))
+              .toList();
+        }
+
+        // Se a resposta for um objeto com propriedade 'estoque'
+        if (responseData is Map<String, dynamic>) {
+          final List<dynamic>? data = responseData['estoque'] as List<dynamic>?;
+          if (data == null) {
+            return [];
+          }
+          return data.map((item) => EstoqueItem.fromJson(item)).toList();
+        }
+
+        // Se chegou aqui, formato não reconhecido
+        return [];
       } else {
         throw Exception('Erro ao carregar estoque: ${response.statusMessage}');
       }
@@ -41,8 +67,20 @@ class EstoqueService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((item) => Produto.fromJson(item)).toList();
+        final dynamic data = response.data;
+
+        // Se a resposta for null, retorna lista vazia
+        if (data == null) {
+          return [];
+        }
+
+        // Se a resposta for uma lista
+        if (data is List) {
+          return data.map((item) => Produto.fromJson(item)).toList();
+        }
+
+        // Se chegou aqui, formato não reconhecido
+        return [];
       } else {
         throw Exception('Erro ao buscar produtos: ${response.statusMessage}');
       }
@@ -54,18 +92,26 @@ class EstoqueService {
   }
 
   // Adiciona um item ao estoque
-  Future<EstoqueItem> adicionarItem(
+  Future<void> adicionarItem(
     int despensaId,
     AdicionarItemRequest request,
   ) async {
     try {
       final response = await _apiService.post(
-        '/despensas/$despensaId/estoque',
-        data: request.toJson(),
+        '/estoque',
+        data: {
+          'despensaId': despensaId,
+          'produtoId': request.produtoId,
+          'quantidade': request.quantidade,
+          'quantidadeMinima': 1, // Default value
+          'observacoes': request.observacoes,
+          'dataValidade': request.dataValidade?.toIso8601String(),
+        },
       );
 
-      if (response.statusCode == 201) {
-        return EstoqueItem.fromJson(response.data);
+      if (response.statusCode == 200) {
+        // API retorna apenas uma mensagem de sucesso, não o item criado
+        return;
       } else {
         throw Exception('Erro ao adicionar item: ${response.statusMessage}');
       }
@@ -85,10 +131,7 @@ class EstoqueService {
   }
 
   // Atualiza um item do estoque
-  Future<EstoqueItem> atualizarItem(
-    int itemId,
-    AtualizarItemRequest request,
-  ) async {
+  Future<void> atualizarItem(int itemId, AtualizarItemRequest request) async {
     try {
       final response = await _apiService.put(
         '/estoque/$itemId',
@@ -96,7 +139,8 @@ class EstoqueService {
       );
 
       if (response.statusCode == 200) {
-        return EstoqueItem.fromJson(response.data);
+        // API retorna um objeto com message e dados extras, não um EstoqueItem
+        return;
       } else {
         throw Exception('Erro ao atualizar item: ${response.statusMessage}');
       }
@@ -116,10 +160,7 @@ class EstoqueService {
   }
 
   // Consome um item do estoque
-  Future<EstoqueItem> consumirItem(
-    int itemId,
-    ConsumirItemRequest request,
-  ) async {
+  Future<void> consumirItem(int itemId, ConsumirItemRequest request) async {
     try {
       final response = await _apiService.post(
         '/estoque/$itemId/consumir',
@@ -127,7 +168,8 @@ class EstoqueService {
       );
 
       if (response.statusCode == 200) {
-        return EstoqueItem.fromJson(response.data);
+        // API retorna um objeto com message e dados extras, não um EstoqueItem
+        return;
       } else {
         throw Exception('Erro ao consumir item: ${response.statusMessage}');
       }

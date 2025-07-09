@@ -60,8 +60,8 @@ namespace EstoqueApp.Api.Controllers
             var resumo = new {
                 totalConvites = convites.Count,
                 convitesPendentes = convites.Count(c => c.estado == "Pendente"),
-                convitesAceites = convites.Count(c => c.estado == "Aceite"),
-                convitesRecusados = convites.Count(c => c.estado == "Recusado"),
+                convitesAceites = convites.Count(c => c.estado == "Aceito"),
+                convitesRejeitados = convites.Count(c => c.estado == "Rejeitado"),
                 convites = convites
             };
 
@@ -98,9 +98,9 @@ namespace EstoqueApp.Api.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Atualizar o convite
-                convite.Estado = EstadoConvite.Aceite;
-                convite.DataResposta = DateTime.Now;
+                // Aceitar o convite
+                convite.Estado = EstadoConvite.Aceito;
+                convite.DataResposta = DateTime.UtcNow;
 
                 // Adicionar o usuário como membro da despensa
                 var novoMembro = new MembroDespensa
@@ -108,7 +108,7 @@ namespace EstoqueApp.Api.Controllers
                     UsuarioId = int.Parse(userId),
                     DespensaId = convite.DespensaId,
                     Papel = PapelDespensa.Membro,
-                    DataAcesso = DateTime.Now
+                    DataAcesso = DateTime.UtcNow
                 };
 
                 _context.MembrosDespensa.Add(novoMembro);
@@ -206,8 +206,8 @@ namespace EstoqueApp.Api.Controllers
             }
 
             // Atualizar o convite
-            convite.Estado = EstadoConvite.Recusado;
-            convite.DataResposta = DateTime.Now;
+            convite.Estado = EstadoConvite.Rejeitado;
+            convite.DataResposta = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
@@ -309,8 +309,8 @@ namespace EstoqueApp.Api.Controllers
             return Ok(new {
                 totalConvitesEnviados = convitesEnviados.Count,
                 convitesPendentes = convitesEnviados.Count(c => c.estado == "Pendente"),
-                convitesAceites = convitesEnviados.Count(c => c.estado == "Aceite"),
-                convitesRecusados = convitesEnviados.Count(c => c.estado == "Recusado"),
+                convitesAceitos = convitesEnviados.Count(c => c.estado == "Aceito"),
+                convitesRejeitados = convitesEnviados.Count(c => c.estado == "Rejeitado"),
                 convites = convitesEnviados
             });
         }

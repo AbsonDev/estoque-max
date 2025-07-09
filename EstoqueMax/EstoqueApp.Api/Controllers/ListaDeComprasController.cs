@@ -253,6 +253,78 @@ namespace EstoqueApp.Api.Controllers
             });
         }
 
+        // POST: api/listadecompras/produto
+        [HttpPost("produto")]
+        public async Task<IActionResult> AdicionarProduto([FromBody] AdicionarProdutoDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Verificar se o produto existe
+            var produto = await _context.Produtos.FindAsync(request.ProdutoId);
+            if (produto == null)
+            {
+                return NotFound("Produto não encontrado.");
+            }
+
+            // Verificar se já foi adicionado
+            var jaExiste = await _context.ListaDeComprasItens
+                .AnyAsync(l => l.UsuarioId == int.Parse(userId) && l.ProdutoId == request.ProdutoId && !l.Comprado);
+
+            if (jaExiste)
+            {
+                return BadRequest("Este produto já está na sua lista de compras.");
+            }
+
+            var novoItem = new ListaDeComprasItem
+            {
+                UsuarioId = int.Parse(userId),
+                ProdutoId = request.ProdutoId,
+                DescricaoManual = null, // Produto tem descrição no cadastro
+                QuantidadeDesejada = request.QuantidadeDesejada > 0 ? request.QuantidadeDesejada : 1,
+                DataCriacao = DateTime.UtcNow
+            };
+
+            _context.ListaDeComprasItens.Add(novoItem);
+            await _context.SaveChangesAsync();
+
+            // Recarregar com informações do produto
+            var itemCompleto = await _context.ListaDeComprasItens
+                .Include(l => l.Produto)
+                .FirstOrDefaultAsync(l => l.Id == novoItem.Id);
+
+            // **NOTIFICAÇÃO EM TEMPO REAL**: Produto adicionado à lista
+            await _hubContext.Clients.Group($"User-{userId}")
+                .SendAsync("ListaDeComprasAtualizada", new { 
+                    acao = "produtoAdicionado",
+                    item = new {
+                        id = itemCompleto!.Id,
+                        produto = new {
+                            id = itemCompleto.Produto!.Id,
+                            nome = itemCompleto.Produto.Nome,
+                            marca = itemCompleto.Produto.Marca
+                        },
+                        quantidadeDesejada = itemCompleto.QuantidadeDesejada,
+                        dataCriacao = itemCompleto.DataCriacao
+                    }
+                });
+
+            return Ok(new {
+                id = itemCompleto.Id,
+                produto = new {
+                    id = itemCompleto.Produto.Id,
+                    nome = itemCompleto.Produto.Nome,
+                    marca = itemCompleto.Produto.Marca
+                },
+                quantidadeDesejada = itemCompleto.QuantidadeDesejada,
+                message = "Produto adicionado à lista de compras com sucesso!"
+            });
+        }
+
         // POST: api/listadecompras/manual
         [HttpPost("manual")]
         public async Task<IActionResult> AdicionarItemManual([FromBody] AdicionarItemManualDto request)
@@ -267,9 +339,10 @@ namespace EstoqueApp.Api.Controllers
             var novoItem = new ListaDeComprasItem
             {
                 UsuarioId = int.Parse(userId),
+                ProdutoId = null, // Item manual não tem produto associado
                 DescricaoManual = request.DescricaoManual,
                 QuantidadeDesejada = request.QuantidadeDesejada > 0 ? request.QuantidadeDesejada : 1,
-                DataCriacao = DateTime.Now
+                DataCriacao = DateTime.UtcNow
             };
 
             _context.ListaDeComprasItens.Add(novoItem);
@@ -477,6 +550,13 @@ namespace EstoqueApp.Api.Controllers
     // **NOVO DTO**
     public class AceitarSugestaoDto
     {
+        public int QuantidadeDesejada { get; set; } = 1;
+    }
+
+    // **NOVO DTO**
+    public class AdicionarProdutoDto
+    {
+        public int ProdutoId { get; set; }
         public int QuantidadeDesejada { get; set; } = 1;
     }
 

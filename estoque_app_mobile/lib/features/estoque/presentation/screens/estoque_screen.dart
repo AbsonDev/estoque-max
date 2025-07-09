@@ -21,7 +21,8 @@ class EstoqueScreen extends StatefulWidget {
   State<EstoqueScreen> createState() => _EstoqueScreenState();
 }
 
-class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateMixin {
+class _EstoqueScreenState extends State<EstoqueScreen>
+    with TickerProviderStateMixin {
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
   bool _isSearchExpanded = false;
@@ -35,7 +36,7 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     // Carrega o estoque inicial
     context.read<EstoqueBloc>().add(LoadEstoque(_selectedDespensaId));
   }
@@ -58,9 +59,7 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
             _buildHeader(),
             _buildStats(),
             _buildFilters(),
-            Expanded(
-              child: _buildContent(),
-            ),
+            Expanded(child: _buildContent()),
           ],
         ),
       ),
@@ -79,23 +78,23 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-              'Estoque',
+                  'Estoque',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-            ),
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 4),
-              Text(
+                Text(
                   'Gerencie seus itens',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
-              ),
-          ],
-        ),
+              ],
+            ),
           ),
-          
+
           // Busca
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -131,9 +130,9 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
                     ),
                   ),
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           // Ordenação
           IconButton(
             onPressed: _showSortDialog,
@@ -160,7 +159,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
               itensVencendo: state.itensVencendo,
               itensBaixoEstoque: state.itensBaixoEstoque,
               itensEmFalta: state.itensEmFalta,
-              itensPrecisaComprar: state.itensPrecisaComprar,
             ),
           );
         }
@@ -190,43 +188,45 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
 
   Widget _buildContent() {
     return BlocConsumer<EstoqueBloc, EstoqueState>(
-        listener: (context, state) {
-          if (state is EstoqueError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppTheme.error,
+      listener: (context, state) {
+        if (state is EstoqueError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppTheme.error,
               behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } else if (state is EstoqueOperationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppTheme.success,
+            ),
+          );
+        } else if (state is EstoqueOperationSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppTheme.success,
               behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is EstoqueLoading) {
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is EstoqueLoading) {
           return const EstoqueLoadingSkeleton();
         }
-        
+
         if (state is EstoqueLoaded) {
           final items = state.filteredItems;
-          
+
           if (items.isEmpty) {
             return EstoqueEmptyState(
               filter: state.currentFilter,
               onAddItem: _showAddItemDialog,
             );
           }
-          
+
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<EstoqueBloc>().add(RefreshEstoque(_selectedDespensaId));
+              context.read<EstoqueBloc>().add(
+                RefreshEstoque(_selectedDespensaId),
+              );
             },
             child: AnimationLimiter(
               child: ListView.builder(
@@ -253,49 +253,47 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
                   );
                 },
               ),
-              ),
-            );
-          }
+            ),
+          );
+        }
 
-          if (state is EstoqueError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: AppTheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Erro ao carregar estoque',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+        if (state is EstoqueError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: AppTheme.error),
                 const SizedBox(height: 16),
-                  ElevatedButton(
-                  onPressed: () {
-                    context.read<EstoqueBloc>().add(LoadEstoque(_selectedDespensaId));
-                  },
-                    child: const Text('Tentar novamente'),
+                Text(
+                  'Erro ao carregar estoque',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: AppTheme.textPrimary,
                   ),
-                ],
-              ),
-            );
-          }
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.message,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<EstoqueBloc>().add(
+                      LoadEstoque(_selectedDespensaId),
+                    );
+                  },
+                  child: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          );
+        }
 
-          return const SizedBox.shrink();
-        },
+        return const SizedBox.shrink();
+      },
     );
   }
 
@@ -316,14 +314,11 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
             ),
           );
         }
-        
+
         return FloatingActionButton(
           onPressed: _showAddItemDialog,
           backgroundColor: AppTheme.primaryColor,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.add, color: Colors.white),
         ).animate().scale(duration: 300.ms);
       },
     );
@@ -363,14 +358,18 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(item.produto.nome),
+        title: Text(item.produto),
         content: Column(
-        mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            Text('Quantidade: ${item.quantidade} ${item.produto.unidadeMedida}'),
-                if (item.dataValidade != null)
-              Text('Validade: ${item.dataValidade!.day}/${item.dataValidade!.month}/${item.dataValidade!.year}'),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Quantidade: ${item.quantidade} ${item.produto.unidadeMedida}',
+            ),
+            if (item.dataValidade != null)
+              Text(
+                'Validade: ${item.dataValidade!.day}/${item.dataValidade!.month}/${item.dataValidade!.year}',
+              ),
             if (item.observacoes != null)
               Text('Observações: ${item.observacoes}'),
           ],
@@ -410,7 +409,9 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar exclusão'),
-        content: Text('Tem certeza que deseja remover "${item.produto.nome}" do estoque?'),
+        content: Text(
+          'Tem certeza que deseja remover "${item.produto}" do estoque?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -421,13 +422,11 @@ class _EstoqueScreenState extends State<EstoqueScreen> with TickerProviderStateM
               Navigator.of(context).pop();
               context.read<EstoqueBloc>().add(RemoveEstoqueItem(item.id));
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.error,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Remover'),
           ),
         ],
       ),
     );
   }
-} 
+}

@@ -79,7 +79,8 @@ builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
 // **NOVO: Registrar serviços de IA**
 builder.Services.AddScoped<PredictionService>();
-builder.Services.AddHostedService<AITrainingBackgroundService>();
+// Temporariamente desabilitado até corrigirmos os campos DateTime
+// builder.Services.AddHostedService<AITrainingBackgroundService>();
 
 // **NOVO: Registrar serviços de Analytics**
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
@@ -120,7 +121,44 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Configure and run the application
 var app = builder.Build();
+
+// Fix DateTime fields on startup
+try
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<EstoqueContext>();
+    var connection = context.Database.GetDbConnection();
+    await connection.OpenAsync();
+    
+    var command = connection.CreateCommand();
+    command.CommandText = @"
+        DELETE FROM ""EstoqueItens"";
+        
+        DO $$
+        BEGIN
+            IF (SELECT data_type FROM information_schema.columns 
+                WHERE table_name = 'EstoqueItens' AND column_name = 'DataAdicao') = 'text' THEN
+                ALTER TABLE ""EstoqueItens"" DROP COLUMN ""DataAdicao"";
+                ALTER TABLE ""EstoqueItens"" ADD COLUMN ""DataAdicao"" timestamp with time zone NOT NULL DEFAULT NOW();
+            END IF;
+            
+            IF (SELECT data_type FROM information_schema.columns 
+                WHERE table_name = 'EstoqueItens' AND column_name = 'DataValidade') = 'text' THEN
+                ALTER TABLE ""EstoqueItens"" DROP COLUMN ""DataValidade"";
+                ALTER TABLE ""EstoqueItens"" ADD COLUMN ""DataValidade"" timestamp with time zone NULL;
+            END IF;
+        END $$;
+    ";
+    await command.ExecuteNonQueryAsync();
+    await connection.CloseAsync();
+    Console.WriteLine("✅ DateTime fields corrected successfully!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ Error fixing DateTime fields: {ex.Message}");
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -158,7 +196,7 @@ app.MapGet("/weatherforecast", () =>
     var forecast =  Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            DateOnly.FromDateTime(DateTime.UtcNow.AddDays(index)),
             Random.Shared.Next(-20, 55),
             summaries[Random.Shared.Next(summaries.Length)]
         ))

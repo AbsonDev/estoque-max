@@ -147,7 +147,7 @@ namespace EstoqueApp.Api.Controllers
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(8), // Duração do token
+                expires: DateTime.UtcNow.AddHours(8), // Duração do token
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

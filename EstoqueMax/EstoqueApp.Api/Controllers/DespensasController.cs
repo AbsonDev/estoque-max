@@ -155,7 +155,7 @@ namespace EstoqueApp.Api.Controllers
                 var despensa = new Despensa
                 {
                     Nome = request.Nome,
-                    DataCriacao = DateTime.Now
+                    DataCriacao = DateTime.UtcNow
                 };
 
                 _context.Despensas.Add(despensa);
@@ -167,7 +167,7 @@ namespace EstoqueApp.Api.Controllers
                     UsuarioId = int.Parse(userId),
                     DespensaId = despensa.Id,
                     Papel = PapelDespensa.Dono,
-                    DataAcesso = DateTime.Now
+                    DataAcesso = DateTime.UtcNow
                 };
 
                 _context.MembrosDespensa.Add(membroDono);
@@ -364,7 +364,7 @@ namespace EstoqueApp.Api.Controllers
                 RemetenteId = int.Parse(userId),
                 DestinatarioId = destinatario.Id,
                 Mensagem = request.Mensagem,
-                DataEnvio = DateTime.Now
+                DataEnvio = DateTime.UtcNow
             };
 
             _context.ConvitesDespensa.Add(convite);

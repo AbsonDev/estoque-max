@@ -31,20 +31,25 @@ class Produto extends Equatable {
 
   factory Produto.fromJson(Map<String, dynamic> json) {
     return Produto(
-      id: json['id'] as int,
-      nome: json['nome'] as String,
+      id: json['id'] as int? ?? 0,
+      nome: json['nome'] as String? ?? 'Produto sem nome',
       marca: json['marca'] as String?,
       categoria: json['categoria'] as String?,
       codigoBarras: json['codigoBarras'] as String?,
-      unidadeMedida: json['unidadeMedida'] as String,
-      precoMedio: json['precoMedio'] != null 
-          ? (json['precoMedio'] as num).toDouble()
+      unidadeMedida: json['unidadeMedida'] as String? ?? 'un',
+      precoMedio: json['precoMedio'] != null
+          ? (json['precoMedio'] as num?)?.toDouble()
           : null,
       descricao: json['descricao'] as String?,
       imagemUrl: json['imagemUrl'] as String?,
-      ativo: json['ativo'] as bool,
-      dataCriacao: DateTime.parse(json['dataCriacao'] as String),
-      ultimaAtualizacao: DateTime.parse(json['ultimaAtualizacao'] as String),
+      ativo: json['ativo'] as bool? ?? true,
+      dataCriacao: json['dataCriacao'] != null
+          ? DateTime.tryParse(json['dataCriacao'] as String) ?? DateTime.now()
+          : DateTime.now(),
+      ultimaAtualizacao: json['ultimaAtualizacao'] != null
+          ? DateTime.tryParse(json['ultimaAtualizacao'] as String) ??
+                DateTime.now()
+          : DateTime.now(),
     );
   }
 
@@ -152,19 +157,19 @@ class Produto extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        nome,
-        marca,
-        categoria,
-        codigoBarras,
-        unidadeMedida,
-        precoMedio,
-        descricao,
-        imagemUrl,
-        ativo,
-        dataCriacao,
-        ultimaAtualizacao,
-      ];
+    id,
+    nome,
+    marca,
+    categoria,
+    codigoBarras,
+    unidadeMedida,
+    precoMedio,
+    descricao,
+    imagemUrl,
+    ativo,
+    dataCriacao,
+    ultimaAtualizacao,
+  ];
 }
 
 class CriarProdutoDto {
@@ -217,4 +222,4 @@ class AtualizarProdutoDto {
       'descricao': descricao,
     };
   }
-} 
+}

@@ -90,22 +90,11 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     emit(const EstoqueOperationInProgress('Adicionando item...'));
 
     try {
-      final newItem = await _estoqueService.adicionarItem(
-        event.despensaId,
-        event.request,
-      );
+      await _estoqueService.adicionarItem(event.despensaId, event.request);
 
-      if (state is EstoqueLoaded) {
-        final currentState = state as EstoqueLoaded;
-        final updatedItems = List<EstoqueItem>.from(currentState.items)
-          ..add(newItem);
-
-        emit(currentState.copyWith(items: updatedItems));
-        emit(const EstoqueOperationSuccess('Item adicionado com sucesso!'));
-      } else {
-        emit(const EstoqueOperationSuccess('Item adicionado com sucesso!'));
-        add(LoadEstoque(event.despensaId));
-      }
+      // Após adicionar o item, recarrega a lista de estoque
+      add(RefreshEstoque(event.despensaId));
+      emit(const EstoqueOperationSuccess('Item adicionado com sucesso!'));
     } catch (e) {
       emit(EstoqueError(e.toString()));
     }
@@ -118,22 +107,17 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     emit(const EstoqueOperationInProgress('Atualizando item...'));
 
     try {
-      final updatedItem = await _estoqueService.atualizarItem(
-        event.itemId,
-        event.request,
-      );
+      await _estoqueService.atualizarItem(event.itemId, event.request);
 
+      // Após atualizar o item, recarrega a lista de estoque
       if (state is EstoqueLoaded) {
         final currentState = state as EstoqueLoaded;
-        final updatedItems = currentState.items.map((item) {
-          return item.id == event.itemId ? updatedItem : item;
-        }).toList();
-
-        emit(currentState.copyWith(items: updatedItems));
-        emit(const EstoqueOperationSuccess('Item atualizado com sucesso!'));
-      } else {
-        emit(const EstoqueOperationSuccess('Item atualizado com sucesso!'));
+        if (currentState.currentDespensaId != null) {
+          add(RefreshEstoque(currentState.currentDespensaId!));
+        }
       }
+
+      emit(const EstoqueOperationSuccess('Item atualizado com sucesso!'));
     } catch (e) {
       emit(EstoqueError(e.toString()));
     }
@@ -146,22 +130,17 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     emit(const EstoqueOperationInProgress('Consumindo item...'));
 
     try {
-      final updatedItem = await _estoqueService.consumirItem(
-        event.itemId,
-        event.request,
-      );
+      await _estoqueService.consumirItem(event.itemId, event.request);
 
+      // Após consumir o item, recarrega a lista de estoque
       if (state is EstoqueLoaded) {
         final currentState = state as EstoqueLoaded;
-        final updatedItems = currentState.items.map((item) {
-          return item.id == event.itemId ? updatedItem : item;
-        }).toList();
-
-        emit(currentState.copyWith(items: updatedItems));
-        emit(const EstoqueOperationSuccess('Item consumido com sucesso!'));
-      } else {
-        emit(const EstoqueOperationSuccess('Item consumido com sucesso!'));
+        if (currentState.currentDespensaId != null) {
+          add(RefreshEstoque(currentState.currentDespensaId!));
+        }
       }
+
+      emit(const EstoqueOperationSuccess('Item consumido com sucesso!'));
     } catch (e) {
       emit(EstoqueError(e.toString()));
     }
@@ -217,7 +196,7 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
 
         emit(currentState.copyWith(items: updatedItems));
 
-        debugPrint('Item atualizado via SignalR: ${updatedItem.produto.nome}');
+        debugPrint('Item atualizado via SignalR: ${updatedItem.produto}');
       } catch (e) {
         debugPrint('Erro ao processar atualização em tempo real: $e');
       }
