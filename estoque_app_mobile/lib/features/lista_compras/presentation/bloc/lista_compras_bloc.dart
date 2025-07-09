@@ -75,7 +75,14 @@ class UpdateItem extends ListaComprasEvent {
   });
 
   @override
-  List<Object?> get props => [itemId, nome, categoria, quantidade, valor, observacoes];
+  List<Object?> get props => [
+    itemId,
+    nome,
+    categoria,
+    quantidade,
+    valor,
+    observacoes,
+  ];
 }
 
 class LoadHistorico extends ListaComprasEvent {
@@ -83,11 +90,7 @@ class LoadHistorico extends ListaComprasEvent {
   final DateTime? dataFim;
   final int? limit;
 
-  LoadHistorico({
-    this.dataInicio,
-    this.dataFim,
-    this.limit,
-  });
+  LoadHistorico({this.dataInicio, this.dataFim, this.limit});
 
   @override
   List<Object?> get props => [dataInicio, dataFim, limit];
@@ -153,7 +156,7 @@ class ItemAdded extends ListaComprasState {
 // BLoC
 class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
   final ListaComprasService _listaComprasService;
-  
+
   ListaComprasBloc(this._listaComprasService) : super(ListaComprasInitial()) {
     on<LoadListaCompras>(_onLoadListaCompras);
     on<AcceptAISuggestion>(_onAcceptAISuggestion);
@@ -173,8 +176,9 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
       if (state is! ListaComprasLoaded) {
         emit(ListaComprasLoading());
       }
-      
-      final lista = await _listaComprasService.getListaCompras();
+
+      final data = await _listaComprasService.getListaDeCompras();
+      final lista = ListaComprasResponse.fromJson(data);
       emit(ListaComprasLoaded(lista));
     } catch (e) {
       emit(ListaComprasError(e.toString()));
@@ -189,11 +193,15 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
       final currentState = state;
       if (currentState is ListaComprasLoaded) {
         emit(ListaComprasUpdating(currentState.lista));
-        
-        await _listaComprasService.aceitarSugestao(event.estoqueItemId);
-        
+
+        await _listaComprasService.aceitarSugestaoPreditiva(
+          event.estoqueItemId,
+          1,
+        );
+
         // Reload the list to get updated data
-        final lista = await _listaComprasService.getListaCompras();
+        final data = await _listaComprasService.getListaDeCompras();
+        final lista = ListaComprasResponse.fromJson(data);
         emit(ListaComprasLoaded(lista));
       }
     } catch (e) {
@@ -209,19 +217,19 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
       final currentState = state;
       if (currentState is ListaComprasLoaded) {
         emit(ListaComprasUpdating(currentState.lista));
-        
-        final request = AddManualItemRequest(
-          nome: event.nome,
-          categoria: event.categoria,
-          quantidade: event.quantidade,
-          valor: event.valor,
-          observacoes: event.observacoes,
+
+        // Corrigir: enviar descricaoManual e quantidadeDesejada no formato correto
+        final descricaoManual = event.nome;
+        final quantidadeDesejada = event.quantidade;
+
+        await _listaComprasService.adicionarItemManual(
+          descricaoManual,
+          quantidadeDesejada,
         );
-        
-        final newItem = await _listaComprasService.adicionarItemManual(request);
-        
+
         // Reload the list to get updated data
-        final lista = await _listaComprasService.getListaCompras();
+        final data = await _listaComprasService.getListaDeCompras();
+        final lista = ListaComprasResponse.fromJson(data);
         emit(ListaComprasLoaded(lista));
       }
     } catch (e) {
@@ -237,11 +245,12 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
       final currentState = state;
       if (currentState is ListaComprasLoaded) {
         emit(ListaComprasUpdating(currentState.lista));
-        
+
         await _listaComprasService.marcarComoComprado(event.itemId);
-        
+
         // Reload the list to get updated data
-        final lista = await _listaComprasService.getListaCompras();
+        final data = await _listaComprasService.getListaDeCompras();
+        final lista = ListaComprasResponse.fromJson(data);
         emit(ListaComprasLoaded(lista));
       }
     } catch (e) {
@@ -257,11 +266,12 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
       final currentState = state;
       if (currentState is ListaComprasLoaded) {
         emit(ListaComprasUpdating(currentState.lista));
-        
+
         await _listaComprasService.removerItem(event.itemId);
-        
+
         // Reload the list to get updated data
-        final lista = await _listaComprasService.getListaCompras();
+        final data = await _listaComprasService.getListaDeCompras();
+        final lista = ListaComprasResponse.fromJson(data);
         emit(ListaComprasLoaded(lista));
       }
     } catch (e) {
@@ -273,27 +283,30 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
     UpdateItem event,
     Emitter<ListaComprasState> emit,
   ) async {
-    try {
-      final currentState = state;
-      if (currentState is ListaComprasLoaded) {
-        emit(ListaComprasUpdating(currentState.lista));
-        
-        await _listaComprasService.atualizarItem(
-          event.itemId,
-          nome: event.nome,
-          categoria: event.categoria,
-          quantidade: event.quantidade,
-          valor: event.valor,
-          observacoes: event.observacoes,
-        );
-        
-        // Reload the list to get updated data
-        final lista = await _listaComprasService.getListaCompras();
-        emit(ListaComprasLoaded(lista));
-      }
-    } catch (e) {
-      emit(ListaComprasError(e.toString()));
-    }
+    // COMENTADO: Endpoint editarItem não existe no backend
+    emit(
+      ListaComprasError('Funcionalidade de edição não disponível no momento'),
+    );
+
+    // try {
+    //   final currentState = state;
+    //   if (currentState is ListaComprasLoaded) {
+    //     emit(ListaComprasUpdating(currentState.lista));
+    //
+    //     await _listaComprasService.editarItem(
+    //       event.itemId,
+    //       quantidadeDesejada: event.quantidade,
+    //       descricaoManual: event.nome,
+    //     );
+    //
+    //     // Reload the list to get updated data
+    //     final data = await _listaComprasService.getListaDeCompras();
+    //     final lista = ListaComprasResponse.fromJson(data);
+    //     emit(ListaComprasLoaded(lista));
+    //   }
+    // } catch (e) {
+    //   emit(ListaComprasError(e.toString()));
+    // }
   }
 
   Future<void> _onLoadHistorico(
@@ -301,11 +314,12 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
     Emitter<ListaComprasState> emit,
   ) async {
     try {
-      final historico = await _listaComprasService.getHistorico(
-        dataInicio: event.dataInicio,
-        dataFim: event.dataFim,
-        limit: event.limit,
-      );
+      final data = await _listaComprasService.getHistorico();
+      final historico =
+          (data['historico'] as List?)
+              ?.map((item) => HistoricoCompra.fromJson(item))
+              .toList() ??
+          [];
       emit(HistoricoLoaded(historico));
     } catch (e) {
       emit(ListaComprasError(e.toString()));
@@ -317,10 +331,11 @@ class ListaComprasBloc extends Bloc<ListaComprasEvent, ListaComprasState> {
     Emitter<ListaComprasState> emit,
   ) async {
     try {
-      final lista = await _listaComprasService.getListaCompras();
+      final data = await _listaComprasService.getListaDeCompras();
+      final lista = ListaComprasResponse.fromJson(data);
       emit(ListaComprasLoaded(lista));
     } catch (e) {
       emit(ListaComprasError(e.toString()));
     }
   }
-} 
+}

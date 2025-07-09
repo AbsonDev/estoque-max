@@ -1,14 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
 import '../../data/services/despensas_service.dart';
 import '../../data/models/despensa.dart';
 import '../../../../core/exceptions/api_exception.dart';
+import '../../../../core/services/signalr_service.dart';
 import 'despensas_event.dart';
 import 'despensas_state.dart';
 
 class DespensasBloc extends Bloc<DespensasEvent, DespensasState> {
   final DespensasService _despensasService;
+  final SignalRService _signalRService;
 
-  DespensasBloc(this._despensasService) : super(const DespensasInitial()) {
+  DespensasBloc(this._despensasService, this._signalRService) : super(const DespensasInitial()) {
     on<LoadDespensas>(_onLoadDespensas);
     on<RefreshDespensas>(_onRefreshDespensas);
     on<CreateDespensa>(_onCreateDespensa);
@@ -18,6 +21,41 @@ class DespensasBloc extends Bloc<DespensasEvent, DespensasState> {
     on<ConvidarMembro>(_onConvidarMembro);
     on<RemoverMembro>(_onRemoverMembro);
     on<ClearDespensaMessage>(_onClearDespensaMessage);
+    on<DespensaUpdatedRealTime>(_onDespensaUpdatedRealTime);
+    on<MembroAdicionadoRealTime>(_onMembroAdicionadoRealTime);
+    on<MembroRemovidoRealTime>(_onMembroRemovidoRealTime);
+    
+    // Configurar listeners do SignalR
+    _setupSignalRListeners();
+  }
+
+  void _setupSignalRListeners() {
+    _signalRService.addDespensaListener((data) {
+      add(DespensaUpdatedRealTime(data));
+    });
+    
+    _signalRService.addMembroAdicionadoListener((data) {
+      add(MembroAdicionadoRealTime(data));
+    });
+    
+    _signalRService.addMembroRemovidoListener((data) {
+      add(MembroRemovidoRealTime(data));
+    });
+  }
+
+  @override
+  Future<void> close() {
+    // Limpar listeners do SignalR
+    _signalRService.removeDespensaListener((data) {
+      add(DespensaUpdatedRealTime(data));
+    });
+    _signalRService.removeMembroAdicionadoListener((data) {
+      add(MembroAdicionadoRealTime(data));
+    });
+    _signalRService.removeMembroRemovidoListener((data) {
+      add(MembroRemovidoRealTime(data));
+    });
+    return super.close();
   }
 
   Future<void> _onLoadDespensas(
@@ -291,6 +329,65 @@ class DespensasBloc extends Bloc<DespensasEvent, DespensasState> {
     final currentState = state;
     if (currentState is DespensasLoaded) {
       emit(currentState.copyWith(clearSuccessMessage: true));
+    }
+  }
+
+  Future<void> _onDespensaUpdatedRealTime(
+    DespensaUpdatedRealTime event,
+    Emitter<DespensasState> emit,
+  ) async {
+    try {
+      // Recarrega as despensas para sincronizar com as mudanças
+      final despensas = await _despensasService.getDespensas();
+      emit(DespensasLoaded(despensas: despensas));
+      
+      debugPrint('Despensas atualizadas via SignalR');
+    } catch (e) {
+      debugPrint('Erro ao processar atualização de despensa em tempo real: $e');
+    }
+  }
+
+  Future<void> _onMembroAdicionadoRealTime(
+    MembroAdicionadoRealTime event,
+    Emitter<DespensasState> emit,
+  ) async {
+    try {
+      // Se estiver visualizando detalhes de uma despensa, recarregar
+      if (state is DespensaDetalhesLoaded) {
+        final currentState = state as DespensaDetalhesLoaded;
+        final despensaAtualizada = await _despensasService.getDespensa(currentState.despensa.id);
+        
+        emit(DespensaDetalhesLoaded(
+          despensa: despensaAtualizada,
+          todasDespensas: currentState.todasDespensas,
+        ));
+      }
+      
+      debugPrint('Membro adicionado via SignalR');
+    } catch (e) {
+      debugPrint('Erro ao processar adição de membro em tempo real: $e');
+    }
+  }
+
+  Future<void> _onMembroRemovidoRealTime(
+    MembroRemovidoRealTime event,
+    Emitter<DespensasState> emit,
+  ) async {
+    try {
+      // Se estiver visualizando detalhes de uma despensa, recarregar
+      if (state is DespensaDetalhesLoaded) {
+        final currentState = state as DespensaDetalhesLoaded;
+        final despensaAtualizada = await _despensasService.getDespensa(currentState.despensa.id);
+        
+        emit(DespensaDetalhesLoaded(
+          despensa: despensaAtualizada,
+          todasDespensas: currentState.todasDespensas,
+        ));
+      }
+      
+      debugPrint('Membro removido via SignalR');
+    } catch (e) {
+      debugPrint('Erro ao processar remoção de membro em tempo real: $e');
     }
   }
 
