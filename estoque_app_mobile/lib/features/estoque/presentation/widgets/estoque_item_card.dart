@@ -54,12 +54,12 @@ class EstoqueItemCard extends StatelessWidget {
           ],
         ),
         child: GestureDetector(
-        onTap: onTap,
+          onTap: onTap,
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: Color(item.statusColor).withOpacity(0.3),
                 width: 2,
@@ -72,12 +72,12 @@ class EstoqueItemCard extends StatelessWidget {
                 ),
               ],
             ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 // Header com nome e status
-              Row(
-                children: [
+                Row(
+                  children: [
                     // Ícone da categoria
                     Container(
                       width: 40,
@@ -88,41 +88,44 @@ class EstoqueItemCard extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          item.produto.iconeCategoria,
+                          '📦', // Ícone padrão
                           style: const TextStyle(fontSize: 20),
                         ),
                       ),
                     ),
-                  const SizedBox(width: 12),
-                    
+                    const SizedBox(width: 12),
+
                     // Nome e marca
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                            item.produto.nome,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
-                            ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.produto,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textPrimary,
+                                ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (item.produto.marca != null)
-                          Text(
-                              item.produto.marca!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.textSecondary,
+                          if (item.marca != null && item.marca!.isNotEmpty)
+                            Text(
+                              item.marca!,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppTheme.textSecondary),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                    
+
                     // Status badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Color(item.statusColor),
                         borderRadius: BorderRadius.circular(12),
@@ -135,10 +138,10 @@ class EstoqueItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ],
+                ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
                 // Informações principais
                 Row(
@@ -149,11 +152,12 @@ class EstoqueItemCard extends StatelessWidget {
                         context,
                         icon: Icons.inventory_2,
                         label: 'Quantidade',
-                        value: '${item.quantidade.toStringAsFixed(item.quantidade.truncateToDouble() == item.quantidade ? 0 : 1)} ${item.produto.unidadeMedida}',
+                        value:
+                            '${item.quantidade.toStringAsFixed(item.quantidade.truncateToDouble() == item.quantidade ? 0 : 1)} un.',
                         color: AppTheme.primaryColor,
                       ),
                     ),
-                    
+
                     // Validade
                     if (item.dataValidade != null)
                       Expanded(
@@ -161,41 +165,20 @@ class EstoqueItemCard extends StatelessWidget {
                           context,
                           icon: Icons.schedule,
                           label: 'Validade',
-                          value: DateFormat('dd/MM/yyyy').format(item.dataValidade!),
+                          value: DateFormat(
+                            'dd/MM/yyyy',
+                          ).format(item.dataValidade!),
                           color: _getValidityColor(),
                         ),
                       ),
                   ],
                 ),
-                
-                // Observações
-                if (item.observacoes != null && item.observacoes!.isNotEmpty)
-                  Column(
-                children: [
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.background,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppTheme.divider,
-                          ),
-                        ),
-                        child: Text(
-                          item.observacoes!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondary,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                
+
                 // Alertas
-                if (item.isVencido || item.isVencendoEm7Dias || item.isQuantidadeBaixa || item.isEmFalta)
+                if (item.isVencido ||
+                    item.isVencendoEm7Dias ||
+                    item.isQuantidadeBaixa ||
+                    item.isEmFalta)
                   Column(
                     children: [
                       const SizedBox(height: 8),
@@ -214,7 +197,7 @@ class EstoqueItemCard extends StatelessWidget {
                             _buildAlertChip(
                               context,
                               icon: Icons.schedule,
-                              label: 'Vencendo em ${item.diasParaVencimento} dias',
+                              label: 'Vencendo',
                               color: Colors.orange,
                             ),
                           if (item.isEmFalta)
@@ -231,21 +214,21 @@ class EstoqueItemCard extends StatelessWidget {
                               label: 'Baixo estoque',
                               color: AppTheme.warning,
                             ),
-                          if (item.precisaComprar)
+                          if (item.estoqueAbaixoDoMinimo)
                             _buildAlertChip(
                               context,
                               icon: Icons.shopping_cart,
-                              label: 'Precisa comprar',
+                              label: 'Precisa repor',
                               color: AppTheme.secondary,
                             ),
                         ],
                       ),
-                ],
-              ),
-            ],
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.2, end: 0);
   }
@@ -258,12 +241,8 @@ class EstoqueItemCard extends StatelessWidget {
     required Color color,
   }) {
     return Row(
-        children: [
-        Icon(
-          icon,
-                color: color,
-          size: 16,
-        ),
+      children: [
+        Icon(icon, color: color, size: 16),
         const SizedBox(width: 4),
         Expanded(
           child: Column(
@@ -271,9 +250,9 @@ class EstoqueItemCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
               ),
               Text(
                 value,
@@ -300,18 +279,12 @@ class EstoqueItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-        ),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 12,
-          ),
+          Icon(icon, color: color, size: 12),
           const SizedBox(width: 4),
           Text(
             label,
@@ -338,4 +311,4 @@ class EstoqueItemCard extends StatelessWidget {
     if (item.isVencendoEm7Dias) return Colors.orange;
     return AppTheme.textSecondary;
   }
-} 
+}

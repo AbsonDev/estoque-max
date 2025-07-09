@@ -81,22 +81,21 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.item.produto.nome,
+                        widget.item.produto,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (widget.item.produto.marca != null) ...[
-                        const SizedBox(height: 4),
+                      if (widget.item.marca != null &&
+                          widget.item.marca!.isNotEmpty)
                         Text(
-                          widget.item.produto.marca!,
+                          widget.item.marca!,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
                           ),
                         ),
-                      ],
                       const SizedBox(height: 8),
                       Row(
                         children: [

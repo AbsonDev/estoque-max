@@ -8,7 +8,6 @@ class EstoqueStatsCard extends StatelessWidget {
   final int itensVencendo;
   final int itensBaixoEstoque;
   final int itensEmFalta;
-  final int itensPrecisaComprar;
 
   const EstoqueStatsCard({
     super.key,
@@ -17,7 +16,6 @@ class EstoqueStatsCard extends StatelessWidget {
     required this.itensVencendo,
     required this.itensBaixoEstoque,
     required this.itensEmFalta,
-    required this.itensPrecisaComprar,
   });
 
   @override
@@ -56,43 +54,31 @@ class EstoqueStatsCard extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Estatísticas principais
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  context,
-                  icon: Icons.inventory_2,
-                  label: 'Total',
-                  value: totalItems.toString(),
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatItem(
-                  context,
-                  icon: Icons.shopping_cart,
-                  label: 'Comprar',
-                  value: itensPrecisaComprar.toString(),
-                  color: AppTheme.warning,
-                ),
-              ),
-            ],
+          Center(
+            child: _buildStatItem(
+              context,
+              icon: Icons.inventory_2,
+              label: 'Total de Itens',
+              value: totalItems.toString(),
+              color: AppTheme.primaryColor,
+            ),
           ),
-          
-          const SizedBox(height: 12),
-          
+
           // Estatísticas de alerta
-          if (itensVencidos > 0 || itensVencendo > 0 || itensBaixoEstoque > 0 || itensEmFalta > 0)
+          if (itensVencidos > 0 ||
+              itensVencendo > 0 ||
+              itensBaixoEstoque > 0 ||
+              itensEmFalta > 0)
             Column(
               children: [
+                const SizedBox(height: 12),
                 const Divider(height: 1),
                 const SizedBox(height: 12),
-                
+
                 // Alertas
                 Wrap(
                   spacing: 8,
@@ -151,17 +137,11 @@ class EstoqueStatsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-        ),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 24,
-          ),
+          Icon(icon, color: color, size: 24),
           const SizedBox(height: 4),
           Text(
             value,
@@ -172,9 +152,9 @@ class EstoqueStatsCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
           ),
         ],
       ),
@@ -193,18 +173,12 @@ class EstoqueStatsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-        ),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 16,
-          ),
+          Icon(icon, color: color, size: 16),
           const SizedBox(width: 4),
           Text(
             '$value',
@@ -216,12 +190,12 @@ class EstoqueStatsCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
           ),
         ],
       ),
     );
   }
-} 
+}

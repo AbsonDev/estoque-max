@@ -19,6 +19,6 @@ namespace EstoqueApp.Api.Models
         [Required]
         public PapelDespensa Papel { get; set; } // Define se é Dono ou Membro
         
-        public DateTime DataAcesso { get; set; } = DateTime.Now; // Quando o usuário ganhou acesso
+        public DateTime DataAcesso { get; set; } = DateTime.UtcNow; // Quando o usuário ganhou acesso
     }
 } 

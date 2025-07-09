@@ -86,7 +86,7 @@ namespace EstoqueApp.Api.Hubs
         // Método para o frontend testar a conexão
         public async Task Ping()
         {
-            await Clients.Caller.SendAsync("Pong", DateTime.Now);
+            await Clients.Caller.SendAsync("Pong", DateTime.UtcNow);
         }
     }
 } 

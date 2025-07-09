@@ -66,9 +66,6 @@ class EstoqueLoaded extends EstoqueState {
       case 'em_falta':
         filtered = filtered.where((item) => item.isEmFalta).toList();
         break;
-      case 'precisa_comprar':
-        filtered = filtered.where((item) => item.precisaComprar).toList();
-        break;
       default:
         // 'todos' - não filtra
         break;
@@ -77,40 +74,36 @@ class EstoqueLoaded extends EstoqueState {
     // Aplica ordenação
     switch (currentSort) {
       case 'nome':
-        filtered.sort((a, b) => sortAscending 
-            ? a.produto.nome.compareTo(b.produto.nome)
-            : b.produto.nome.compareTo(a.produto.nome));
+        filtered.sort(
+          (a, b) => sortAscending
+              ? a.produto.compareTo(b.produto)
+              : b.produto.compareTo(a.produto),
+        );
         break;
       case 'quantidade':
-        filtered.sort((a, b) => sortAscending 
-            ? a.quantidade.compareTo(b.quantidade)
-            : b.quantidade.compareTo(a.quantidade));
+        filtered.sort(
+          (a, b) => sortAscending
+              ? a.quantidade.compareTo(b.quantidade)
+              : b.quantidade.compareTo(a.quantidade),
+        );
         break;
       case 'validade':
         filtered.sort((a, b) {
           if (a.dataValidade == null && b.dataValidade == null) return 0;
           if (a.dataValidade == null) return 1;
           if (b.dataValidade == null) return -1;
-          return sortAscending 
+          return sortAscending
               ? a.dataValidade!.compareTo(b.dataValidade!)
               : b.dataValidade!.compareTo(a.dataValidade!);
         });
         break;
-      case 'categoria':
-        filtered.sort((a, b) => sortAscending 
-            ? (a.produto.categoria ?? '').compareTo(b.produto.categoria ?? '')
-            : (b.produto.categoria ?? '').compareTo(a.produto.categoria ?? ''));
-        break;
-      case 'status':
-        filtered.sort((a, b) => sortAscending 
-            ? a.status.compareTo(b.status)
-            : b.status.compareTo(a.status));
-        break;
       default:
-        // 'data_adicao' - ordenação padrão
-        filtered.sort((a, b) => sortAscending 
-            ? a.dataAdicao.compareTo(b.dataAdicao)
-            : b.dataAdicao.compareTo(a.dataAdicao));
+        // Ordenação padrão por nome
+        filtered.sort(
+          (a, b) => sortAscending
+              ? a.produto.compareTo(b.produto)
+              : b.produto.compareTo(a.produto),
+        );
         break;
     }
 
@@ -121,18 +114,18 @@ class EstoqueLoaded extends EstoqueState {
   int get totalItems => items.length;
   int get itensVencidos => items.where((item) => item.isVencido).length;
   int get itensVencendo => items.where((item) => item.isVencendoEm7Dias).length;
-  int get itensBaixoEstoque => items.where((item) => item.isQuantidadeBaixa).length;
+  int get itensBaixoEstoque =>
+      items.where((item) => item.isQuantidadeBaixa).length;
   int get itensEmFalta => items.where((item) => item.isEmFalta).length;
-  int get itensPrecisaComprar => items.where((item) => item.precisaComprar).length;
 
   @override
   List<Object?> get props => [
-        items,
+    items,
     produtos,
-        currentFilter,
-        currentSort,
-        sortAscending,
-        currentDespensaId,
+    currentFilter,
+    currentSort,
+    sortAscending,
+    currentDespensaId,
   ];
 }
 
@@ -182,4 +175,4 @@ class ProdutosError extends EstoqueState {
 
   @override
   List<Object?> get props => [message];
-} 
+}
