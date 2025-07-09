@@ -56,7 +56,7 @@ jobs:
       # Build da aplicação Flutter para web
       - name: Build Flutter web
         working-directory: ./estoque_app_mobile
-        run: flutter build web --release --web-renderer html
+        run: flutter build web --release
       
       # Deploy para Azure Static Web Apps
       - name: Build And Deploy
