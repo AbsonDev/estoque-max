@@ -6,121 +6,171 @@ class ListaComprasService {
 
   ListaComprasService(this._apiService);
 
-  Future<ListaComprasResponse> getListaCompras() async {
+  Future<Map<String, dynamic>> getListaDeCompras() async {
     try {
-      final response = await _apiService.get('/lista-de-compras');
-      return ListaComprasResponse.fromJson(response.data);
+      final response = await _apiService.get('/listadecompras');
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
     } catch (e) {
-      throw Exception('Erro ao carregar lista de compras: ${e.toString()}');
+      throw Exception('Erro ao carregar lista de compras: $e');
     }
   }
 
-  Future<void> aceitarSugestao(int estoqueItemId) async {
-    try {
-      await _apiService.post(
-        '/lista-de-compras/aceitar-sugestao/$estoqueItemId',
-      );
-    } catch (e) {
-      throw Exception('Erro ao aceitar sugestão: ${e.toString()}');
-    }
-  }
-
-  Future<ListaComprasItem> adicionarItemManual(
-    AddManualItemRequest request,
+  Future<Map<String, dynamic>> aceitarSugestaoPreditiva(
+    int estoqueItemId,
+    int quantidadeDesejada,
   ) async {
     try {
       final response = await _apiService.post(
-        '/lista-de-compras/adicionar-manual',
-        data: request.toJson(),
-      );
-      return ListaComprasItem.fromJson(response.data);
-    } catch (e) {
-      throw Exception('Erro ao adicionar item manual: ${e.toString()}');
-    }
-  }
-
-  Future<void> marcarComoComprado(int itemId) async {
-    try {
-      await _apiService.put('/lista-de-compras/$itemId/marcar-comprado');
-    } catch (e) {
-      throw Exception('Erro ao marcar como comprado: ${e.toString()}');
-    }
-  }
-
-  Future<void> removerItem(int itemId) async {
-    try {
-      await _apiService.delete('/lista-de-compras/$itemId');
-    } catch (e) {
-      throw Exception('Erro ao remover item: ${e.toString()}');
-    }
-  }
-
-  Future<List<HistoricoCompra>> getHistorico({
-    DateTime? dataInicio,
-    DateTime? dataFim,
-    int? limit = 50,
-  }) async {
-    try {
-      final queryParams = <String, dynamic>{
-        if (dataInicio != null) 'dataInicio': dataInicio.toIso8601String(),
-        if (dataFim != null) 'dataFim': dataFim.toIso8601String(),
-        if (limit != null) 'limit': limit,
-      };
-
-      final response = await _apiService.get(
-        '/lista-de-compras/historico',
-        queryParameters: queryParams,
+        '/listadecompras/aceitar-sugestao/$estoqueItemId',
+        data: {'quantidadeDesejada': quantidadeDesejada},
       );
 
-      return (response.data as List)
-          .map((item) => HistoricoCompra.fromJson(item))
-          .toList();
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
     } catch (e) {
-      throw Exception('Erro ao carregar histórico: ${e.toString()}');
+      throw Exception('Erro ao aceitar sugestão: $e');
     }
   }
 
-  Future<void> atualizarItem(
+  Future<Map<String, dynamic>> adicionarItemManual(
+    String descricaoManual,
+    int quantidadeDesejada,
+  ) async {
+    try {
+      final response = await _apiService.post(
+        '/listadecompras/adicionar-manual',
+        data: {
+          'descricaoManual': descricaoManual,
+          'quantidadeDesejada': quantidadeDesejada,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Erro ao adicionar item manual: $e');
+    }
+  }
+
+  Future<bool> marcarComoComprado(int itemId) async {
+    try {
+      final response = await _apiService.put(
+        '/listadecompras/$itemId/marcar-comprado',
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['success'] ?? true;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Erro ao marcar como comprado: $e');
+    }
+  }
+
+  Future<bool> removerItem(int itemId) async {
+    try {
+      final response = await _apiService.delete('/listadecompras/$itemId');
+
+      if (response.statusCode == 200) {
+        return response.data['success'] ?? true;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Erro ao remover item: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getHistorico() async {
+    try {
+      final response = await _apiService.get('/listadecompras/historico');
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Erro ao carregar histórico: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> editarItem(
     int itemId, {
-    String? nome,
-    String? categoria,
-    int? quantidade,
-    double? valor,
-    String? observacoes,
+    int? quantidadeDesejada,
+    String? descricaoManual,
+    int? despensaId,
   }) async {
     try {
-      final data = <String, dynamic>{
-        if (nome != null) 'nome': nome,
-        if (categoria != null) 'categoria': categoria,
-        if (quantidade != null) 'quantidade': quantidade,
-        if (valor != null) 'valor': valor,
-        if (observacoes != null) 'observacoes': observacoes,
-      };
+      final data = <String, dynamic>{};
 
-      await _apiService.put('/lista-de-compras/$itemId', data: data);
-    } catch (e) {
-      throw Exception('Erro ao atualizar item: ${e.toString()}');
-    }
-  }
+      if (quantidadeDesejada != null) {
+        data['quantidadeDesejada'] = quantidadeDesejada;
+      }
 
-  Future<List<String>> getCategorias() async {
-    try {
-      final response = await _apiService.get('/lista-de-compras/categorias');
-      return List<String>.from(response.data);
-    } catch (e) {
-      throw Exception('Erro ao carregar categorias: ${e.toString()}');
-    }
-  }
+      if (descricaoManual != null) {
+        data['descricaoManual'] = descricaoManual;
+      }
 
-  Future<List<String>> getSugestoesProdutos(String query) async {
-    try {
-      final response = await _apiService.get(
-        '/lista-de-compras/sugestoes-produtos',
-        queryParameters: {'query': query},
+      if (despensaId != null) {
+        data['despensaId'] = despensaId;
+      }
+
+      final response = await _apiService.put(
+        '/listadecompras/$itemId',
+        data: data,
       );
-      return List<String>.from(response.data);
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
     } catch (e) {
-      throw Exception('Erro ao carregar sugestões: ${e.toString()}');
+      throw Exception('Erro ao editar item: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getCategorias() async {
+    try {
+      final response = await _apiService.get('/listadecompras/categorias');
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Erro ao carregar categorias: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getSugestoesProdutos() async {
+    try {
+      final response = await _apiService.post(
+        '/listadecompras/sugestoes-produtos',
+        data: {},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erro no servidor: ${response.statusMessage}');
+      }
+    } catch (e) {
+      throw Exception('Erro ao carregar sugestões: $e');
     }
   }
 }
