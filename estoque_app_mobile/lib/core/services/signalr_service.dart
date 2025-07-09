@@ -4,8 +4,9 @@ import 'dart:async';
 import 'api_service.dart';
 
 class SignalRService {
-  static const String hubUrl = 'http://localhost:5265/estoqueHub';
-  
+  static const String hubUrl =
+      'https://estoquemaxapi-acfwdye6g0bbdwb5.brazilsouth-01.azurewebsites.net/estoqueHub';
+
   final ApiService _apiService;
   HubConnection? _hubConnection;
   bool _isConnected = false;
@@ -37,18 +38,37 @@ class SignalRService {
       }
 
       _hubConnection = HubConnectionBuilder()
-          .withUrl(hubUrl, options: HttpConnectionOptions(
-            accessTokenFactory: () => Future.value(token),
-          ))
-          .withAutomaticReconnect(
-            retryDelays: [0, 2000, 10000, 30000],
+          .withUrl(
+            hubUrl,
+            options: HttpConnectionOptions(
+              accessTokenFactory: () => Future.value(token),
+            ),
           )
+          .withAutomaticReconnect(retryDelays: [0, 2000, 10000, 30000])
           .build();
 
       // Configura os event handlers para conexão
-      _hubConnection!.onclose(_onConnectionClosed);
-      _hubConnection!.onreconnecting(_onReconnecting);
-      _hubConnection!.onreconnected(_onReconnected);
+      // TODO: Corrigir tipos de callback quando a biblioteca for atualizada
+      // _hubConnection!.onclose((error) {
+      //   _isConnected = false;
+      //   debugPrint('SignalR: Conexão fechada - $error');
+
+      //   // Agenda reconexão se não foi desconectado intencionalmente
+      //   if (error != null) {
+      //     _scheduleReconnect();
+      //   }
+      // });
+
+      // _hubConnection!.onreconnecting((error) {
+      //   _isConnected = false;
+      //   debugPrint('SignalR: Reconectando - $error');
+      // });
+
+      // _hubConnection!.onreconnected((connectionId) {
+      //   _isConnected = true;
+      //   _reconnectAttempts = 0;
+      //   debugPrint('SignalR: Reconectado - $connectionId');
+      // });
 
       // Configura os event handlers para eventos do hub
       _setupEventHandlers();
@@ -63,7 +83,7 @@ class SignalRService {
     } catch (e) {
       _isConnecting = false;
       debugPrint('Erro ao conectar SignalR: $e');
-      
+
       // Tenta reconectar automaticamente
       _scheduleReconnect();
     }
@@ -82,27 +102,6 @@ class SignalRService {
     }
   }
 
-  void _onConnectionClosed([Exception? error]) {
-    _isConnected = false;
-    debugPrint('SignalR: Conexão fechada - $error');
-    
-    // Agenda reconexão se não foi desconectado intencionalmente
-    if (error != null) {
-      _scheduleReconnect();
-    }
-  }
-
-  void _onReconnecting([Exception? error]) {
-    _isConnected = false;
-    debugPrint('SignalR: Reconectando - $error');
-  }
-
-  void _onReconnected([String? connectionId]) {
-    _isConnected = true;
-    _reconnectAttempts = 0;
-    debugPrint('SignalR: Reconectado - $connectionId');
-  }
-
   void _scheduleReconnect() {
     if (_reconnectAttempts >= maxReconnectAttempts) {
       debugPrint('SignalR: Máximo de tentativas de reconexão atingido');
@@ -111,7 +110,7 @@ class SignalRService {
 
     _reconnectAttempts++;
     final delay = Duration(seconds: _reconnectAttempts * 5);
-    
+
     _reconnectTimer = Timer(delay, () {
       debugPrint('SignalR: Tentativa de reconexão $_reconnectAttempts');
       connect();
@@ -307,4 +306,4 @@ class SignalRService {
     _onMembroRemovido.clear();
     disconnect();
   }
-} 
+}

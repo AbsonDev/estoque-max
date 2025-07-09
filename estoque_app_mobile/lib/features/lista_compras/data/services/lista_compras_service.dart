@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../../../../core/services/api_service.dart';
 import '../models/lista_compras_models.dart';
 
@@ -18,13 +17,17 @@ class ListaComprasService {
 
   Future<void> aceitarSugestao(int estoqueItemId) async {
     try {
-      await _apiService.post('/lista-de-compras/aceitar-sugestao/$estoqueItemId');
+      await _apiService.post(
+        '/lista-de-compras/aceitar-sugestao/$estoqueItemId',
+      );
     } catch (e) {
       throw Exception('Erro ao aceitar sugestão: ${e.toString()}');
     }
   }
 
-  Future<ListaComprasItem> adicionarItemManual(AddManualItemRequest request) async {
+  Future<ListaComprasItem> adicionarItemManual(
+    AddManualItemRequest request,
+  ) async {
     try {
       final response = await _apiService.post(
         '/lista-de-compras/adicionar-manual',
@@ -68,7 +71,7 @@ class ListaComprasService {
         '/lista-de-compras/historico',
         queryParameters: queryParams,
       );
-      
+
       return (response.data as List)
           .map((item) => HistoricoCompra.fromJson(item))
           .toList();
@@ -77,7 +80,8 @@ class ListaComprasService {
     }
   }
 
-  Future<void> atualizarItem(int itemId, {
+  Future<void> atualizarItem(
+    int itemId, {
     String? nome,
     String? categoria,
     int? quantidade,
@@ -119,4 +123,4 @@ class ListaComprasService {
       throw Exception('Erro ao carregar sugestões: ${e.toString()}');
     }
   }
-} 
+}

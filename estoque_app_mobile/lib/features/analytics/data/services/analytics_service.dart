@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../../../../core/services/api_service.dart';
 import '../models/analytics_models.dart';
 
@@ -10,11 +9,11 @@ class AnalyticsService {
   Future<AnalyticsDashboard> getDashboard({int? despensaId}) async {
     try {
       final response = await _apiService.get(
-        despensaId != null 
-          ? '/analytics/dashboard-despensa/$despensaId'
-          : '/analytics/dashboard',
+        despensaId != null
+            ? '/analytics/dashboard-despensa/$despensaId'
+            : '/analytics/dashboard',
       );
-      
+
       return AnalyticsDashboard.fromJson(response.data);
     } catch (e) {
       throw Exception('Erro ao carregar dashboard: ${e.toString()}');
@@ -23,12 +22,16 @@ class AnalyticsService {
 
   Future<List<ConsumoCategoria>> getConsumoCategoria() async {
     try {
-      final response = await _apiService.get('/analytics/consumo-por-categoria');
+      final response = await _apiService.get(
+        '/analytics/consumo-por-categoria',
+      );
       return (response.data as List)
           .map((item) => ConsumoCategoria.fromJson(item))
           .toList();
     } catch (e) {
-      throw Exception('Erro ao carregar consumo por categoria: ${e.toString()}');
+      throw Exception(
+        'Erro ao carregar consumo por categoria: ${e.toString()}',
+      );
     }
   }
 
@@ -67,18 +70,24 @@ class AnalyticsService {
 
   Future<List<TendenciaDesperdicio>> getTendenciaDesperdicio() async {
     try {
-      final response = await _apiService.get('/analytics/tendencia-desperdicio');
+      final response = await _apiService.get(
+        '/analytics/tendencia-desperdicio',
+      );
       return (response.data as List)
           .map((item) => TendenciaDesperdicio.fromJson(item))
           .toList();
     } catch (e) {
-      throw Exception('Erro ao carregar tendência de desperdício: ${e.toString()}');
+      throw Exception(
+        'Erro ao carregar tendência de desperdício: ${e.toString()}',
+      );
     }
   }
 
   Future<List<ItemExpirado>> getItensExpirados() async {
     try {
-      final response = await _apiService.get('/analytics/itens-expirados-no-mes');
+      final response = await _apiService.get(
+        '/analytics/itens-expirados-no-mes',
+      );
       return (response.data as List)
           .map((item) => ItemExpirado.fromJson(item))
           .toList();
@@ -134,7 +143,9 @@ class AnalyticsService {
       );
       return response.data;
     } catch (e) {
-      throw Exception('Erro ao carregar comparação de consumo: ${e.toString()}');
+      throw Exception(
+        'Erro ao carregar comparação de consumo: ${e.toString()}',
+      );
     }
   }
 
@@ -165,4 +176,4 @@ class AnalyticsService {
       throw Exception('Erro ao exportar dados: ${e.toString()}');
     }
   }
-} 
+}

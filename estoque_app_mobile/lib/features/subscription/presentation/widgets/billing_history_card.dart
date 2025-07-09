@@ -6,10 +6,7 @@ import '../../data/models/subscription_models.dart';
 class BillingHistoryCard extends StatelessWidget {
   final SubscriptionHistory history;
 
-  const BillingHistoryCard({
-    super.key,
-    required this.history,
-  });
+  const BillingHistoryCard({super.key, required this.history});
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +28,11 @@ class BillingHistoryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                _getStatusIcon(),
-                color: _getStatusColor(),
-                size: 20,
-              ),
+              Icon(_getStatusIcon(), color: _getStatusColor(), size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  history.planName,
+                  history.description,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.textPrimary,
@@ -63,9 +56,9 @@ class BillingHistoryCard extends StatelessWidget {
             children: [
               Text(
                 DateFormat('dd/MM/yyyy').format(history.date),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
               ),
               const Spacer(),
               Container(
@@ -85,13 +78,14 @@ class BillingHistoryCard extends StatelessWidget {
               ),
             ],
           ),
-          if (history.description != null && history.description!.isNotEmpty) ...[
+          if (history.description != null &&
+              history.description!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               history.description!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.textSecondary,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
             ),
           ],
         ],
@@ -149,4 +143,4 @@ class BillingHistoryCard extends StatelessWidget {
         return history.status;
     }
   }
-} 
+}

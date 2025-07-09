@@ -6,14 +6,12 @@ import '../bloc/estoque_event.dart';
 import '../bloc/estoque_state.dart';
 import '../../data/models/estoque_item.dart';
 import '../../data/models/produto.dart';
+import '../../data/services/estoque_service.dart';
 
 class AdicionarItemDialog extends StatefulWidget {
   final int? despensaId;
 
-  const AdicionarItemDialog({
-    super.key,
-    this.despensaId,
-  });
+  const AdicionarItemDialog({super.key, this.despensaId});
 
   @override
   State<AdicionarItemDialog> createState() => _AdicionarItemDialogState();
@@ -24,7 +22,7 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
   final _quantidadeController = TextEditingController();
   final _quantidadeMinimaController = TextEditingController(text: '1');
   final _codigoBarrasController = TextEditingController();
-  
+
   Produto? _produtoSelecionado;
   DateTime? _dataValidade;
   bool _isLoading = false;
@@ -32,7 +30,7 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
   @override
   void initState() {
     super.initState();
-    context.read<EstoqueBloc>().add(const CarregarProdutos());
+    context.read<EstoqueBloc>().add(const SearchProdutos(''));
   }
 
   @override
@@ -58,10 +56,6 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
         } else if (state is EstoqueError) {
           setState(() {
             _isLoading = false;
-          });
-        } else if (state is EstoqueLoaded && state.produtoEncontrado != null) {
-          setState(() {
-            _produtoSelecionado = state.produtoEncontrado;
           });
         }
       },
@@ -189,7 +183,7 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
           return DropdownMenuItem(
             value: produto,
             child: Text(
-              produto.marca != null 
+              produto.marca != null
                   ? '${produto.nome} - ${produto.marca}'
                   : produto.nome,
             ),
@@ -208,7 +202,7 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
         },
       );
     }
-    
+
     return const CircularProgressIndicator();
   }
 
@@ -226,8 +220,8 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
               ? '${_dataValidade!.day}/${_dataValidade!.month}/${_dataValidade!.year}'
               : 'Selecionar data',
           style: TextStyle(
-            color: _dataValidade != null 
-                ? AppTheme.textPrimary 
+            color: _dataValidade != null
+                ? AppTheme.textPrimary
                 : AppTheme.textSecondary,
           ),
         ),
@@ -238,7 +232,7 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
   void _buscarProdutoPorCodigoBarras() {
     final codigoBarras = _codigoBarrasController.text.trim();
     if (codigoBarras.isNotEmpty) {
-      context.read<EstoqueBloc>().add(BuscarProdutoPorCodigoBarras(codigoBarras));
+      context.read<EstoqueBloc>().add(SearchProdutos(codigoBarras));
     }
   }
 
@@ -273,15 +267,16 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
         _isLoading = true;
       });
 
-      final dto = AdicionarEstoqueDto(
-        despensaId: widget.despensaId!,
+      final request = AdicionarItemRequest(
         produtoId: _produtoSelecionado!.id,
-        quantidade: int.parse(_quantidadeController.text),
-        quantidadeMinima: int.parse(_quantidadeMinimaController.text),
+        quantidade: double.parse(_quantidadeController.text),
+        observacoes: null,
         dataValidade: _dataValidade,
       );
 
-      context.read<EstoqueBloc>().add(AdicionarItemEstoque(dto));
+      context.read<EstoqueBloc>().add(
+        AddItemToEstoque(widget.despensaId!, request),
+      );
     }
   }
-} 
+}

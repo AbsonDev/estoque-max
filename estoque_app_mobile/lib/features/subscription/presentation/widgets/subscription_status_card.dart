@@ -6,10 +6,7 @@ import '../../data/models/subscription_models.dart';
 class SubscriptionStatusCard extends StatelessWidget {
   final SubscriptionStatus status;
 
-  const SubscriptionStatusCard({
-    super.key,
-    required this.status,
-  });
+  const SubscriptionStatusCard({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +15,7 @@ class SubscriptionStatusCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _getStatusColor().withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: _getStatusColor().withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -53,11 +47,12 @@ class SubscriptionStatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      status.planName,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
+                      status.tierName,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -71,13 +66,16 @@ class SubscriptionStatusCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: _getStatusColor().withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  status.formattedPrice,
+                  status.status,
                   style: TextStyle(
                     color: _getStatusColor(),
                     fontWeight: FontWeight.w600,
@@ -88,99 +86,30 @@ class SubscriptionStatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Features
           Text(
-            'Recursos Incluídos',
+            'Status da Assinatura',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: AppTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
-          ...status.features.map((feature) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: AppTheme.success,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    feature,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )),
-          
-          if (status.isTrialPeriod && status.trialEndDate != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.warning.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              Icon(Icons.check_circle, color: AppTheme.success, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Plano ${status.tierName}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppTheme.textPrimary),
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.timer,
-                    color: AppTheme.warning,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Período de teste termina em ${DateFormat('dd/MM/yyyy').format(status.trialEndDate!)}',
-                      style: TextStyle(
-                        color: AppTheme.warning,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          
-          if (status.cancelAtPeriodEnd && status.endDate != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.error.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning,
-                    color: AppTheme.error,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Assinatura será cancelada em ${DateFormat('dd/MM/yyyy').format(status.endDate!)}',
-                      style: TextStyle(
-                        color: AppTheme.error,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          
-          if (status.endDate != null && !status.cancelAtPeriodEnd) ...[
+            ],
+          ),
+
+          if (status.expiresAt != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -198,9 +127,35 @@ class SubscriptionStatusCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Próxima cobrança em ${DateFormat('dd/MM/yyyy').format(status.endDate!)}',
+                      'Expira em ${DateFormat('dd/MM/yyyy').format(status.expiresAt!)}',
                       style: TextStyle(
                         color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (status.renewsAt != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.refresh, color: AppTheme.success, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Renova em ${DateFormat('dd/MM/yyyy').format(status.renewsAt!)}',
+                      style: TextStyle(
+                        color: AppTheme.success,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -217,8 +172,6 @@ class SubscriptionStatusCard extends StatelessWidget {
   Color _getStatusColor() {
     if (status.isActive) {
       return AppTheme.success;
-    } else if (status.isTrialPeriod) {
-      return AppTheme.warning;
     } else {
       return AppTheme.error;
     }
@@ -227,8 +180,6 @@ class SubscriptionStatusCard extends StatelessWidget {
   IconData _getStatusIcon() {
     if (status.isActive) {
       return Icons.check_circle;
-    } else if (status.isTrialPeriod) {
-      return Icons.timer;
     } else {
       return Icons.cancel;
     }
@@ -237,10 +188,8 @@ class SubscriptionStatusCard extends StatelessWidget {
   String _getStatusText() {
     if (status.isActive) {
       return 'Ativo';
-    } else if (status.isTrialPeriod) {
-      return 'Período de teste';
     } else {
       return 'Inativo';
     }
   }
-} 
+}

@@ -30,7 +30,9 @@ class _MembrosDespensaScreenState extends State<MembrosDespensaScreen> {
   }
 
   void _loadMembros() {
-    context.read<ConvitesBloc>().add(LoadMembros(despensaId: widget.despensaId));
+    context.read<ConvitesBloc>().add(
+      LoadMembros(despensaId: widget.despensaId),
+    );
   }
 
   @override
@@ -42,10 +44,12 @@ class _MembrosDespensaScreenState extends State<MembrosDespensaScreen> {
           IconButton(
             icon: const Icon(Icons.person_add),
             onPressed: () {
-              ConviteEnviarDialog.show(
-                context,
-                widget.despensaId,
-                widget.despensaNome,
+              showDialog(
+                context: context,
+                builder: (context) => ConviteEnviarDialog(
+                  despensaId: widget.despensaId,
+                  despensaNome: widget.despensaNome,
+                ),
               );
             },
           ),
@@ -64,20 +68,22 @@ class _MembrosDespensaScreenState extends State<MembrosDespensaScreen> {
           if (state is ConvitesLoading) {
             return const ConviteLoadingSkeleton();
           }
-          
+
           if (state is MembrosLoaded) {
             final membros = state.membros;
-            
+
             if (membros.isEmpty) {
               return ConvitesEmptyState(
                 title: 'Nenhum membro',
                 subtitle: 'Esta despensa não possui membros ainda.',
                 icon: Icons.people_outline,
                 onActionPressed: () {
-                  ConviteEnviarDialog.show(
-                    context,
-                    widget.despensaId,
-                    widget.despensaNome,
+                  showDialog(
+                    context: context,
+                    builder: (context) => ConviteEnviarDialog(
+                      despensaId: widget.despensaId,
+                      despensaNome: widget.despensaNome,
+                    ),
                   );
                 },
                 actionText: 'Convidar',
@@ -95,20 +101,23 @@ class _MembrosDespensaScreenState extends State<MembrosDespensaScreen> {
                 itemBuilder: (context, index) {
                   final membro = membros[index];
                   return MembroCard(
-                    membro: membro,
-                    onRemover: () {
-                      _showRemoverDialog(membro);
-                    },
-                    onAlterarRole: (novoRole) {
-                      context.read<ConvitesBloc>().add(
+                        membro: membro,
+                        onRemover: () {
+                          _showRemoverDialog(membro);
+                        },
+                        onAlterarRole: (novoRole) {
+                          context.read<ConvitesBloc>().add(
                             AlterarRoleMembro(
                               despensaId: widget.despensaId,
                               membroId: membro.id,
                               novoRole: novoRole,
                             ),
                           );
-                    },
-                  ).animate().fadeIn(duration: 300.ms).slideY(
+                        },
+                      )
+                      .animate()
+                      .fadeIn(duration: 300.ms)
+                      .slideY(
                         begin: 0.2,
                         duration: 300.ms,
                         curve: Curves.easeOutCubic,
@@ -127,10 +136,12 @@ class _MembrosDespensaScreenState extends State<MembrosDespensaScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          ConviteEnviarDialog.show(
-            context,
-            widget.despensaId,
-            widget.despensaNome,
+          showDialog(
+            context: context,
+            builder: (context) => ConviteEnviarDialog(
+              despensaId: widget.despensaId,
+              despensaNome: widget.despensaNome,
+            ),
           );
         },
         child: const Icon(Icons.person_add),
@@ -155,11 +166,11 @@ class _MembrosDespensaScreenState extends State<MembrosDespensaScreen> {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<ConvitesBloc>().add(
-                    RemoverMembro(
-                      despensaId: widget.despensaId,
-                      membroId: membro.id,
-                    ),
-                  );
+                RemoverMembro(
+                  despensaId: widget.despensaId,
+                  membroId: membro.id,
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -191,4 +202,4 @@ class _MembrosDespensaScreenState extends State<MembrosDespensaScreen> {
       ),
     );
   }
-} 
+}

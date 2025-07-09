@@ -19,8 +19,9 @@ class HomeScreen extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isWideScreen = constraints.maxWidth > 900;
-                  final isTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
-                  
+                  final isTablet =
+                      constraints.maxWidth > 600 && constraints.maxWidth <= 900;
+
                   return Center(
                     child: Container(
                       constraints: BoxConstraints(
@@ -28,26 +29,31 @@ class HomeScreen extends StatelessWidget {
                       ),
                       child: SingleChildScrollView(
                         padding: EdgeInsets.all(isWideScreen ? 40 : 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             _buildHeader(context, state, isWideScreen),
                             SizedBox(height: isWideScreen ? 40 : 32),
-                            
+
                             if (isWideScreen)
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: _buildAccountInfo(context, state),
-                                  ),
-                                  const SizedBox(width: 40),
-                                  Expanded(
-                                    flex: 1,
-                                    child: _buildNextSteps(context, isWideScreen),
-                                  ),
-                                ],
+                              IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 1,
+                                      child: _buildAccountInfo(context, state),
+                                    ),
+                                    const SizedBox(width: 40),
+                                    Expanded(
+                                      flex: 1,
+                                      child: _buildNextSteps(
+                                        context,
+                                        isWideScreen,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               )
                             else
                               Column(
@@ -57,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                                   _buildNextSteps(context, isWideScreen),
                                 ],
                               ),
-                            
+
                             SizedBox(height: isWideScreen ? 40 : 32),
                             _buildQuickActions(context, isWideScreen),
                           ],
@@ -76,7 +82,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AuthState state, bool isWideScreen) {
+  Widget _buildHeader(
+    BuildContext context,
+    AuthState state,
+    bool isWideScreen,
+  ) {
     return Container(
       padding: EdgeInsets.all(isWideScreen ? 32 : 24),
       decoration: BoxDecoration(
@@ -89,24 +99,19 @@ class HomeScreen extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.2),
-        ),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
       ),
       child: Row(
-                      children: [
-                        Container(
+        children: [
+          Container(
             width: isWideScreen ? 80 : 60,
             height: isWideScreen ? 80 : 60,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                AppTheme.primaryColor,
-                                AppTheme.primaryVariant,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.primaryColor, AppTheme.primaryVariant],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(isWideScreen ? 40 : 30),
               boxShadow: [
                 BoxShadow(
@@ -115,58 +120,58 @@ class HomeScreen extends StatelessWidget {
                   offset: const Offset(0, 10),
                 ),
               ],
-                          ),
+            ),
             child: Icon(
-                            Icons.person,
-                            color: AppTheme.onPrimary,
+              Icons.person,
+              color: AppTheme.onPrimary,
               size: isWideScreen ? 40 : 30,
-                          ),
-                        ),
+            ),
+          ),
           SizedBox(width: isWideScreen ? 24 : 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   'Olá, ${state is AuthAuthenticated ? (state.user?.nome ?? 'usuário') : 'usuário'}!',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                     fontSize: isWideScreen ? 32 : 24,
-                                    ),
-                              ),
+                  ),
+                ),
                 const SizedBox(height: 8),
-                              Text(
+                Text(
                   'Bem-vindo ao EstoqueMax - Gerencie seu estoque de forma inteligente',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
                     fontSize: isWideScreen ? 18 : 16,
                   ),
-                              ),
-                            ],
-                          ),
-                        ),
+                ),
+              ],
+            ),
+          ),
           Container(
             decoration: BoxDecoration(
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppTheme.divider),
-                                ),
+            ),
             child: IconButton(
               onPressed: () => _showLogoutDialog(context),
               icon: const Icon(Icons.logout, color: AppTheme.textSecondary),
               tooltip: 'Sair',
             ),
-                                  ),
-                                ],
-                              ),
-                            );
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildAccountInfo(BuildContext context, AuthState state) {
     return Container(
       padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.divider),
@@ -177,10 +182,10 @@ class HomeScreen extends StatelessWidget {
             offset: const Offset(0, 5),
           ),
         ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
               Icon(
@@ -189,48 +194,54 @@ class HomeScreen extends StatelessWidget {
                 size: 28,
               ),
               const SizedBox(width: 12),
-                          Text(
-                            'Informações da Conta',
+              Text(
+                'Informações da Conta',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary,
-                                ),
-                          ),
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
-                          _buildInfoRow(
-                            context,
-                            icon: Icons.person_outline,
-                            label: 'Nome',
-            value: state is AuthAuthenticated ? (state.user?.nome ?? 'Não informado') : 'Não informado',
-                          ),
+          _buildInfoRow(
+            context,
+            icon: Icons.person_outline,
+            label: 'Nome',
+            value: state is AuthAuthenticated
+                ? (state.user?.nome ?? 'Não informado')
+                : 'Não informado',
+          ),
           const SizedBox(height: 16),
-                          _buildInfoRow(
-                            context,
-                            icon: Icons.email_outlined,
-                            label: 'Email',
-            value: state is AuthAuthenticated ? (state.user?.email ?? 'Não informado') : 'Não informado',
-                          ),
+          _buildInfoRow(
+            context,
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: state is AuthAuthenticated
+                ? (state.user?.email ?? 'Não informado')
+                : 'Não informado',
+          ),
           const SizedBox(height: 16),
-                          _buildInfoRow(
-                            context,
-                            icon: Icons.security_outlined,
-                            label: 'Provedor',
-            value: state is AuthAuthenticated ? (state.user?.provider ?? 'EstoqueMax') : 'EstoqueMax',
-                          ),
-                        ],
-                      ),
+          _buildInfoRow(
+            context,
+            icon: Icons.security_outlined,
+            label: 'Provedor',
+            value: state is AuthAuthenticated
+                ? (state.user?.provider ?? 'EstoqueMax')
+                : 'EstoqueMax',
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildNextSteps(BuildContext context, bool isWideScreen) {
     return Container(
       padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: AppTheme.divider),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -238,10 +249,10 @@ class HomeScreen extends StatelessWidget {
             offset: const Offset(0, 5),
           ),
         ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             children: [
               Icon(
@@ -250,55 +261,59 @@ class HomeScreen extends StatelessWidget {
                 size: 28,
               ),
               const SizedBox(width: 12),
-                          Text(
+              Text(
                 'Primeiros Passos',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary,
-                                ),
-                          ),
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
-                          _buildFeatureCard(
-                            context,
-                            icon: Icons.inventory_2_outlined,
+          _buildFeatureCard(
+            context,
+            icon: Icons.inventory_2_outlined,
             title: 'Gerenciar Despensas',
             description: 'Organize itens por locais da casa',
             color: Colors.blue,
-                            onTap: () {
+            onTap: () {
               Navigator.of(context).pushNamed('/despensas');
-                            },
-                          ),
+            },
+          ),
           const SizedBox(height: 16),
-                          _buildFeatureCard(
-                            context,
-                            icon: Icons.analytics_outlined,
-                            title: 'Ver Análises',
-                            description: 'Acompanhe seus gastos e consumo',
+          _buildFeatureCard(
+            context,
+            icon: Icons.analytics_outlined,
+            title: 'Ver Análises',
+            description: 'Acompanhe seus gastos e consumo',
             color: Colors.green,
-                            onTap: () {
-                              // TODO: Implementar navegação para análises
+            onTap: () {
+              // TODO: Implementar navegação para análises
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Funcionalidade em desenvolvimento')),
+                const SnackBar(
+                  content: Text('Funcionalidade em desenvolvimento'),
+                ),
               );
-                            },
-                          ),
+            },
+          ),
           const SizedBox(height: 16),
-                          _buildFeatureCard(
-                            context,
-                            icon: Icons.family_restroom_outlined,
+          _buildFeatureCard(
+            context,
+            icon: Icons.family_restroom_outlined,
             title: 'Compartilhamento Familiar',
-                            description: 'Compartilhe com sua família',
+            description: 'Compartilhe com sua família',
             color: Colors.orange,
-                            onTap: () {
-                              // TODO: Implementar navegação para partilha familiar
+            onTap: () {
+              // TODO: Implementar navegação para partilha familiar
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Funcionalidade em desenvolvimento')),
+                const SnackBar(
+                  content: Text('Funcionalidade em desenvolvimento'),
+                ),
               );
-                            },
-                          ),
-                        ],
+            },
+          ),
+        ],
       ),
     );
   }
@@ -316,9 +331,7 @@ class HomeScreen extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.2),
-        ),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
       ),
       child: Column(
         children: [
@@ -335,10 +348,10 @@ class HomeScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ],
                 ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           Wrap(
             spacing: 16,
@@ -358,7 +371,9 @@ class HomeScreen extends StatelessWidget {
                 label: 'Lista de Compras',
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Funcionalidade em desenvolvimento')),
+                    const SnackBar(
+                      content: Text('Funcionalidade em desenvolvimento'),
+                    ),
                   );
                 },
               ),
@@ -368,7 +383,9 @@ class HomeScreen extends StatelessWidget {
                 label: 'Relatórios',
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Funcionalidade em desenvolvimento')),
+                    const SnackBar(
+                      content: Text('Funcionalidade em desenvolvimento'),
+                    ),
                   );
                 },
               ),
@@ -378,9 +395,11 @@ class HomeScreen extends StatelessWidget {
                 label: 'Configurações',
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Funcionalidade em desenvolvimento')),
+                    const SnackBar(
+                      content: Text('Funcionalidade em desenvolvimento'),
+                    ),
                   );
-      },
+                },
               ),
             ],
           ),
@@ -489,11 +508,7 @@ class HomeScreen extends StatelessWidget {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-                color: color,
-              ),
+              child: Icon(Icons.arrow_forward_ios, size: 16, color: color),
             ),
           ],
         ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/analytics_models.dart';
 
@@ -27,10 +26,7 @@ class InsightsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _getTypeColor().withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: _getTypeColor().withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -50,11 +46,7 @@ class InsightsCard extends StatelessWidget {
                   color: _getTypeColor().withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  _getTypeIcon(),
-                  color: _getTypeColor(),
-                  size: 20,
-                ),
+                child: Icon(_getTypeIcon(), color: _getTypeColor(), size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -79,9 +71,8 @@ class InsightsCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           'Confiança: ${(confidence * 100).toStringAsFixed(0)}%',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppTheme.textSecondary),
                         ),
                       ],
                     ),
@@ -198,4 +189,4 @@ class InsightsCard extends StatelessWidget {
         return 'Alerta';
     }
   }
-} 
+}

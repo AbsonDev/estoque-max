@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../bloc/convites_bloc.dart';
 import '../../data/models/convite_models.dart';
 
@@ -43,7 +42,7 @@ class _ConviteEnviarDialogState extends State<ConviteEnviarDialog> {
           setState(() {
             _isLoading = false;
           });
-          
+
           if (state is ConvitesSuccess) {
             Navigator.of(context).pop();
             ScaffoldMessenger.of(context).showSnackBar(
@@ -75,10 +74,7 @@ class _ConviteEnviarDialogState extends State<ConviteEnviarDialog> {
               children: [
                 Text(
                   'Enviar convite para despensa "${widget.despensaNome}"',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -94,8 +90,9 @@ class _ConviteEnviarDialogState extends State<ConviteEnviarDialog> {
                     if (value == null || value.isEmpty) {
                       return 'Digite um email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return 'Digite um email válido';
                     }
                     return null;
@@ -118,9 +115,11 @@ class _ConviteEnviarDialogState extends State<ConviteEnviarDialog> {
           ),
           actions: [
             TextButton(
-              onPressed: _isLoading ? null : () {
-                Navigator.of(context).pop();
-              },
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                    },
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
@@ -149,11 +148,8 @@ class _ConviteEnviarDialogState extends State<ConviteEnviarDialog> {
       );
 
       context.read<ConvitesBloc>().add(
-            EnviarConvite(
-              despensaId: widget.despensaId,
-              request: request,
-            ),
-          );
+        EnviarConvite(despensaId: widget.despensaId, request: request),
+      );
     }
   }
 
@@ -166,4 +162,4 @@ class _ConviteEnviarDialogState extends State<ConviteEnviarDialog> {
       ),
     );
   }
-} 
+}

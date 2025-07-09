@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/services/api_service.dart';
@@ -6,7 +5,7 @@ import '../models/subscription_models.dart';
 
 class SubscriptionService {
   final ApiService _apiService;
-  
+
   SubscriptionService(this._apiService);
 
   // Configuração do RevenueCat
@@ -14,7 +13,7 @@ class SubscriptionService {
     try {
       // Configurar RevenueCat com sua chave
       await Purchases.setLogLevel(LogLevel.debug);
-      
+
       PurchasesConfiguration configuration;
       if (defaultTargetPlatform == TargetPlatform.android) {
         configuration = PurchasesConfiguration('google_play_api_key');
@@ -23,7 +22,7 @@ class SubscriptionService {
       } else {
         return;
       }
-      
+
       await Purchases.configure(configuration);
     } catch (e) {
       debugPrint('Error configuring RevenueCat: $e');
@@ -114,11 +113,11 @@ class SubscriptionService {
   Future<CustomerInfo> purchasePackage(Package package) async {
     try {
       final purchaserInfo = await Purchases.purchasePackage(package);
-      
+
       // Notifica o backend sobre a compra
-      await _syncPurchaseWithBackend(purchaserInfo.customerInfo);
-      
-      return purchaserInfo.customerInfo;
+      await _syncPurchaseWithBackend(purchaserInfo);
+
+      return purchaserInfo;
     } catch (e) {
       debugPrint('Error purchasing package: $e');
       throw Exception('Erro ao processar compra');
@@ -129,10 +128,10 @@ class SubscriptionService {
   Future<CustomerInfo> restorePurchases() async {
     try {
       final customerInfo = await Purchases.restorePurchases();
-      
+
       // Sincroniza com o backend
       await _syncPurchaseWithBackend(customerInfo);
-      
+
       return customerInfo;
     } catch (e) {
       debugPrint('Error restoring purchases: $e');
@@ -143,11 +142,14 @@ class SubscriptionService {
   // Sincroniza compra com o backend
   Future<void> _syncPurchaseWithBackend(CustomerInfo customerInfo) async {
     try {
-      await _apiService.post('/subscription/sync', data: {
-        'customerInfo': customerInfo.toJson(),
-        'activeSubscriptions': customerInfo.activeSubscriptions,
-        'entitlements': customerInfo.entitlements.active,
-      });
+      await _apiService.post(
+        '/subscription/sync',
+        data: {
+          'customerInfo': customerInfo.toJson(),
+          'activeSubscriptions': customerInfo.activeSubscriptions,
+          'entitlements': customerInfo.entitlements.active,
+        },
+      );
     } catch (e) {
       debugPrint('Error syncing purchase with backend: $e');
       // Não lança erro para não interromper o fluxo de compra
@@ -269,4 +271,4 @@ class SubscriptionService {
       return false;
     }
   }
-} 
+}

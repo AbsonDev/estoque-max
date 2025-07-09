@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/models/convite_models.dart';
 
 class ConviteCard extends StatelessWidget {
@@ -90,10 +89,7 @@ class ConviteCard extends StatelessWidget {
                 isRecebido
                     ? 'Convite de ${convite.remetenteNome}'
                     : 'Convite para ${convite.destinatarioEmail}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -120,19 +116,12 @@ class ConviteCard extends StatelessWidget {
   Widget _buildContent() {
     return Row(
       children: [
-        Icon(
-          Icons.email_outlined,
-          size: 16,
-          color: Colors.grey[600],
-        ),
+        Icon(Icons.email_outlined, size: 16, color: Colors.grey[600]),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             isRecebido ? convite.remetenteEmail : convite.destinatarioEmail,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
           ),
         ),
       ],
@@ -148,11 +137,7 @@ class ConviteCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.message_outlined,
-            size: 16,
-            color: Colors.grey[600],
-          ),
+          Icon(Icons.message_outlined, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -172,43 +157,25 @@ class ConviteCard extends StatelessWidget {
   Widget _buildFooter() {
     return Row(
       children: [
-        Icon(
-          Icons.schedule_outlined,
-          size: 16,
-          color: Colors.grey[600],
-        ),
+        Icon(Icons.schedule_outlined, size: 16, color: Colors.grey[600]),
         const SizedBox(width: 8),
         Text(
           _formatarData(convite.dataEnvio),
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         if (convite.dataResposta != null) ...[
           const SizedBox(width: 16),
-          Icon(
-            Icons.reply_outlined,
-            size: 16,
-            color: Colors.grey[600],
-          ),
+          Icon(Icons.reply_outlined, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
           Text(
             'Respondido: ${_formatarData(convite.dataResposta!)}',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           ),
         ],
         const Spacer(),
         if (onDeletar != null)
           IconButton(
-            icon: Icon(
-              Icons.delete_outline,
-              size: 20,
-              color: Colors.red[400],
-            ),
+            icon: Icon(Icons.delete_outline, size: 20, color: Colors.red[400]),
             onPressed: onDeletar,
           ),
       ],
@@ -306,4 +273,4 @@ class ConviteCard extends StatelessWidget {
       return 'Agora';
     }
   }
-} 
+}

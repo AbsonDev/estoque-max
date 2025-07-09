@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/models/convite_models.dart';
 
 class MembroCard extends StatelessWidget {
@@ -50,10 +49,7 @@ class MembroCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         membro.email,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -72,14 +68,10 @@ class MembroCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'Membro desde ${_formatarData(membro.dataJuntou)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
                 const Spacer(),
-                if (onAlterarRole != null)
-                  _buildRoleButton(context),
+                if (onAlterarRole != null) _buildRoleButton(context),
                 if (onRemover != null && !membro.isAdmin)
                   IconButton(
                     icon: Icon(
@@ -117,11 +109,7 @@ class MembroCard extends StatelessWidget {
 
   Widget _buildRoleButton(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.more_vert,
-        size: 20,
-        color: Colors.grey[600],
-      ),
+      icon: Icon(Icons.more_vert, size: 20, color: Colors.grey[600]),
       onSelected: (value) {
         if (value == 'toggle_admin') {
           final novoRole = membro.isAdmin ? 'member' : 'admin';
@@ -134,7 +122,9 @@ class MembroCard extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                membro.isAdmin ? Icons.remove_moderator : Icons.admin_panel_settings,
+                membro.isAdmin
+                    ? Icons.remove_moderator
+                    : Icons.admin_panel_settings,
                 size: 16,
               ),
               const SizedBox(width: 8),
@@ -161,4 +151,4 @@ class MembroCard extends StatelessWidget {
       return 'Hoje';
     }
   }
-} 
+}

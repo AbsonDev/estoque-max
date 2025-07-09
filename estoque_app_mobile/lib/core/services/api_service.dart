@@ -12,14 +12,16 @@ class AuthResponse {
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       token: json['token'] as String,
-      user: json['user'] != null ? User.fromJson(json['user'] as Map<String, dynamic>) : null,
+      user: json['user'] != null
+          ? User.fromJson(json['user'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
 
 class ApiService {
   static const String baseUrl =
-      'http://localhost:5265/api'; // Corrigido para HTTP
+      'https://estoquemaxapi-acfwdye6g0bbdwb5.brazilsouth-01.azurewebsites.net/api';
   static const String tokenKey = 'auth_token';
 
   late final Dio _dio;
@@ -88,7 +90,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final token = response.data['token'] as String;
         await saveToken(token);
-        
+
         // Backend não retorna user no login, então retornamos apenas o token
         return AuthResponse(token: token);
       } else {
@@ -115,25 +117,26 @@ class ApiService {
         data: request.toJson(),
       );
 
-      if (response.statusCode == 200) { // CORRIGIDO: backend retorna 200, não 201
+      if (response.statusCode == 200) {
+        // CORRIGIDO: backend retorna 200, não 201
         // Backend retorna apenas message no registro, não token
         // Apenas confirma que o registro foi bem-sucedido
-        
+
         // Após registro bem-sucedido, fazemos login automaticamente
         final loginRequest = LoginRequest(
           email: request.email,
           senha: request.senha,
         );
-        
+
         return await login(loginRequest);
       } else {
         throw Exception('Erro no registro: ${response.statusMessage}');
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 400) {
-        final errorMessage = e.response?.data is Map 
-          ? e.response?.data['message'] ?? 'Usuário já existe.'
-          : 'Usuário já existe.';
+        final errorMessage = e.response?.data is Map
+            ? e.response?.data['message'] ?? 'Usuário já existe.'
+            : 'Usuário já existe.';
         throw Exception(errorMessage);
       } else if (e.response?.statusCode == 409) {
         throw Exception('Email já está em uso');
@@ -156,13 +159,13 @@ class ApiService {
       if (response.statusCode == 200) {
         final token = response.data['token'] as String;
         await saveToken(token);
-        
+
         // Backend retorna user no login Google
         User? user;
         if (response.data['user'] != null) {
           user = User.fromJson(response.data['user'] as Map<String, dynamic>);
         }
-        
+
         return AuthResponse(token: token, user: user);
       } else {
         throw Exception('Erro no login com Google: ${response.statusMessage}');
@@ -188,7 +191,7 @@ class ApiService {
   // REMOVIDO: Endpoint /auth/profile não existe no backend
   // Se precisar de dados do usuário, pode implementar um endpoint no backend
   // ou armazenar os dados do usuário localmente após o login
-  
+
   // REMOVIDO: Endpoint /auth/validate-token não existe no backend
   // Validação do token agora é feita apenas verificando se existe no storage
   Future<bool> validateToken() async {
@@ -202,19 +205,38 @@ class ApiService {
   }
 
   // Métodos HTTP genéricos para outras funcionalidades
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     return await _dio.get(path, queryParameters: queryParameters);
   }
 
-  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
     return await _dio.post(path, data: data, queryParameters: queryParameters);
   }
 
-  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
     return await _dio.put(path, data: data, queryParameters: queryParameters);
   }
 
-  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await _dio.delete(path, data: data, queryParameters: queryParameters);
+  Future<Response> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    return await _dio.delete(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+    );
   }
 }

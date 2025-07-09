@@ -27,14 +27,14 @@ class PaywallWidget extends StatelessWidget {
       builder: (context, state) {
         if (state is SubscriptionLoaded) {
           final featureAccess = state.featureAccess;
-          
+
           if (_hasFeatureAccess(featureAccess)) {
             return child;
           } else {
             return _buildPaywallOverlay(context);
           }
         }
-        
+
         return child;
       },
     );
@@ -53,9 +53,9 @@ class PaywallWidget extends StatelessWidget {
       case 'advanced_filters':
         return featureAccess.hasAdvancedFilters;
       case 'custom_categories':
-        return featureAccess.hasCustomCategories;
+        return false; // Feature not implemented
       case 'priority_support':
-        return featureAccess.hasPrioritySupport;
+        return false; // Feature not implemented
       default:
         return false;
     }
@@ -65,12 +65,7 @@ class PaywallWidget extends StatelessWidget {
     return Stack(
       children: [
         // Conteúdo original desfocado
-        Opacity(
-          opacity: 0.3,
-          child: AbsorbPointer(
-            child: child,
-          ),
-        ),
+        Opacity(opacity: 0.3, child: AbsorbPointer(child: child)),
         // Overlay do paywall
         Positioned.fill(
           child: Container(
@@ -96,15 +91,8 @@ class PaywallWidget extends StatelessWidget {
             color: Colors.amber,
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            Icons.lock_outline,
-            size: 40,
-            color: Colors.white,
-          ),
-        ).animate().scale(
-          duration: 600.ms,
-          curve: Curves.elasticOut,
-        ),
+          child: Icon(Icons.lock_outline, size: 40, color: Colors.white),
+        ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
         const SizedBox(height: 16),
         Text(
           'Funcionalidade Premium',
@@ -114,52 +102,38 @@ class PaywallWidget extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
-        ).animate().fadeIn(
-          delay: 200.ms,
-          duration: 600.ms,
-        ),
+        ).animate().fadeIn(delay: 200.ms, duration: 600.ms),
         const SizedBox(height: 8),
         Text(
           _getFeatureDescription(),
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.white70, fontSize: 14),
           textAlign: TextAlign.center,
-        ).animate().fadeIn(
-          delay: 400.ms,
-          duration: 600.ms,
-        ),
+        ).animate().fadeIn(delay: 400.ms, duration: 600.ms),
         const SizedBox(height: 20),
         ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const SubscriptionScreen(),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SubscriptionScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.amber,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 12,
-            ),
-          ),
-          child: const Text(
-            'Fazer Upgrade',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ).animate().fadeIn(
-          delay: 600.ms,
-          duration: 600.ms,
-        ).slideY(
-          begin: 0.3,
-          curve: Curves.easeOutCubic,
-        ),
+              child: const Text(
+                'Fazer Upgrade',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            )
+            .animate()
+            .fadeIn(delay: 600.ms, duration: 600.ms)
+            .slideY(begin: 0.3, curve: Curves.easeOutCubic),
       ],
     );
   }
@@ -204,22 +178,16 @@ class PaywallButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!enabled) {
-      return ElevatedButton(
-        onPressed: onPressed,
-        child: child,
-      );
+      return ElevatedButton(onPressed: onPressed, child: child);
     }
 
     return BlocBuilder<SubscriptionBloc, SubscriptionState>(
       builder: (context, state) {
         if (state is SubscriptionLoaded) {
           final featureAccess = state.featureAccess;
-          
+
           if (_hasFeatureAccess(featureAccess)) {
-            return ElevatedButton(
-              onPressed: onPressed,
-              child: child,
-            );
+            return ElevatedButton(onPressed: onPressed, child: child);
           } else {
             return ElevatedButton(
               onPressed: () => _showPaywallDialog(context),
@@ -234,11 +202,8 @@ class PaywallButton extends StatelessWidget {
             );
           }
         }
-        
-        return ElevatedButton(
-          onPressed: onPressed,
-          child: child,
-        );
+
+        return ElevatedButton(onPressed: onPressed, child: child);
       },
     );
   }
@@ -256,9 +221,9 @@ class PaywallButton extends StatelessWidget {
       case 'advanced_filters':
         return featureAccess.hasAdvancedFilters;
       case 'custom_categories':
-        return featureAccess.hasCustomCategories;
+        return false; // Feature not implemented
       case 'priority_support':
-        return featureAccess.hasPrioritySupport;
+        return false; // Feature not implemented
       default:
         return false;
     }
@@ -272,16 +237,9 @@ class PaywallButton extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.lock_outline,
-              size: 48,
-              color: Colors.amber,
-            ),
+            Icon(Icons.lock_outline, size: 48, color: Colors.amber),
             const SizedBox(height: 16),
-            Text(
-              _getFeatureDescription(),
-              textAlign: TextAlign.center,
-            ),
+            Text(_getFeatureDescription(), textAlign: TextAlign.center),
           ],
         ),
         actions: [
@@ -402,8 +360,11 @@ class UsageLimitWidget extends StatelessWidget {
                 value: percentage,
                 backgroundColor: Colors.grey[300],
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isAtLimit ? Colors.red : 
-                  isNearLimit ? Colors.orange : Colors.blue,
+                  isAtLimit
+                      ? Colors.red
+                      : isNearLimit
+                      ? Colors.orange
+                      : Colors.blue,
                 ),
               ),
               if (isNearLimit && onUpgradePressed != null) ...[
@@ -417,10 +378,10 @@ class UsageLimitWidget extends StatelessWidget {
                       foregroundColor: Colors.black,
                     ),
                     child: Text(
-                      isAtLimit ? 'Limite Atingido - Upgrade' : 'Quase no Limite - Upgrade',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      isAtLimit
+                          ? 'Limite Atingido - Upgrade'
+                          : 'Quase no Limite - Upgrade',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -431,4 +392,4 @@ class UsageLimitWidget extends StatelessWidget {
       ),
     );
   }
-} 
+}

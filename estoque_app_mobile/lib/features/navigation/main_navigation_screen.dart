@@ -10,7 +10,6 @@ import '../despensas/presentation/screens/despensas_screen.dart';
 import '../estoque/presentation/screens/estoque_screen.dart';
 import '../lista_compras/presentation/screens/lista_compras_screen.dart';
 import '../analytics/presentation/screens/analytics_screen.dart';
-import '../subscription/presentation/screens/subscription_screen.dart';
 import 'widgets/floating_action_menu.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -20,7 +19,7 @@ class MainNavigationScreen extends StatefulWidget {
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> 
+class _MainNavigationScreenState extends State<MainNavigationScreen>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
   bool _isMenuVisible = false;
@@ -74,7 +73,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     setState(() {
       _isMenuVisible = !_isMenuVisible;
     });
-    
+
     if (_isMenuVisible) {
       _menuAnimationController.forward();
       _fabAnimationController.forward();
@@ -128,7 +127,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
                         borderRadius: BorderRadius.circular(20),
@@ -154,13 +156,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            state is AuthAuthenticated 
+                            state is AuthAuthenticated
                                 ? (state.user?.nome ?? 'Usuário')
                                 : 'Usuário',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textPrimary,
+                                ),
                           ),
                         ],
                       ),
@@ -283,11 +286,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.star,
-            color: Colors.white,
-            size: 16,
-          ),
+          const Icon(Icons.star, color: Colors.white, size: 16),
           const SizedBox(width: 4),
           Text(
             'Free',
@@ -317,9 +316,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
               Navigator.of(context).pop();
               context.read<AuthBloc>().add(AuthLogoutRequested());
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.error,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Sair'),
           ),
         ],
@@ -333,9 +330,5 @@ class TabItem {
   final String label;
   final Color activeColor;
 
-  TabItem({
-    required this.icon,
-    required this.label,
-    required this.activeColor,
-  });
-} 
+  TabItem({required this.icon, required this.label, required this.activeColor});
+}

@@ -1,366 +1,279 @@
-import 'package:equatable/equatable.dart';
+class UserSubscription {
+  final String id;
+  final String status;
+  final String tierId;
+  final DateTime? expiresAt;
+  final bool isActive;
+  final bool isTrial;
 
-class SubscriptionTier extends Equatable {
+  UserSubscription({
+    required this.id,
+    required this.status,
+    required this.tierId,
+    this.expiresAt,
+    required this.isActive,
+    required this.isTrial,
+  });
+
+  factory UserSubscription.fromJson(Map<String, dynamic> json) {
+    return UserSubscription(
+      id: json['id'] as String,
+      status: json['status'] as String,
+      tierId: json['tierId'] as String,
+      expiresAt: json['expiresAt'] != null
+          ? DateTime.parse(json['expiresAt'] as String)
+          : null,
+      isActive: json['isActive'] as bool,
+      isTrial: json['isTrial'] as bool,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'status': status,
+      'tierId': tierId,
+      'expiresAt': expiresAt?.toIso8601String(),
+      'isActive': isActive,
+      'isTrial': isTrial,
+    };
+  }
+}
+
+class SubscriptionTier {
   final String id;
   final String name;
   final String description;
   final double price;
   final String currency;
-  final String period;
+  final String interval;
   final List<String> features;
-  final bool isActive;
-  final int maxDespensas;
-  final int maxMembros;
-  final int maxItens;
-  final bool hasAnalytics;
-  final bool hasAIPredictions;
-  final bool hasExport;
-  final bool hasScanner;
+  final Map<String, int> limits;
 
-  const SubscriptionTier({
+  SubscriptionTier({
     required this.id,
     required this.name,
     required this.description,
     required this.price,
     required this.currency,
-    required this.period,
+    required this.interval,
     required this.features,
-    required this.isActive,
-    required this.maxDespensas,
-    required this.maxMembros,
-    required this.maxItens,
-    required this.hasAnalytics,
-    required this.hasAIPredictions,
-    required this.hasExport,
-    required this.hasScanner,
+    required this.limits,
   });
 
   factory SubscriptionTier.fromJson(Map<String, dynamic> json) {
     return SubscriptionTier(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      price: (json['price'] ?? 0.0).toDouble(),
-      currency: json['currency'] ?? 'EUR',
-      period: json['period'] ?? 'monthly',
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      price: (json['price'] as num).toDouble(),
+      currency: json['currency'] as String,
+      interval: json['interval'] as String,
       features: List<String>.from(json['features'] ?? []),
-      isActive: json['isActive'] ?? false,
-      maxDespensas: json['maxDespensas'] ?? 0,
-      maxMembros: json['maxMembros'] ?? 0,
-      maxItens: json['maxItens'] ?? 0,
-      hasAnalytics: json['hasAnalytics'] ?? false,
-      hasAIPredictions: json['hasAIPredictions'] ?? false,
-      hasExport: json['hasExport'] ?? false,
-      hasScanner: json['hasScanner'] ?? false,
+      limits: Map<String, int>.from(json['limits'] ?? {}),
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'price': price,
-      'currency': currency,
-      'period': period,
-      'features': features,
-      'isActive': isActive,
-      'maxDespensas': maxDespensas,
-      'maxMembros': maxMembros,
-      'maxItens': maxItens,
-      'hasAnalytics': hasAnalytics,
-      'hasAIPredictions': hasAIPredictions,
-      'hasExport': hasExport,
-      'hasScanner': hasScanner,
-    };
-  }
-
-  @override
-  List<Object?> get props => [
-    id, name, description, price, currency, period, features, isActive,
-    maxDespensas, maxMembros, maxItens, hasAnalytics, hasAIPredictions,
-    hasExport, hasScanner,
-  ];
 }
 
-class UserSubscription extends Equatable {
-  final String id;
-  final String userId;
-  final String tierName;
-  final String status;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final DateTime? trialEndDate;
-  final bool isActive;
-  final bool isTrial;
-  final bool willRenew;
-  final String? revenueId;
-  final String? productId;
-  final SubscriptionTier tier;
-
-  const UserSubscription({
-    required this.id,
-    required this.userId,
-    required this.tierName,
-    required this.status,
-    this.startDate,
-    this.endDate,
-    this.trialEndDate,
-    required this.isActive,
-    required this.isTrial,
-    required this.willRenew,
-    this.revenueId,
-    this.productId,
-    required this.tier,
-  });
-
-  factory UserSubscription.fromJson(Map<String, dynamic> json) {
-    return UserSubscription(
-      id: json['id'] ?? '',
-      userId: json['userId'] ?? '',
-      tierName: json['tierName'] ?? '',
-      status: json['status'] ?? '',
-      startDate: json['startDate'] != null
-          ? DateTime.parse(json['startDate'])
-          : null,
-      endDate: json['endDate'] != null
-          ? DateTime.parse(json['endDate'])
-          : null,
-      trialEndDate: json['trialEndDate'] != null
-          ? DateTime.parse(json['trialEndDate'])
-          : null,
-      isActive: json['isActive'] ?? false,
-      isTrial: json['isTrial'] ?? false,
-      willRenew: json['willRenew'] ?? false,
-      revenueId: json['revenueId'],
-      productId: json['productId'],
-      tier: SubscriptionTier.fromJson(json['tier'] ?? {}),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'userId': userId,
-      'tierName': tierName,
-      'status': status,
-      'startDate': startDate?.toIso8601String(),
-      'endDate': endDate?.toIso8601String(),
-      'trialEndDate': trialEndDate?.toIso8601String(),
-      'isActive': isActive,
-      'isTrial': isTrial,
-      'willRenew': willRenew,
-      'revenueId': revenueId,
-      'productId': productId,
-      'tier': tier.toJson(),
-    };
-  }
-
-  @override
-  List<Object?> get props => [
-    id, userId, tierName, status, startDate, endDate, trialEndDate,
-    isActive, isTrial, willRenew, revenueId, productId, tier,
-  ];
-}
-
-class UsageLimits extends Equatable {
-  final int usedDespensas;
-  final int usedMembros;
-  final int usedItens;
+class UsageLimits {
   final int maxDespensas;
   final int maxMembros;
   final int maxItens;
+  final int currentDespensas;
+  final int currentMembros;
+  final int currentItens;
+  final bool canAddDespensa;
+  final bool canAddMembro;
+  final bool canAddItem;
 
-  const UsageLimits({
-    required this.usedDespensas,
-    required this.usedMembros,
-    required this.usedItens,
+  UsageLimits({
     required this.maxDespensas,
     required this.maxMembros,
     required this.maxItens,
+    required this.currentDespensas,
+    required this.currentMembros,
+    required this.currentItens,
+    required this.canAddDespensa,
+    required this.canAddMembro,
+    required this.canAddItem,
   });
 
   factory UsageLimits.fromJson(Map<String, dynamic> json) {
     return UsageLimits(
-      usedDespensas: json['usedDespensas'] ?? 0,
-      usedMembros: json['usedMembros'] ?? 0,
-      usedItens: json['usedItens'] ?? 0,
-      maxDespensas: json['maxDespensas'] ?? 0,
-      maxMembros: json['maxMembros'] ?? 0,
-      maxItens: json['maxItens'] ?? 0,
+      maxDespensas: json['maxDespensas'] as int,
+      maxMembros: json['maxMembros'] as int,
+      maxItens: json['maxItens'] as int,
+      currentDespensas: json['currentDespensas'] as int,
+      currentMembros: json['currentMembros'] as int,
+      currentItens: json['currentItens'] as int,
+      canAddDespensa: json['canAddDespensa'] as bool,
+      canAddMembro: json['canAddMembro'] as bool,
+      canAddItem: json['canAddItem'] as bool,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'usedDespensas': usedDespensas,
-      'usedMembros': usedMembros,
-      'usedItens': usedItens,
-      'maxDespensas': maxDespensas,
-      'maxMembros': maxMembros,
-      'maxItens': maxItens,
-    };
-  }
-
-  bool get canAddDespensa => usedDespensas < maxDespensas;
-  bool get canAddMembro => usedMembros < maxMembros;
-  bool get canAddItem => usedItens < maxItens;
-
-  double get despensaUsagePercentage => maxDespensas > 0 ? (usedDespensas / maxDespensas) : 0;
-  double get membroUsagePercentage => maxMembros > 0 ? (usedMembros / maxMembros) : 0;
-  double get itemUsagePercentage => maxItens > 0 ? (usedItens / maxItens) : 0;
-
-  @override
-  List<Object?> get props => [
-    usedDespensas, usedMembros, usedItens,
-    maxDespensas, maxMembros, maxItens,
-  ];
 }
 
-class FeatureAccess extends Equatable {
+class FeatureAccess {
   final bool hasAnalytics;
   final bool hasAIPredictions;
   final bool hasExport;
   final bool hasScanner;
+  final bool hasReports;
   final bool hasAdvancedFilters;
-  final bool hasCustomCategories;
-  final bool hasPrioritySupport;
 
-  const FeatureAccess({
+  FeatureAccess({
     required this.hasAnalytics,
     required this.hasAIPredictions,
     required this.hasExport,
     required this.hasScanner,
+    required this.hasReports,
     required this.hasAdvancedFilters,
-    required this.hasCustomCategories,
-    required this.hasPrioritySupport,
   });
 
   factory FeatureAccess.fromJson(Map<String, dynamic> json) {
     return FeatureAccess(
-      hasAnalytics: json['hasAnalytics'] ?? false,
-      hasAIPredictions: json['hasAIPredictions'] ?? false,
-      hasExport: json['hasExport'] ?? false,
-      hasScanner: json['hasScanner'] ?? false,
-      hasAdvancedFilters: json['hasAdvancedFilters'] ?? false,
-      hasCustomCategories: json['hasCustomCategories'] ?? false,
-      hasPrioritySupport: json['hasPrioritySupport'] ?? false,
+      hasAnalytics: json['hasAnalytics'] as bool,
+      hasAIPredictions: json['hasAIPredictions'] as bool,
+      hasExport: json['hasExport'] as bool,
+      hasScanner: json['hasScanner'] as bool,
+      hasReports: json['hasReports'] as bool,
+      hasAdvancedFilters: json['hasAdvancedFilters'] as bool,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'hasAnalytics': hasAnalytics,
-      'hasAIPredictions': hasAIPredictions,
-      'hasExport': hasExport,
-      'hasScanner': hasScanner,
-      'hasAdvancedFilters': hasAdvancedFilters,
-      'hasCustomCategories': hasCustomCategories,
-      'hasPrioritySupport': hasPrioritySupport,
-    };
-  }
-
-  @override
-  List<Object?> get props => [
-    hasAnalytics, hasAIPredictions, hasExport, hasScanner,
-    hasAdvancedFilters, hasCustomCategories, hasPrioritySupport,
-  ];
 }
 
-class PaywallInfo extends Equatable {
+class PaywallInfo {
   final String feature;
   final String title;
   final String description;
   final String requiredTier;
-  final String buttonText;
-  final String icon;
+  final bool canStartTrial;
 
-  const PaywallInfo({
+  PaywallInfo({
     required this.feature,
     required this.title,
     required this.description,
     required this.requiredTier,
-    required this.buttonText,
-    required this.icon,
+    required this.canStartTrial,
   });
 
   factory PaywallInfo.fromJson(Map<String, dynamic> json) {
     return PaywallInfo(
-      feature: json['feature'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      requiredTier: json['requiredTier'] ?? '',
-      buttonText: json['buttonText'] ?? '',
-      icon: json['icon'] ?? '',
+      feature: json['feature'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      requiredTier: json['requiredTier'] as String,
+      canStartTrial: json['canStartTrial'] as bool,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'feature': feature,
-      'title': title,
-      'description': description,
-      'requiredTier': requiredTier,
-      'buttonText': buttonText,
-      'icon': icon,
-    };
-  }
-
-  @override
-  List<Object?> get props => [
-    feature, title, description, requiredTier, buttonText, icon,
-  ];
 }
 
-// Predefined tiers
-class SubscriptionTiers {
-  static const SubscriptionTier free = SubscriptionTier(
-    id: 'free',
-    name: 'Gratuito',
-    description: 'Perfeito para começar',
-    price: 0.0,
-    currency: 'EUR',
-    period: 'forever',
-    features: [
-      '2 despensas',
-      '5 membros por despensa',
-      '100 itens',
-      'Funcionalidades básicas',
-    ],
-    isActive: true,
-    maxDespensas: 2,
-    maxMembros: 5,
-    maxItens: 100,
-    hasAnalytics: false,
-    hasAIPredictions: false,
-    hasExport: false,
-    hasScanner: false,
-  );
+class SubscriptionStatus {
+  final String status;
+  final DateTime? renewsAt;
+  final DateTime? expiresAt;
+  final bool isActive;
+  final String tierName;
 
-  static const SubscriptionTier premium = SubscriptionTier(
-    id: 'premium',
-    name: 'Premium',
-    description: 'Para famílias e uso avançado',
-    price: 4.99,
-    currency: 'EUR',
-    period: 'monthly',
-    features: [
-      'Despensas ilimitadas',
-      'Membros ilimitados',
-      'Itens ilimitados',
-      'Analytics completos',
-      'Previsões de IA',
-      'Exportação de dados',
-      'Scanner de código de barras',
-      'Suporte prioritário',
-    ],
-    isActive: true,
-    maxDespensas: -1, // unlimited
-    maxMembros: -1,
-    maxItens: -1,
-    hasAnalytics: true,
-    hasAIPredictions: true,
-    hasExport: true,
-    hasScanner: true,
-  );
-} 
+  SubscriptionStatus({
+    required this.status,
+    this.renewsAt,
+    this.expiresAt,
+    required this.isActive,
+    required this.tierName,
+  });
+
+  factory SubscriptionStatus.fromJson(Map<String, dynamic> json) {
+    return SubscriptionStatus(
+      status: json['status'] as String,
+      renewsAt: json['renewsAt'] != null
+          ? DateTime.parse(json['renewsAt'] as String)
+          : null,
+      expiresAt: json['expiresAt'] != null
+          ? DateTime.parse(json['expiresAt'] as String)
+          : null,
+      isActive: json['isActive'] as bool,
+      tierName: json['tierName'] as String,
+    );
+  }
+}
+
+class SubscriptionPlan {
+  final String id;
+  final String name;
+  final String description;
+  final double price;
+  final String currency;
+  final List<String> features;
+
+  SubscriptionPlan({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.currency,
+    required this.features,
+  });
+
+  factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
+    return SubscriptionPlan(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      price: (json['price'] as num).toDouble(),
+      currency: json['currency'] as String,
+      features: List<String>.from(json['features'] ?? []),
+    );
+  }
+}
+
+class SubscriptionAnalytics {
+  final int totalUsers;
+  final int activeSubscribers;
+  final double monthlyRevenue;
+  final Map<String, int> subscriptionsByTier;
+
+  SubscriptionAnalytics({
+    required this.totalUsers,
+    required this.activeSubscribers,
+    required this.monthlyRevenue,
+    required this.subscriptionsByTier,
+  });
+
+  factory SubscriptionAnalytics.fromJson(Map<String, dynamic> json) {
+    return SubscriptionAnalytics(
+      totalUsers: json['totalUsers'] as int,
+      activeSubscribers: json['activeSubscribers'] as int,
+      monthlyRevenue: (json['monthlyRevenue'] as num).toDouble(),
+      subscriptionsByTier: Map<String, int>.from(
+        json['subscriptionsByTier'] ?? {},
+      ),
+    );
+  }
+}
+
+class SubscriptionHistory {
+  final String id;
+  final DateTime date;
+  final String description;
+  final double amount;
+  final String status;
+
+  SubscriptionHistory({
+    required this.id,
+    required this.date,
+    required this.description,
+    required this.amount,
+    required this.status,
+  });
+
+  factory SubscriptionHistory.fromJson(Map<String, dynamic> json) {
+    return SubscriptionHistory(
+      id: json['id'] as String,
+      date: DateTime.parse(json['date'] as String),
+      description: json['description'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      status: json['status'] as String,
+    );
+  }
+}

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../../../../core/services/api_service.dart';
 import '../models/convite_models.dart';
 
@@ -83,7 +82,11 @@ class ConvitesService {
     }
   }
 
-  Future<void> alterarRoleMembro(int despensaId, int membroId, String novoRole) async {
+  Future<void> alterarRoleMembro(
+    int despensaId,
+    int membroId,
+    String novoRole,
+  ) async {
     try {
       await _apiService.put(
         '/despensas/$despensaId/membros/$membroId/role',
@@ -93,4 +96,4 @@ class ConvitesService {
       throw Exception('Erro ao alterar role do membro: ${e.toString()}');
     }
   }
-} 
+}

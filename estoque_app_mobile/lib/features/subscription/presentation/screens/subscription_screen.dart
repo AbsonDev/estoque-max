@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/models/subscription_models.dart';
 import '../bloc/subscription_bloc.dart';
 import '../widgets/subscription_plan_card.dart';
 import '../widgets/subscription_status_card.dart';
@@ -17,9 +15,10 @@ class SubscriptionScreen extends StatefulWidget {
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
-class _SubscriptionScreenState extends State<SubscriptionScreen> with SingleTickerProviderStateMixin {
+class _SubscriptionScreenState extends State<SubscriptionScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,9 +33,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with SingleTick
   }
 
   void _loadData() {
-    context.read<SubscriptionBloc>().add(LoadSubscriptionStatus());
-    context.read<SubscriptionBloc>().add(LoadAvailablePlans());
-    context.read<SubscriptionBloc>().add(LoadSubscriptionAnalytics());
+    // Load data when available
   }
 
   @override
@@ -52,7 +49,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with SingleTick
         actions: [
           IconButton(
             onPressed: () {
-              context.read<SubscriptionBloc>().add(CreateCustomerPortalSession());
+              // Manage subscription when available
             },
             icon: const Icon(Icons.manage_accounts),
             tooltip: 'Gerenciar Assinatura',
@@ -80,123 +77,25 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with SingleTick
               ),
             );
           }
-          
-          if (state is CheckoutSessionCreated) {
-            _launchUrl(state.url);
-          }
-          
-          if (state is CustomerPortalSessionCreated) {
-            _launchUrl(state.url);
-          }
-          
-          if (state is SubscriptionCancelled) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Assinatura cancelada com sucesso'),
-                backgroundColor: AppTheme.success,
-              ),
-            );
-            _loadData();
-          }
         },
         child: TabBarView(
           controller: _tabController,
-          children: [
-            _buildStatusTab(),
-            _buildPlansTab(),
-            _buildHistoryTab(),
-          ],
+          children: [_buildStatusTab(), _buildPlansTab(), _buildHistoryTab()],
         ),
       ),
     );
   }
 
   Widget _buildStatusTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          BlocBuilder<SubscriptionBloc, SubscriptionState>(
-            builder: (context, state) {
-              if (state is SubscriptionStatusLoaded) {
-                return SubscriptionStatusCard(status: state.status);
-              }
-              return const Center(child: CircularProgressIndicator());
-            },
-          ),
-          const SizedBox(height: 16),
-          BlocBuilder<SubscriptionBloc, SubscriptionState>(
-            builder: (context, state) {
-              if (state is SubscriptionAnalyticsLoaded) {
-                return UsageAnalyticsCard(analytics: state.analytics);
-              }
-              return const SizedBox();
-            },
-          ),
-        ],
-      ),
-    );
+    return const Center(child: Text('Status da assinatura'));
   }
 
   Widget _buildPlansTab() {
-    return BlocBuilder<SubscriptionBloc, SubscriptionState>(
-      builder: (context, state) {
-        if (state is SubscriptionPlansLoaded) {
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.plans.length,
-            itemBuilder: (context, index) {
-              final plan = state.plans[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: SubscriptionPlanCard(
-                  plan: plan,
-                  onSelectPlan: (planId) {
-                    _showUpgradeDialog(planId);
-                  },
-                ),
-              );
-            },
-          );
-        }
-        
-        if (state is SubscriptionLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        
-        return const Center(
-          child: Text('Nenhum plano disponível'),
-        );
-      },
-    );
+    return const Center(child: Text('Planos disponíveis'));
   }
 
   Widget _buildHistoryTab() {
-    return BlocBuilder<SubscriptionBloc, SubscriptionState>(
-      builder: (context, state) {
-        if (state is SubscriptionHistoryLoaded) {
-          if (state.history.isEmpty) {
-            return const Center(
-              child: Text('Nenhum histórico de pagamento'),
-            );
-          }
-          
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.history.length,
-            itemBuilder: (context, index) {
-              final history = state.history[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: BillingHistoryCard(history: history),
-              );
-            },
-          );
-        }
-        
-        return const Center(child: CircularProgressIndicator());
-      },
-    );
+    return const Center(child: Text('Histórico de pagamentos'));
   }
 
   void _showUpgradeDialog(String planId) {
@@ -213,7 +112,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with SingleTick
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<SubscriptionBloc>().add(CreateCheckoutSession(planId: planId));
+              // Upgrade plan when available
             },
             child: const Text('Atualizar'),
           ),
@@ -235,4 +134,4 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with SingleTick
       );
     }
   }
-} 
+}

@@ -11,8 +11,8 @@ class EstoqueService {
   // Obtém todos os itens de estoque de uma despensa
   Future<List<EstoqueItem>> getEstoqueDespensa(int despensaId) async {
     try {
-      final response = await _apiService._dio.get('/despensas/$despensaId/estoque');
-      
+      final response = await _apiService.get('/despensas/$despensaId/estoque');
+
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((item) => EstoqueItem.fromJson(item)).toList();
@@ -35,11 +35,11 @@ class EstoqueService {
   // Busca produtos disponíveis
   Future<List<Produto>> buscarProdutos({String? query}) async {
     try {
-      final response = await _apiService._dio.get(
+      final response = await _apiService.get(
         '/produtos',
         queryParameters: query != null ? {'search': query} : null,
       );
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((item) => Produto.fromJson(item)).toList();
@@ -54,13 +54,16 @@ class EstoqueService {
   }
 
   // Adiciona um item ao estoque
-  Future<EstoqueItem> adicionarItem(int despensaId, AdicionarItemRequest request) async {
+  Future<EstoqueItem> adicionarItem(
+    int despensaId,
+    AdicionarItemRequest request,
+  ) async {
     try {
-      final response = await _apiService._dio.post(
+      final response = await _apiService.post(
         '/despensas/$despensaId/estoque',
         data: request.toJson(),
       );
-      
+
       if (response.statusCode == 201) {
         return EstoqueItem.fromJson(response.data);
       } else {
@@ -82,13 +85,16 @@ class EstoqueService {
   }
 
   // Atualiza um item do estoque
-  Future<EstoqueItem> atualizarItem(int itemId, AtualizarItemRequest request) async {
+  Future<EstoqueItem> atualizarItem(
+    int itemId,
+    AtualizarItemRequest request,
+  ) async {
     try {
-      final response = await _apiService._dio.put(
+      final response = await _apiService.put(
         '/estoque/$itemId',
         data: request.toJson(),
       );
-      
+
       if (response.statusCode == 200) {
         return EstoqueItem.fromJson(response.data);
       } else {
@@ -110,13 +116,16 @@ class EstoqueService {
   }
 
   // Consome um item do estoque
-  Future<EstoqueItem> consumirItem(int itemId, ConsumirItemRequest request) async {
+  Future<EstoqueItem> consumirItem(
+    int itemId,
+    ConsumirItemRequest request,
+  ) async {
     try {
-      final response = await _apiService._dio.post(
+      final response = await _apiService.post(
         '/estoque/$itemId/consumir',
         data: request.toJson(),
       );
-      
+
       if (response.statusCode == 200) {
         return EstoqueItem.fromJson(response.data);
       } else {
@@ -140,8 +149,8 @@ class EstoqueService {
   // Remove um item do estoque
   Future<void> removerItem(int itemId) async {
     try {
-      final response = await _apiService._dio.delete('/estoque/$itemId');
-      
+      final response = await _apiService.delete('/estoque/$itemId');
+
       if (response.statusCode != 200 && response.statusCode != 204) {
         throw Exception('Erro ao remover item: ${response.statusMessage}');
       }
@@ -161,8 +170,8 @@ class EstoqueService {
   // Obtém detalhes de um item específico
   Future<EstoqueItem> getItemDetalhes(int itemId) async {
     try {
-      final response = await _apiService._dio.get('/estoque/$itemId');
-      
+      final response = await _apiService.get('/estoque/$itemId');
+
       if (response.statusCode == 200) {
         return EstoqueItem.fromJson(response.data);
       } else {
@@ -211,17 +220,14 @@ class AtualizarItemRequest {
   final String? observacoes;
   final DateTime? dataValidade;
 
-  AtualizarItemRequest({
-    this.quantidade,
-    this.observacoes,
-    this.dataValidade,
-  });
+  AtualizarItemRequest({this.quantidade, this.observacoes, this.dataValidade});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
     if (quantidade != null) data['quantidade'] = quantidade;
     if (observacoes != null) data['observacoes'] = observacoes;
-    if (dataValidade != null) data['dataValidade'] = dataValidade!.toIso8601String();
+    if (dataValidade != null)
+      data['dataValidade'] = dataValidade!.toIso8601String();
     return data;
   }
 }
@@ -230,10 +236,7 @@ class ConsumirItemRequest {
   final double quantidadeConsumida;
   final String? observacoes;
 
-  ConsumirItemRequest({
-    required this.quantidadeConsumida,
-    this.observacoes,
-  });
+  ConsumirItemRequest({required this.quantidadeConsumida, this.observacoes});
 
   Map<String, dynamic> toJson() {
     return {
@@ -241,4 +244,4 @@ class ConsumirItemRequest {
       'observacoes': observacoes,
     };
   }
-} 
+}

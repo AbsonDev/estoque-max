@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/lista_compras_models.dart';
@@ -25,7 +24,9 @@ class ListaComprasItemCard extends StatelessWidget {
         children: [
           SlidableAction(
             onPressed: (_) => onToggleComprado(),
-            backgroundColor: item.comprado ? AppTheme.warning : AppTheme.success,
+            backgroundColor: item.comprado
+                ? AppTheme.warning
+                : AppTheme.success,
             foregroundColor: Colors.white,
             icon: item.comprado ? Icons.undo : Icons.check,
             label: item.comprado ? 'Desfazer' : 'Comprar',
@@ -45,7 +46,7 @@ class ListaComprasItemCard extends StatelessWidget {
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: item.comprado 
+            color: item.comprado
                 ? AppTheme.success.withOpacity(0.3)
                 : AppTheme.primaryColor.withOpacity(0.1),
             width: 1,
@@ -70,11 +71,11 @@ class ListaComprasItemCard extends StatelessWidget {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: item.comprado 
+                      color: item.comprado
                           ? AppTheme.success
                           : Colors.transparent,
                       border: Border.all(
-                        color: item.comprado 
+                        color: item.comprado
                             ? AppTheme.success
                             : AppTheme.textSecondary,
                         width: 2,
@@ -82,17 +83,13 @@ class ListaComprasItemCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: item.comprado
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 16,
-                          )
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
                         : null,
                   ),
                 ),
-                
+
                 const SizedBox(width: 12),
-                
+
                 // Product info
                 Expanded(
                   child: Column(
@@ -103,10 +100,10 @@ class ListaComprasItemCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: item.comprado 
+                          color: item.comprado
                               ? AppTheme.textSecondary
                               : AppTheme.textPrimary,
-                          decoration: item.comprado 
+                          decoration: item.comprado
                               ? TextDecoration.lineThrough
                               : TextDecoration.none,
                         ),
@@ -168,7 +165,7 @@ class ListaComprasItemCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Quantity and price
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -178,7 +175,7 @@ class ListaComprasItemCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: item.comprado 
+                        color: item.comprado
                             ? AppTheme.textSecondary
                             : AppTheme.textPrimary,
                       ),
@@ -192,7 +189,7 @@ class ListaComprasItemCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: item.comprado 
+                        color: item.comprado
                             ? AppTheme.textSecondary
                             : AppTheme.primaryColor,
                       ),
@@ -201,7 +198,7 @@ class ListaComprasItemCard extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             if (item.observacoes != null && item.observacoes!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
@@ -231,16 +228,12 @@ class ListaComprasItemCard extends StatelessWidget {
                 ),
               ),
             ],
-            
+
             if (item.comprado && item.dataCompra != null) ...[
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(
-                    Icons.schedule,
-                    color: AppTheme.textSecondary,
-                    size: 16,
-                  ),
+                  Icon(Icons.schedule, color: AppTheme.textSecondary, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'Comprado em ${DateFormat('dd/MM/yyyy HH:mm').format(item.dataCompra!)}',
@@ -280,4 +273,4 @@ class ListaComprasItemCard extends StatelessWidget {
         return AppTheme.primaryColor;
     }
   }
-} 
+}

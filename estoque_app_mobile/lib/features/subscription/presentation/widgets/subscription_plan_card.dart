@@ -20,8 +20,8 @@ class SubscriptionPlanCard extends StatelessWidget {
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: plan.isPopular ? AppTheme.primaryColor : AppTheme.textSecondary.withOpacity(0.2),
-          width: plan.isPopular ? 2 : 1,
+          color: AppTheme.textSecondary.withOpacity(0.2),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -42,10 +42,11 @@ class SubscriptionPlanCard extends StatelessWidget {
                   children: [
                     Text(
                       plan.name,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -57,9 +58,12 @@ class SubscriptionPlanCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (plan.isPopular)
+              if (false) // Remove popular badge for now
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor,
                     borderRadius: BorderRadius.circular(20),
@@ -76,49 +80,47 @@ class SubscriptionPlanCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Price
           Text(
-            plan.formattedPrice,
+            'R\$ ${plan.price.toStringAsFixed(2)}',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppTheme.primaryColor,
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Features
-          ...plan.features.map((feature) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: AppTheme.success,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    feature,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textPrimary,
+          ...plan.features.map(
+            (feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: AppTheme.success, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
-          
+          ),
+
           const SizedBox(height: 20),
-          
+
           // Action button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: plan.isCurrentPlan ? null : () => onSelectPlan(plan.id),
+              onPressed: () => onSelectPlan(plan.id),
               style: ElevatedButton.styleFrom(
-                backgroundColor: plan.isCurrentPlan ? AppTheme.textSecondary : AppTheme.primaryColor,
+                backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -126,10 +128,8 @@ class SubscriptionPlanCard extends StatelessWidget {
                 ),
               ),
               child: Text(
-                plan.isCurrentPlan ? 'Plano Atual' : 'Selecionar',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
+                'Selecionar',
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -137,4 +137,4 @@ class SubscriptionPlanCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

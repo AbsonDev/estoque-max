@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../bloc/convites_bloc.dart';
 import '../widgets/convite_card.dart';
-import '../widgets/convite_enviar_dialog.dart';
 import '../widgets/convites_empty_state.dart';
 import '../widgets/convite_loading_skeleton.dart';
-import '../../data/models/convite_models.dart';
 
 class ConvitesScreen extends StatefulWidget {
   const ConvitesScreen({Key? key}) : super(key: key);
@@ -23,7 +20,7 @@ class _ConvitesScreenState extends State<ConvitesScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
+
     // Carrega convites recebidos por padrão
     context.read<ConvitesBloc>().add(LoadConvitesRecebidos());
   }
@@ -56,10 +53,7 @@ class _ConvitesScreenState extends State<ConvitesScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildConvitesRecebidosTab(),
-          _buildConvitesEnviadosTab(),
-        ],
+        children: [_buildConvitesRecebidosTab(), _buildConvitesEnviadosTab()],
       ),
     );
   }
@@ -78,10 +72,10 @@ class _ConvitesScreenState extends State<ConvitesScreen>
         if (state is ConvitesLoading) {
           return const ConviteLoadingSkeleton();
         }
-        
+
         if (state is ConvitesLoaded) {
           final convites = state.convitesRecebidos;
-          
+
           if (convites.isEmpty) {
             return const ConvitesEmptyState(
               title: 'Nenhum convite recebido',
@@ -104,18 +98,20 @@ class _ConvitesScreenState extends State<ConvitesScreen>
                   convite: convite,
                   isRecebido: true,
                   onAceitar: () {
-                    context.read<ConvitesBloc>().add(AceitarConvite(conviteId: convite.id));
+                    context.read<ConvitesBloc>().add(
+                      AceitarConvite(conviteId: convite.id),
+                    );
                   },
                   onRecusar: () {
-                    context.read<ConvitesBloc>().add(RecusarConvite(conviteId: convite.id));
+                    context.read<ConvitesBloc>().add(
+                      RecusarConvite(conviteId: convite.id),
+                    );
                   },
                   onDeletar: () {
-                    context.read<ConvitesBloc>().add(DeletarConvite(conviteId: convite.id));
+                    context.read<ConvitesBloc>().add(
+                      DeletarConvite(conviteId: convite.id),
+                    );
                   },
-                ).animate().fadeIn(duration: 300.ms).slideY(
-                  begin: 0.2,
-                  duration: 300.ms,
-                  curve: Curves.easeOutCubic,
                 );
               },
             ),
@@ -145,10 +141,10 @@ class _ConvitesScreenState extends State<ConvitesScreen>
         if (state is ConvitesLoading) {
           return const ConviteLoadingSkeleton();
         }
-        
+
         if (state is ConvitesLoaded) {
           final convites = state.convitesEnviados;
-          
+
           if (convites.isEmpty) {
             return const ConvitesEmptyState(
               title: 'Nenhum convite enviado',
@@ -171,12 +167,10 @@ class _ConvitesScreenState extends State<ConvitesScreen>
                   convite: convite,
                   isRecebido: false,
                   onDeletar: () {
-                    context.read<ConvitesBloc>().add(DeletarConvite(conviteId: convite.id));
+                    context.read<ConvitesBloc>().add(
+                      DeletarConvite(conviteId: convite.id),
+                    );
                   },
-                ).animate().fadeIn(duration: 300.ms).slideY(
-                  begin: 0.2,
-                  duration: 300.ms,
-                  curve: Curves.easeOutCubic,
                 );
               },
             ),
@@ -211,4 +205,4 @@ class _ConvitesScreenState extends State<ConvitesScreen>
       ),
     );
   }
-} 
+}

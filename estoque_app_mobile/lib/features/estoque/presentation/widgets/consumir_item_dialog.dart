@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/estoque_bloc.dart';
-import '../bloc/estoque_event.dart';
 import '../bloc/estoque_state.dart';
+import '../bloc/estoque_event.dart';
 import '../../data/models/estoque_item.dart';
+import '../../data/services/estoque_service.dart';
 
 class ConsumirItemDialog extends StatefulWidget {
   final EstoqueItem item;
 
-  const ConsumirItemDialog({
-    super.key,
-    required this.item,
-  });
+  const ConsumirItemDialog({super.key, required this.item});
 
   @override
   State<ConsumirItemDialog> createState() => _ConsumirItemDialogState();
@@ -57,10 +56,7 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(
-                Icons.remove_circle_outline,
-                color: AppTheme.primaryColor,
-              ),
+              Icon(Icons.remove_circle_outline, color: AppTheme.primaryColor),
               const SizedBox(width: 8),
               const Text('Consumir Item'),
             ],
@@ -77,24 +73,30 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
                   decoration: BoxDecoration(
                     color: AppTheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withOpacity(0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.item.produtoNome,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        widget.item.produto.nome,
+                        style: const TextStyle(
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (widget.item.produtoMarca != null)
+                      if (widget.item.produto.marca != null) ...[
+                        const SizedBox(height: 4),
                         Text(
-                          widget.item.produtoMarca!,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.textSecondary,
+                          widget.item.produto.marca!,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
                           ),
                         ),
+                      ],
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -106,9 +108,8 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
                           const SizedBox(width: 4),
                           Text(
                             'Estoque atual: ${widget.item.quantidade}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textSecondary,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppTheme.textSecondary),
                           ),
                         ],
                       ),
@@ -177,11 +178,11 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
   Widget _buildPrevisaoEstoque() {
     final quantidadeConsumida = int.tryParse(_quantidadeController.text) ?? 0;
     final estoqueRestante = widget.item.quantidade - quantidadeConsumida;
-    
+
     Color cor = AppTheme.success;
     IconData icone = Icons.check_circle_outline;
     String status = 'Estoque normal';
-    
+
     if (estoqueRestante <= 0) {
       cor = AppTheme.error;
       icone = Icons.dangerous_outlined;
@@ -209,18 +210,9 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
               children: [
                 Text(
                   'Estoque após consumo: $estoqueRestante',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: cor,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: cor),
                 ),
-                Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: cor,
-                  ),
-                ),
+                Text(status, style: TextStyle(fontSize: 12, color: cor)),
               ],
             ),
           ),
@@ -231,15 +223,14 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
 
   void _consumirItem() {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final dto = ConsumirEstoqueDto(
-        quantidadeConsumida: int.parse(_quantidadeController.text),
+      final request = ConsumirItemRequest(
+        quantidadeConsumida: double.parse(_quantidadeController.text),
+        observacoes: null,
       );
 
-      context.read<EstoqueBloc>().add(ConsumirItemEstoque(widget.item.id, dto));
+      context.read<EstoqueBloc>().add(
+        ConsumeEstoqueItem(widget.item.id, request),
+      );
     }
   }
-} 
+}

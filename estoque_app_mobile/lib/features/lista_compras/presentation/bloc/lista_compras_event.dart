@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import '../../data/services/lista_compras_service.dart';
 
 abstract class ListaComprasEvent extends Equatable {
   const ListaComprasEvent();
@@ -8,7 +7,14 @@ abstract class ListaComprasEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadListaCompras extends ListaComprasEvent {}
+class LoadListaCompras extends ListaComprasEvent {
+  final int despensaId;
+
+  LoadListaCompras({required this.despensaId});
+
+  @override
+  List<Object?> get props => [despensaId];
+}
 
 class RefreshListaCompras extends ListaComprasEvent {}
 
@@ -95,4 +101,30 @@ class ListaComprasUpdatedRealTime extends ListaComprasEvent {
 
   @override
   List<Object?> get props => [data];
-} 
+}
+
+class AdicionarItemManualRequest {
+  final String nome;
+  final double quantidade;
+  final String? unidade;
+  final String? categoria;
+  final String? observacoes;
+
+  AdicionarItemManualRequest({
+    required this.nome,
+    required this.quantidade,
+    this.unidade,
+    this.categoria,
+    this.observacoes,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'nome': nome,
+      'quantidade': quantidade,
+      'unidade': unidade,
+      'categoria': categoria,
+      'observacoes': observacoes,
+    };
+  }
+}

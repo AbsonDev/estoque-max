@@ -5,10 +5,7 @@ import '../../data/models/subscription_models.dart';
 class UsageAnalyticsCard extends StatelessWidget {
   final SubscriptionAnalytics analytics;
 
-  const UsageAnalyticsCard({
-    super.key,
-    required this.analytics,
-  });
+  const UsageAnalyticsCard({super.key, required this.analytics});
 
   @override
   Widget build(BuildContext context) {
@@ -36,31 +33,30 @@ class UsageAnalyticsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
-          // Despensas
+
+          // Total Users
           _buildUsageItem(
-            'Despensas',
-            analytics.totalDespensas,
-            analytics.limiteDespensas,
-            Icons.store,
-          ),
-          const SizedBox(height: 12),
-          
-          // Itens
-          _buildUsageItem(
-            'Itens no Estoque',
-            analytics.totalItensEstoque,
-            analytics.limiteItensEstoque,
-            Icons.inventory,
-          ),
-          const SizedBox(height: 12),
-          
-          // Membros
-          _buildUsageItem(
-            'Membros',
-            analytics.totalMembros,
-            analytics.limiteMembros,
+            'Total de Usuários',
+            analytics.totalUsers,
+            analytics.totalUsers + 100, // Mock limit
             Icons.people,
+          ),
+          const SizedBox(height: 12),
+
+          // Active Subscribers
+          _buildUsageItem(
+            'Assinantes Ativos',
+            analytics.activeSubscribers,
+            analytics.totalUsers,
+            Icons.star,
+          ),
+          const SizedBox(height: 12),
+
+          // Revenue (simplified)
+          _buildRevenueItem(
+            'Receita Mensal',
+            analytics.monthlyRevenue,
+            Icons.attach_money,
           ),
         ],
       ),
@@ -69,17 +65,13 @@ class UsageAnalyticsCard extends StatelessWidget {
 
   Widget _buildUsageItem(String label, int used, int limit, IconData icon) {
     final progress = limit > 0 ? used / limit : 0.0;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(
-              icon,
-              color: AppTheme.primaryColor,
-              size: 20,
-            ),
+            Icon(icon, color: AppTheme.primaryColor, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -111,4 +103,29 @@ class UsageAnalyticsCard extends StatelessWidget {
       ],
     );
   }
-} 
+
+  Widget _buildRevenueItem(String label, double revenue, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.success, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+        Text(
+          'R\$ ${revenue.toStringAsFixed(2)}',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppTheme.success,
+          ),
+        ),
+      ],
+    );
+  }
+}

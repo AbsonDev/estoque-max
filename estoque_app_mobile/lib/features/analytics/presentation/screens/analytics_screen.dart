@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/analytics_models.dart';
 import '../bloc/analytics_bloc.dart';
-import '../widgets/analytics_card.dart';
 import '../widgets/chart_card.dart';
 import '../widgets/insights_card.dart';
 import '../widgets/kpi_card.dart';
@@ -55,7 +54,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             }
 
             if (state is AnalyticsRefreshing) {
-              return _buildDashboard(state.currentDashboard, isRefreshing: true);
+              return _buildDashboard(
+                state.currentDashboard,
+                isRefreshing: true,
+              );
             }
 
             return _buildError();
@@ -78,24 +80,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: AppTheme.error,
-          ),
+          Icon(Icons.error_outline, size: 64, color: AppTheme.error),
           const SizedBox(height: 16),
           Text(
             'Erro ao carregar analytics',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppTheme.textPrimary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             'Tente novamente mais tarde',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -107,7 +105,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildDashboard(AnalyticsDashboard dashboard, {bool isRefreshing = false}) {
+  Widget _buildDashboard(
+    AnalyticsDashboard dashboard, {
+    bool isRefreshing = false,
+  }) {
     return RefreshIndicator(
       onRefresh: () async {
         context.read<AnalyticsBloc>().add(RefreshAnalytics());
@@ -164,9 +165,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               const SizedBox(height: 4),
               Text(
                 'Acompanhe suas métricas e insights',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -237,7 +238,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Monthly Expenses Chart
         if (dashboard.gastosMensais.isNotEmpty) ...[
           ChartCard(
@@ -254,7 +255,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         if (dashboard.consumoPorCategoria.isNotEmpty) ...[
           ChartCard(
             title: 'Consumo por Categoria',
-            chart: _buildCategoryConsumptionChart(dashboard.consumoPorCategoria),
+            chart: _buildCategoryConsumptionChart(
+              dashboard.consumoPorCategoria,
+            ),
           ).animate().fadeIn(
             delay: const Duration(milliseconds: 300),
             duration: const Duration(milliseconds: 500),
@@ -326,9 +329,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ),
                 subtitle: Text(
                   produto.categoria,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                  ),
+                  style: const TextStyle(color: AppTheme.textSecondary),
                 ),
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -442,9 +443,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ),
                 subtitle: Text(
                   'Expirado em ${DateFormat('dd/MM/yyyy').format(item.dataExpiracao)}',
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                  ),
+                  style: const TextStyle(color: AppTheme.textSecondary),
                 ),
                 trailing: Text(
                   NumberFormat.currency(
@@ -644,7 +643,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Color _getColorFromString(String? colorString) {
     if (colorString == null) return AppTheme.primaryColor;
-    
+
     try {
       return Color(int.parse(colorString.replaceFirst('#', '0xff')));
     } catch (e) {
@@ -664,4 +663,4 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         return Icons.shopping_cart;
     }
   }
-} 
+}
