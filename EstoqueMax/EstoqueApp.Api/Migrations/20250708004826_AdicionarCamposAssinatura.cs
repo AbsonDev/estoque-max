@@ -195,13 +195,12 @@ namespace EstoqueApp.Api.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "timestamp with time zone");
 
-            migrationBuilder.AlterColumn<bool>(
-                name: "Comprado",
-                table: "ListaDeComprasItens",
-                type: "INTEGER",
-                nullable: false,
-                oldClrType: typeof(bool),
-                oldType: "boolean");
+            // Conversão manual para PostgreSQL - boolean para integer
+            migrationBuilder.Sql(@"
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ALTER COLUMN ""Comprado"" TYPE INTEGER 
+                USING (CASE WHEN ""Comprado"" THEN 1 ELSE 0 END);
+            ");
 
             migrationBuilder.AlterColumn<int>(
                 name: "Id",
@@ -615,13 +614,12 @@ namespace EstoqueApp.Api.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "TEXT");
 
-            migrationBuilder.AlterColumn<bool>(
-                name: "Comprado",
-                table: "ListaDeComprasItens",
-                type: "boolean",
-                nullable: false,
-                oldClrType: typeof(bool),
-                oldType: "INTEGER");
+            // Conversão reversa para PostgreSQL - integer para boolean
+            migrationBuilder.Sql(@"
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ALTER COLUMN ""Comprado"" TYPE BOOLEAN 
+                USING (""Comprado"" = 1);
+            ");
 
             migrationBuilder.AlterColumn<int>(
                 name: "Id",
