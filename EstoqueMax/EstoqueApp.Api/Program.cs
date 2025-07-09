@@ -9,6 +9,7 @@ using EstoqueApp.Api.Services.AI;
 using EstoqueApp.Api.Services.Analytics;
 using Microsoft.OpenApi.Models;
 
+// GitHub Action trigger test - workflow correction applied
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
@@ -62,19 +63,11 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Configuração do Entity Framework Core - SQLite para desenvolvimento, PostgreSQL para produção
+// Configuração do Entity Framework Core - PostgreSQL para desenvolvimento e produção
 builder.Services.AddDbContext<EstoqueContext>(options =>
 {
-    if (builder.Environment.IsDevelopment())
-    {
-        // Use SQLite para desenvolvimento
-        options.UseSqlite(builder.Configuration.GetConnectionString("SQLiteConnection") ?? "Data Source=EstoqueMax.db");
-    }
-    else
-    {
-        // Use PostgreSQL para produção
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    }
+    // Usar PostgreSQL tanto para desenvolvimento quanto para produção
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
 // Adicionar cache em memória
