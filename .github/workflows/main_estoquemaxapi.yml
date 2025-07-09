@@ -29,7 +29,7 @@ jobs:
         run: dotnet build EstoqueMax/EstoqueApp.Api/EstoqueApp.Api.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish EstoqueMax/EstoqueApp.Api/EstoqueApp.Api.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish EstoqueMax/EstoqueApp.Api/EstoqueApp.Api.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp" --self-contained false --verbosity normal
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -109,10 +109,12 @@ jobs:
           name: .net-app
           path: ./app
 
-      - name: Run Database Migrations
+      - name: List artifact contents (debug)
         run: |
-          cd EstoqueMax/EstoqueApp.Api
-          dotnet ef database update --connection "Server=estoquemaxdb.postgres.database.azure.com;Database=postgres;Port=5432;User Id=EstoqueMax;Password=19791953!Abson;Ssl Mode=Require;"
+          echo "Listing contents of ./app:"
+          ls -la ./app || dir ./app
+          echo "Checking for main files:"
+          ls -la ./app/*.dll || dir ./app\*.dll
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -121,4 +123,10 @@ jobs:
           app-name: 'EstoqueMaxApi'
           slot-name: 'Production'
           package: ./app
+          restart: true
+
+      - name: Run Database Migrations (after deploy)
+        run: |
+          cd EstoqueMax/EstoqueApp.Api
+          dotnet ef database update --connection "Server=estoquemaxdb.postgres.database.azure.com;Database=postgres;Port=5432;User Id=EstoqueMax;Password=19791953!Abson;Ssl Mode=Require;"
           
