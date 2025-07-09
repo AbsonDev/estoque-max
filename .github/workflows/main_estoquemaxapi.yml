@@ -68,31 +68,50 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CF8154EE7D5D4D03BCB3F42B0969CB3D }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_15D0CBA5ECE1467887F7EA3538D69D5D }}
 
-      # **NOVO: Executar migrações do banco de dados**
-      - name: Run database migrations
+      - name: Configure App Settings
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: 'EstoqueMaxApi'
+          app-settings-json: |
+            [
+              {
+                "name": "ConnectionStrings__DefaultConnection",
+                "value": "Server=estoquemaxdb.postgres.database.azure.com;Database=postgres;Port=5432;User Id=EstoqueMax;Password=19791953!Abson;Ssl Mode=Require;"
+              },
+              {
+                "name": "Jwt__Key",
+                "value": "EstoqueMaxSuperSecretKeyForJwtAuthentication2024!@#$%^&*()_+{}|:<>?[]\\;',./~`1234567890"
+              },
+              {
+                "name": "Jwt__Issuer",
+                "value": "EstoqueApp.Api"
+              },
+              {
+                "name": "Jwt__Audience",
+                "value": "EstoqueApp.Clientes"
+              },
+              {
+                "name": "Authentication__Google__ClientId",
+                "value": "265016365851-63o4nec9jujr8eelujrimjb4667ghobi.apps.googleusercontent.com"
+              },
+              {
+                "name": "Stripe__SecretKey",
+                "value": "sk_test_SUA_CHAVE_SECRETA_AQUI"
+              },
+              {
+                "name": "Stripe__PublishableKey",
+                "value": "pk_test_SUA_CHAVE_PUBLICA_AQUI"
+              },
+              {
+                "name": "Stripe__WebhookSecret",
+                "value": "whsec_SEU_SEGREDO_DE_WEBHOOK_AQUI"
+              }
+            ]
+
+      - name: Run Database Migrations
         run: |
           cd EstoqueMax/EstoqueApp.Api
-          dotnet ef database update --connection "${{ secrets.AZURE_POSTGRESQL_CONNECTION_STRING }}"
-        env:
-          ASPNETCORE_ENVIRONMENT: Production
-
-      # **NOVO: Configurar App Settings no Azure**
-      - name: Configure Azure App Settings
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            az webapp config appsettings set \
-              --name EstoqueMaxApi \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_NAME }} \
-              --settings \
-              "ConnectionStrings__DefaultConnection=${{ secrets.AZURE_POSTGRESQL_CONNECTION_STRING }}" \
-              "Jwt__Key=${{ secrets.JWT_SECRET_KEY }}" \
-              "Jwt__Issuer=EstoqueApp.Api" \
-              "Jwt__Audience=EstoqueApp.Clientes" \
-              "Authentication__Google__ClientId=${{ secrets.GOOGLE_CLIENT_ID }}" \
-              "Stripe__SecretKey=${{ secrets.STRIPE_SECRET_KEY }}" \
-              "Stripe__PublishableKey=${{ secrets.STRIPE_PUBLISHABLE_KEY }}" \
-              "Stripe__WebhookSecret=${{ secrets.STRIPE_WEBHOOK_SECRET }}"
+          dotnet ef database update --connection "Server=estoquemaxdb.postgres.database.azure.com;Database=postgres;Port=5432;User Id=EstoqueMax;Password=19791953!Abson;Ssl Mode=Require;"
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
