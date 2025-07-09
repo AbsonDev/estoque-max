@@ -56,11 +56,6 @@ jobs:
       - name: Install EF Core tools
         run: dotnet tool install --global dotnet-ef
 
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: .net-app
-      
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -108,6 +103,12 @@ jobs:
               }
             ]
 
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+          path: ./app
+
       - name: Run Database Migrations
         run: |
           cd EstoqueMax/EstoqueApp.Api
@@ -119,5 +120,5 @@ jobs:
         with:
           app-name: 'EstoqueMaxApi'
           slot-name: 'Production'
-          package: .
+          package: ./app
           
