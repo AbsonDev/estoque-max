@@ -79,7 +79,7 @@ namespace EstoqueApp.Api.Migrations
             // 2. Migrar dados existentes: criar entradas na tabela MembrosDespensa para os donos atuais
             migrationBuilder.Sql(@"
                 INSERT INTO ""MembrosDespensa"" (""UsuarioId"", ""DespensaId"", ""Papel"", ""DataAcesso"")
-                SELECT ""UsuarioId"", ""Id"", 0, datetime('now')
+                SELECT ""UsuarioId"", ""Id"", 0, NOW()
                 FROM ""Despensas""
                 WHERE ""UsuarioId"" IS NOT NULL;
             ");
