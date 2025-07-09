@@ -110,10 +110,7 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
                 color: AppTheme.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.add,
-                color: AppTheme.primaryColor,
-              ),
+              child: const Icon(Icons.add, color: AppTheme.primaryColor),
             ),
           ),
         ],
@@ -177,24 +174,20 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: AppTheme.error,
-          ),
+          Icon(Icons.error_outline, size: 64, color: AppTheme.error),
           const SizedBox(height: 16),
           Text(
             'Erro ao carregar lista',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppTheme.textPrimary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             'Tente novamente mais tarde',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -220,8 +213,13 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
             child: ShoppingListStats(
               totalItems: lista.itens.length,
               completedItems: lista.itens.where((item) => item.comprado).length,
-              totalValue: lista.itens.fold(0.0, (sum, item) => sum + item.valor),
-              spentValue: lista.itens.where((item) => item.comprado).fold(0.0, (sum, item) => sum + item.valor),
+              totalValue: lista.itens.fold(
+                0.0,
+                (sum, item) => sum + item.valor,
+              ),
+              spentValue: lista.itens
+                  .where((item) => item.comprado)
+                  .fold(0.0, (sum, item) => sum + item.valor),
             ),
           ),
 
@@ -243,51 +241,44 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
 
           // Items List
           if (filteredItems.isEmpty)
-            SliverFillRemaining(
-              child: _buildEmptyState(),
-            )
+            SliverFillRemaining(child: _buildEmptyState())
           else
             SliverPadding(
               padding: const EdgeInsets.all(20),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final item = filteredItems[index];
-                    return AnimationConfiguration.staggeredList(
-                      position: index,
-                      duration: const Duration(milliseconds: 375),
-                      child: SlideAnimation(
-                        verticalOffset: 50.0,
-                        child: FadeInAnimation(
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: ListaComprasItemCard(
-                              item: item,
-                              onToggleComprado: () {
-                                context.read<ListaComprasBloc>().add(
-                                  ToggleItemComprado(itemId: item.id),
-                                );
-                              },
-                              onRemove: () {
-                                context.read<ListaComprasBloc>().add(
-                                  RemoveItem(itemId: item.id),
-                                );
-                              },
-                            ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final item = filteredItems[index];
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: SlideAnimation(
+                      verticalOffset: 50.0,
+                      child: FadeInAnimation(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ListaComprasItemCard(
+                            item: item,
+                            onToggleComprado: () {
+                              context.read<ListaComprasBloc>().add(
+                                ToggleItemComprado(itemId: item.id),
+                              );
+                            },
+                            onRemove: () {
+                              context.read<ListaComprasBloc>().add(
+                                RemoveItem(itemId: item.id),
+                              );
+                            },
                           ),
                         ),
                       ),
-                    );
-                  },
-                  childCount: filteredItems.length,
-                ),
+                    ),
+                  );
+                }, childCount: filteredItems.length),
               ),
             ),
 
           // Bottom padding
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 100),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
@@ -320,9 +311,9 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
         const SizedBox(height: 8),
         Text(
           'Adicione itens manualmente ou aceite sugestões da IA',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTheme.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -358,7 +349,7 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((item) {
         return item.nome.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               item.categoria.toLowerCase().contains(_searchQuery.toLowerCase());
+            item.categoria.toLowerCase().contains(_searchQuery.toLowerCase());
       }).toList();
     }
 
@@ -382,4 +373,4 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
       ),
     );
   }
-} 
+}

@@ -84,4 +84,34 @@ class RemoverMembro extends DespensasEvent {
 /// Evento para limpar mensagens de erro/sucesso
 class ClearDespensaMessage extends DespensasEvent {
   const ClearDespensaMessage();
+}
+
+/// Evento para atualização em tempo real de despensas
+class DespensaUpdatedRealTime extends DespensasEvent {
+  final Map<String, dynamic> data;
+
+  const DespensaUpdatedRealTime(this.data);
+
+  @override
+  List<Object> get props => [data];
+}
+
+/// Evento para membro adicionado em tempo real
+class MembroAdicionadoRealTime extends DespensasEvent {
+  final Map<String, dynamic> data;
+
+  const MembroAdicionadoRealTime(this.data);
+
+  @override
+  List<Object> get props => [data];
+}
+
+/// Evento para membro removido em tempo real
+class MembroRemovidoRealTime extends DespensasEvent {
+  final Map<String, dynamic> data;
+
+  const MembroRemovidoRealTime(this.data);
+
+  @override
+  List<Object> get props => [data];
 } 

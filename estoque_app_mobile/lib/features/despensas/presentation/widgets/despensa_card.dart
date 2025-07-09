@@ -24,9 +24,7 @@ class DespensaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: isLoading ? null : onTap,
         borderRadius: BorderRadius.circular(16),
@@ -61,87 +59,97 @@ class DespensaCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              // Nome da despensa
-              Text(
-                despensa.nome,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              // Conteúdo principal - usando Expanded para controlar o espaço
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Nome da despensa
+                    Text(
+                      despensa.nome,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
 
-              const SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
-              // Informações básicas
-              Row(
-                children: [
-                  Expanded(
-                    child: Row(
+                    // Informações básicas
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
-                        Flexible(
-                          child: _buildInfoChip(
-                            icon: Icons.inventory_2_outlined,
-                            label: '${despensa.totalItens} itens',
-                            color: AppTheme.primaryColor,
-                          ),
+                        _buildInfoChip(
+                          icon: Icons.inventory_2_outlined,
+                          label: '${despensa.totalItens} itens',
+                          color: AppTheme.primaryColor,
                         ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: _buildInfoChip(
-                            icon: Icons.people_outline,
-                            label: '${despensa.totalMembros} membros',
-                            color: Colors.green,
-                          ),
+                        _buildInfoChip(
+                          icon: Icons.people_outline,
+                          label: '${despensa.totalMembros} membros',
+                          color: Colors.green,
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 12),
+                    const SizedBox(height: 8),
 
-              // Papel do usuário
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getRoleColor().withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _getRoleColor().withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      despensa.sounDono ? Icons.star : Icons.person_outline,
-                      size: 14,
-                      color: _getRoleColor(),
+                    // Papel do usuário
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getRoleColor().withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _getRoleColor().withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            despensa.sounDono
+                                ? Icons.star
+                                : Icons.person_outline,
+                            size: 12,
+                            color: _getRoleColor(),
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              despensa.meuPapel,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: _getRoleColor(),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 4),
+
+                    const Spacer(),
+
+                    // Data de criação
                     Text(
-                      despensa.meuPapel,
+                      'Criada em ${_formatDate(despensa.dataCriacao)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _getRoleColor(),
-                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textSecondary,
+                        fontSize: 10,
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Data de criação
-              Text(
-                'Criada em ${_formatDate(despensa.dataCriacao)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.textSecondary,
                 ),
               ),
             ],
@@ -157,10 +165,7 @@ class DespensaCard extends StatelessWidget {
       height: 48,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryColor,
-            AppTheme.primaryVariant,
-          ],
+          colors: [AppTheme.primaryColor, AppTheme.primaryVariant],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -173,23 +178,14 @@ class DespensaCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        _getDespensaIcon(),
-        color: Colors.white,
-        size: 24,
-      ),
+      child: Icon(_getDespensaIcon(), color: Colors.white, size: 24),
     );
   }
 
   Widget _buildPopupMenu(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.more_vert,
-        color: AppTheme.textSecondary,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      icon: Icon(Icons.more_vert, color: AppTheme.textSecondary),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (value) {
         switch (value) {
           case 'edit':
@@ -247,7 +243,7 @@ class DespensaCard extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
@@ -255,17 +251,14 @@ class DespensaCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
-              overflow: TextOverflow.ellipsis,
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: color,
             ),
           ),
         ],
@@ -275,12 +268,16 @@ class DespensaCard extends StatelessWidget {
 
   IconData _getDespensaIcon() {
     final nome = despensa.nome.toLowerCase();
-    
+
     if (nome.contains('cozinha') || nome.contains('kitchen')) {
       return Icons.kitchen_outlined;
-    } else if (nome.contains('banho') || nome.contains('bathroom') || nome.contains('casa de banho')) {
+    } else if (nome.contains('banho') ||
+        nome.contains('bathroom') ||
+        nome.contains('casa de banho')) {
       return Icons.bathtub_outlined;
-    } else if (nome.contains('lavandaria') || nome.contains('lavanderia') || nome.contains('laundry')) {
+    } else if (nome.contains('lavandaria') ||
+        nome.contains('lavanderia') ||
+        nome.contains('laundry')) {
       return Icons.local_laundry_service_outlined;
     } else if (nome.contains('escritório') || nome.contains('office')) {
       return Icons.business_center_outlined;
@@ -291,7 +288,7 @@ class DespensaCard extends StatelessWidget {
     } else if (nome.contains('despensa') || nome.contains('pantry')) {
       return Icons.food_bank_outlined;
     }
-    
+
     return Icons.home_outlined;
   }
 
@@ -301,10 +298,20 @@ class DespensaCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
     ];
-    
+
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
-} 
+}

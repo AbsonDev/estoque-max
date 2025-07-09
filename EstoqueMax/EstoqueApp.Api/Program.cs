@@ -149,15 +149,59 @@ try
                 ALTER TABLE ""EstoqueItens"" DROP COLUMN ""DataValidade"";
                 ALTER TABLE ""EstoqueItens"" ADD COLUMN ""DataValidade"" timestamp with time zone NULL;
             END IF;
+            
+            -- Fix Comprado field in ListaDeComprasItens
+            IF (SELECT data_type FROM information_schema.columns 
+                WHERE table_name = 'ListaDeComprasItens' AND column_name = 'Comprado') != 'boolean' THEN
+                
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ALTER COLUMN ""Comprado"" TYPE boolean 
+                USING CASE 
+                    WHEN ""Comprado""::text = '1' THEN true
+                    WHEN ""Comprado""::text = '0' THEN false
+                    ELSE false
+                END;
+                
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ALTER COLUMN ""Comprado"" SET DEFAULT false;
+            END IF;
+            
+            -- Add DataCompra column if it doesn't exist
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'ListaDeComprasItens' AND column_name = 'DataCompra') THEN
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ADD COLUMN ""DataCompra"" timestamp with time zone NULL;
+            END IF;
+            
+            -- Add PrecoEstimado column if it doesn't exist
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'ListaDeComprasItens' AND column_name = 'PrecoEstimado') THEN
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ADD COLUMN ""PrecoEstimado"" decimal(10,2) NULL;
+            END IF;
+            
+            -- Add Loja column if it doesn't exist
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'ListaDeComprasItens' AND column_name = 'Loja') THEN
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ADD COLUMN ""Loja"" text NULL;
+            END IF;
+            
+            -- Add Notas column if it doesn't exist
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                WHERE table_name = 'ListaDeComprasItens' AND column_name = 'Notas') THEN
+                ALTER TABLE ""ListaDeComprasItens"" 
+                ADD COLUMN ""Notas"" text NULL;
+            END IF;
         END $$;
     ";
     await command.ExecuteNonQueryAsync();
     await connection.CloseAsync();
-    Console.WriteLine("✅ DateTime fields corrected successfully!");
+    Console.WriteLine("✅ All database fields corrected successfully!");
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"❌ Error fixing DateTime fields: {ex.Message}");
+    Console.WriteLine($"❌ Error fixing fields: {ex.Message}");
 }
 
 // Configure the HTTP request pipeline.

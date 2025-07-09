@@ -13,14 +13,20 @@ class ListaComprasResponse extends Equatable {
 
   factory ListaComprasResponse.fromJson(Map<String, dynamic> json) {
     return ListaComprasResponse(
-      itens: (json['itens'] as List<dynamic>?)
-          ?.map((item) => ListaComprasItem.fromJson(item))
-          .toList() ?? [],
-      sugestoesPreditivas: (json['sugestoesPreditivas'] as List<dynamic>?)
-          ?.map((item) => SugestaoPreditiva.fromJson(item))
-          .toList() ?? [],
-      ultimaAtualizacao: json['ultimaAtualizacao'] != null
-          ? DateTime.parse(json['ultimaAtualizacao'])
+      itens:
+          (json['listaDeCompras'] as List<dynamic>?)
+              ?.map((item) => ListaComprasItem.fromJson(item))
+              .toList() ??
+          [],
+      sugestoesPreditivas:
+          (json['sugestoesPreditivas'] != null &&
+              json['sugestoesPreditivas']['itens'] != null)
+          ? (json['sugestoesPreditivas']['itens'] as List<dynamic>)
+                .map((item) => SugestaoPreditiva.fromJson(item))
+                .toList()
+          : [],
+      ultimaAtualizacao: json['dataUltimaAtualizacao'] != null
+          ? DateTime.parse(json['dataUltimaAtualizacao'])
           : null,
     );
   }
@@ -28,7 +34,9 @@ class ListaComprasResponse extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'itens': itens.map((item) => item.toJson()).toList(),
-      'sugestoesPreditivas': sugestoesPreditivas.map((item) => item.toJson()).toList(),
+      'sugestoesPreditivas': sugestoesPreditivas
+          .map((item) => item.toJson())
+          .toList(),
       'ultimaAtualizacao': ultimaAtualizacao?.toIso8601String(),
     };
   }
@@ -67,21 +75,24 @@ class ListaComprasItem extends Equatable {
   factory ListaComprasItem.fromJson(Map<String, dynamic> json) {
     return ListaComprasItem(
       id: json['id'] ?? 0,
-      nome: json['nome'] ?? '',
-      categoria: json['categoria'] ?? '',
-      quantidade: json['quantidade'] ?? 1,
+      nome: json['produto'] != null
+          ? json['produto']['nome']
+          : json['descricaoManual'] ?? '',
+      categoria: json['produto'] != null
+          ? json['produto']['categoria'] ?? ''
+          : '',
+      quantidade: json['quantidadeDesejada'] ?? 1,
       valor: (json['valor'] as num?)?.toDouble() ?? 0.0,
       comprado: json['comprado'] ?? false,
       dataCompra: json['dataCompra'] != null
           ? DateTime.parse(json['dataCompra'])
           : null,
       observacoes: json['observacoes'],
-      tipo: TipoItem.values.firstWhere(
-        (t) => t.name == json['tipo'],
-        orElse: () => TipoItem.manual,
-      ),
+      tipo: json['tipo'] == 'tradicional' ? TipoItem.manual : TipoItem.sugestao,
       estoqueItemId: json['estoqueItemId'],
-      dataCriacao: DateTime.parse(json['dataCriacao']),
+      dataCriacao: json['dataCriacao'] != null
+          ? DateTime.parse(json['dataCriacao'])
+          : DateTime.now(),
     );
   }
 
@@ -131,7 +142,17 @@ class ListaComprasItem extends Equatable {
 
   @override
   List<Object?> get props => [
-    id, nome, categoria, quantidade, valor, comprado, dataCompra, observacoes, tipo, estoqueItemId, dataCriacao,
+    id,
+    nome,
+    categoria,
+    quantidade,
+    valor,
+    comprado,
+    dataCompra,
+    observacoes,
+    tipo,
+    estoqueItemId,
+    dataCriacao,
   ];
 }
 
@@ -160,15 +181,17 @@ class SugestaoPreditiva extends Equatable {
 
   factory SugestaoPreditiva.fromJson(Map<String, dynamic> json) {
     return SugestaoPreditiva(
-      estoqueItemId: json['estoqueItemId'] ?? 0,
-      nome: json['nome'] ?? '',
-      categoria: json['categoria'] ?? '',
-      quantidade: json['quantidade'] ?? 1,
+      estoqueItemId: json['EstoqueItemId'] ?? 0,
+      nome: json['Produto'] != null ? json['Produto']['Nome'] : '',
+      categoria: json['Produto'] != null
+          ? json['Produto']['Categoria'] ?? ''
+          : '',
+      quantidade: json['QuantidadeSugerida'] ?? 1,
       valor: (json['valor'] as num?)?.toDouble() ?? 0.0,
-      confianca: (json['confianca'] as num?)?.toDouble() ?? 0.0,
-      motivo: json['motivo'] ?? '',
-      previsaoConsumo: json['previsaoConsumo'] != null
-          ? DateTime.parse(json['previsaoConsumo'])
+      confianca: (json['Confianca'] as num?)?.toDouble() ?? 0.0,
+      motivo: json['MotivoSugestao'] ?? '',
+      previsaoConsumo: json['DataPrevisao'] != null
+          ? DateTime.parse(json['DataPrevisao'])
           : null,
       imagemUrl: json['imagemUrl'],
     );
@@ -190,7 +213,15 @@ class SugestaoPreditiva extends Equatable {
 
   @override
   List<Object?> get props => [
-    estoqueItemId, nome, categoria, quantidade, valor, confianca, motivo, previsaoConsumo, imagemUrl,
+    estoqueItemId,
+    nome,
+    categoria,
+    quantidade,
+    valor,
+    confianca,
+    motivo,
+    previsaoConsumo,
+    imagemUrl,
   ];
 }
 
@@ -218,11 +249,13 @@ class HistoricoCompra extends Equatable {
   factory HistoricoCompra.fromJson(Map<String, dynamic> json) {
     return HistoricoCompra(
       id: json['id'] ?? 0,
-      nome: json['nome'] ?? '',
+      nome: json['nome'] ?? json['descricao'] ?? '',
       categoria: json['categoria'] ?? '',
-      quantidade: json['quantidade'] ?? 1,
+      quantidade: json['quantidade'] ?? json['quantidadeDesejada'] ?? 1,
       valor: (json['valor'] as num?)?.toDouble() ?? 0.0,
-      dataCompra: DateTime.parse(json['dataCompra']),
+      dataCompra: json['dataCompra'] != null
+          ? DateTime.parse(json['dataCompra'])
+          : DateTime.now(),
       local: json['local'],
       observacoes: json['observacoes'],
     );
@@ -242,7 +275,16 @@ class HistoricoCompra extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, nome, categoria, quantidade, valor, dataCompra, local, observacoes];
+  List<Object?> get props => [
+    id,
+    nome,
+    categoria,
+    quantidade,
+    valor,
+    dataCompra,
+    local,
+    observacoes,
+  ];
 }
 
 class AddManualItemRequest extends Equatable {
@@ -282,7 +324,7 @@ extension ListaComprasItemExtensions on ListaComprasItem {
   bool get isSuggestion => tipo == TipoItem.sugestao;
   bool get isPending => !comprado;
   bool get isCompleted => comprado;
-  
+
   double get totalValue => valor * quantidade;
 }
 
@@ -290,6 +332,6 @@ extension SugestaoPreditivaExtensions on SugestaoPreditiva {
   bool get isHighConfidence => confianca >= 0.8;
   bool get isMediumConfidence => confianca >= 0.5 && confianca < 0.8;
   bool get isLowConfidence => confianca < 0.5;
-  
+
   double get totalValue => valor * quantidade;
-} 
+}

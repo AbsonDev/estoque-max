@@ -46,7 +46,7 @@ class ListaComprasService {
   ) async {
     try {
       final response = await _apiService.post(
-        '/listadecompras/adicionar-manual',
+        '/listadecompras/manual',
         data: {
           'descricaoManual': descricaoManual,
           'quantidadeDesejada': quantidadeDesejada,
@@ -107,70 +107,73 @@ class ListaComprasService {
     }
   }
 
-  Future<Map<String, dynamic>> editarItem(
-    int itemId, {
-    int? quantidadeDesejada,
-    String? descricaoManual,
-    int? despensaId,
-  }) async {
-    try {
-      final data = <String, dynamic>{};
+  // COMENTADO: Endpoint não existe no backend
+  // Future<Map<String, dynamic>> editarItem(
+  //   int itemId, {
+  //   int? quantidadeDesejada,
+  //   String? descricaoManual,
+  //   int? despensaId,
+  // }) async {
+  //   try {
+  //     final data = <String, dynamic>{};
+  //
+  //     if (quantidadeDesejada != null) {
+  //       data['quantidadeDesejada'] = quantidadeDesejada;
+  //     }
+  //
+  //     if (descricaoManual != null) {
+  //       data['descricaoManual'] = descricaoManual;
+  //     }
+  //
+  //     if (despensaId != null) {
+  //       data['despensaId'] = despensaId;
+  //     }
+  //
+  //     final response = await _apiService.put(
+  //       '/listadecompras/$itemId',
+  //       data: data,
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       return response.data;
+  //     } else {
+  //       throw Exception('Erro no servidor: ${response.statusMessage}');
+  //     }
+  //   } catch (e) {
+  //     throw Exception('Erro ao editar item: $e');
+  //   }
+  // }
 
-      if (quantidadeDesejada != null) {
-        data['quantidadeDesejada'] = quantidadeDesejada;
-      }
+  // COMENTADO: Endpoint não existe no backend
+  // Future<Map<String, dynamic>> getCategorias() async {
+  //   try {
+  //     final response = await _apiService.get('/listadecompras/categorias');
+  //
+  //     if (response.statusCode == 200) {
+  //       return response.data;
+  //     } else {
+  //       throw Exception('Erro no servidor: ${response.statusMessage}');
+  //     }
+  //   } catch (e) {
+  //     throw Exception('Erro ao carregar categorias: $e');
+  //   }
+  // }
 
-      if (descricaoManual != null) {
-        data['descricaoManual'] = descricaoManual;
-      }
-
-      if (despensaId != null) {
-        data['despensaId'] = despensaId;
-      }
-
-      final response = await _apiService.put(
-        '/listadecompras/$itemId',
-        data: data,
-      );
-
-      if (response.statusCode == 200) {
-        return response.data;
-      } else {
-        throw Exception('Erro no servidor: ${response.statusMessage}');
-      }
-    } catch (e) {
-      throw Exception('Erro ao editar item: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> getCategorias() async {
-    try {
-      final response = await _apiService.get('/listadecompras/categorias');
-
-      if (response.statusCode == 200) {
-        return response.data;
-      } else {
-        throw Exception('Erro no servidor: ${response.statusMessage}');
-      }
-    } catch (e) {
-      throw Exception('Erro ao carregar categorias: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> getSugestoesProdutos() async {
-    try {
-      final response = await _apiService.post(
-        '/listadecompras/sugestoes-produtos',
-        data: {},
-      );
-
-      if (response.statusCode == 200) {
-        return response.data;
-      } else {
-        throw Exception('Erro no servidor: ${response.statusMessage}');
-      }
-    } catch (e) {
-      throw Exception('Erro ao carregar sugestões: $e');
-    }
-  }
+  // COMENTADO: Endpoint não existe no backend
+  // Future<Map<String, dynamic>> getSugestoesProdutos() async {
+  //   try {
+  //     final response = await _apiService.post(
+  //       '/listadecompras/sugestoes-produtos',
+  //       data: {},
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       return response.data;
+  //     } else {
+  //       throw Exception('Erro no servidor: ${response.statusMessage}');
+  //     }
+  //   } catch (e) {
+  //     throw Exception('Erro ao carregar sugestões: $e');
+  //   }
+  // }
 }
