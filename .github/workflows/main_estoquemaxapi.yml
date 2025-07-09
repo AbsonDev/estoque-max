@@ -112,9 +112,9 @@ jobs:
       - name: List artifact contents (debug)
         run: |
           echo "Listing contents of ./app:"
-          ls -la ./app || dir ./app
+          Get-ChildItem -Path ./app -Force
           echo "Checking for main files:"
-          ls -la ./app/*.dll || dir ./app\*.dll
+          Get-ChildItem -Path ./app -Filter "*.dll" -Force
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
