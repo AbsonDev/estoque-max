@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EstoqueApp.Api.Migrations
 {
     [DbContext(typeof(EstoqueContext))]
-    [Migration("20250709144952_CorrectDateTimeTypes")]
-    partial class CorrectDateTimeTypes
+    [Migration("20250710181204_AddProdutoVisibilidadeFields")]
+    partial class AddProdutoVisibilidadeFields
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -322,6 +322,9 @@ namespace EstoqueApp.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Marca")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -330,6 +333,12 @@ namespace EstoqueApp.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("UsuarioCriadorId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Visibilidade")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

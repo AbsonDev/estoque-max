@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../data/models/estoque_item.dart';
 import '../../data/models/produto.dart';
+import '../../../despensas/data/models/despensa.dart';
 
 abstract class EstoqueState extends Equatable {
   const EstoqueState();
@@ -20,6 +21,7 @@ class EstoqueLoaded extends EstoqueState {
   final String currentSort;
   final bool sortAscending;
   final int? currentDespensaId;
+  final bool isShowingAllItems; // Flag para indicar se está mostrando todos os itens
 
   const EstoqueLoaded({
     required this.items,
@@ -28,6 +30,7 @@ class EstoqueLoaded extends EstoqueState {
     this.currentSort = 'nome',
     this.sortAscending = true,
     this.currentDespensaId,
+    this.isShowingAllItems = false,
   });
 
   EstoqueLoaded copyWith({
@@ -37,6 +40,7 @@ class EstoqueLoaded extends EstoqueState {
     String? currentSort,
     bool? sortAscending,
     int? currentDespensaId,
+    bool? isShowingAllItems,
   }) {
     return EstoqueLoaded(
       items: items ?? this.items,
@@ -45,6 +49,7 @@ class EstoqueLoaded extends EstoqueState {
       currentSort: currentSort ?? this.currentSort,
       sortAscending: sortAscending ?? this.sortAscending,
       currentDespensaId: currentDespensaId ?? this.currentDespensaId,
+      isShowingAllItems: isShowingAllItems ?? this.isShowingAllItems,
     );
   }
 
@@ -126,6 +131,7 @@ class EstoqueLoaded extends EstoqueState {
     currentSort,
     sortAscending,
     currentDespensaId,
+    isShowingAllItems,
   ];
 }
 
@@ -172,6 +178,26 @@ class ProdutosError extends EstoqueState {
   final String message;
 
   const ProdutosError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class DespensasLoading extends EstoqueState {}
+
+class DespensasLoaded extends EstoqueState {
+  final List<Despensa> despensas;
+
+  const DespensasLoaded(this.despensas);
+
+  @override
+  List<Object?> get props => [despensas];
+}
+
+class DespensasError extends EstoqueState {
+  final String message;
+
+  const DespensasError(this.message);
 
   @override
   List<Object?> get props => [message];

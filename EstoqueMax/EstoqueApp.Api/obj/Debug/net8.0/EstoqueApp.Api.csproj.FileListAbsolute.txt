@@ -365,7 +365,6 @@ C:/Users/ovg19/Documents/projetos/estoque-max/EstoqueMax/EstoqueApp.Api/bin/Debu
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/EstoqueApp.Api.sourcelink.json
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/scopedcss/bundle/EstoqueApp.Api.styles.css
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/staticwebassets.build.json
-/Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/staticwebassets.build.json.cache
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/staticwebassets.development.json
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/staticwebassets.build.endpoints.json
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/EstoqueA.CF84E865.Up2Date
@@ -374,3 +373,4 @@ C:/Users/ovg19/Documents/projetos/estoque-max/EstoqueMax/EstoqueApp.Api/bin/Debu
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/EstoqueApp.Api.pdb
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/EstoqueApp.Api.genruntimeconfig.cache
 /Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/ref/EstoqueApp.Api.dll
+/Users/absondutragalvao/Abson Projects/estoque-max/EstoqueMax/EstoqueApp.Api/obj/Debug/net8.0/staticwebassets.build.json.cache

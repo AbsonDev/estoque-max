@@ -100,15 +100,41 @@ class EstoqueItemCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item.produto,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.produto,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(width: 8),
+                              // Tag da despensa
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  item.despensaNome,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ),
+                            ],
                           ),
                           if (item.marca != null && item.marca!.isNotEmpty)
                             Text(

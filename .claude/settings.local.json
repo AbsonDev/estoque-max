@@ -5,7 +5,15 @@
       "Bash(flutter analyze:*)",
       "Bash(flutter build:*)",
       "Bash(dart analyze:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(dotnet build)",
+      "Bash(dotnet tool update:*)",
+      "Bash(export PATH=\"$PATH:/Users/absondutragalvao/.dotnet/tools\")",
+      "Bash(dotnet ef database:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(dotnet run)"
     ],
     "deny": []
   }

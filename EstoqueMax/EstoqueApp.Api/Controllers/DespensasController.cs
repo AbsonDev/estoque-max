@@ -83,7 +83,7 @@ namespace EstoqueApp.Api.Controllers
             // Verificar permissão
             if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), id))
             {
-                return Forbid("Você não tem permissão para acessar esta despensa.");
+                return Forbid();
             }
 
             var despensa = await _context.Despensas
@@ -214,7 +214,7 @@ namespace EstoqueApp.Api.Controllers
             // Verificar se é dono (apenas dono pode alterar o nome)
             if (!await _permissionService.IsDonoDespensa(int.Parse(userId), id))
             {
-                return Forbid("Apenas o dono pode alterar o nome da despensa.");
+                return Forbid();
             }
 
             var despensa = await _context.Despensas.FindAsync(id);
@@ -257,7 +257,7 @@ namespace EstoqueApp.Api.Controllers
             // Verificar se é dono (apenas dono pode deletar)
             if (!await _permissionService.IsDonoDespensa(int.Parse(userId), id))
             {
-                return Forbid("Apenas o dono pode deletar a despensa.");
+                return Forbid();
             }
 
             var despensa = await _context.Despensas
@@ -321,7 +321,7 @@ namespace EstoqueApp.Api.Controllers
             // Verificar se pode convidar (apenas dono)
             if (!await _permissionService.PodeConvidarParaDespensa(int.Parse(userId), id))
             {
-                return Forbid("Apenas o dono pode convidar novos membros.");
+                return Forbid();
             }
 
             // Verificar se o destinatário existe
@@ -411,7 +411,7 @@ namespace EstoqueApp.Api.Controllers
             // Verificar se pode remover
             if (!await _permissionService.PodeRemoverMembroDespensa(int.Parse(userId), id, membroId))
             {
-                return Forbid("Você não tem permissão para remover este membro.");
+                return Forbid();
             }
 
             var membro = await _context.MembrosDespensa

@@ -5,8 +5,8 @@ class EstoqueItem extends Equatable {
   final String produto;
   final String? marca;
   final String? codigoBarras;
-  final double quantidade;
-  final double quantidadeMinima;
+  final int quantidade;
+  final int quantidadeMinima;
   final bool estoqueAbaixoDoMinimo;
   final DateTime? dataValidade;
   final Map<String, dynamic> despensa;
@@ -29,8 +29,8 @@ class EstoqueItem extends Equatable {
       produto: json['produto'] as String? ?? 'Produto não informado',
       marca: json['marca'] as String?,
       codigoBarras: json['codigoBarras'] as String?,
-      quantidade: (json['quantidade'] as num?)?.toDouble() ?? 0.0,
-      quantidadeMinima: (json['quantidadeMinima'] as num?)?.toDouble() ?? 1.0,
+      quantidade: json['quantidade'] as int? ?? 0,
+      quantidadeMinima: json['quantidadeMinima'] as int? ?? 1,
       estoqueAbaixoDoMinimo: json['estoqueAbaixoDoMinimo'] as bool? ?? false,
       dataValidade: json['dataValidade'] != null
           ? DateTime.tryParse(json['dataValidade'] as String)
@@ -58,8 +58,8 @@ class EstoqueItem extends Equatable {
     String? produto,
     String? marca,
     String? codigoBarras,
-    double? quantidade,
-    double? quantidadeMinima,
+    int? quantidade,
+    int? quantidadeMinima,
     bool? estoqueAbaixoDoMinimo,
     DateTime? dataValidade,
     Map<String, dynamic>? despensa,
@@ -125,27 +125,46 @@ class EstoqueItem extends Equatable {
 
 class AdicionarEstoqueDto {
   final int despensaId;
-  final int produtoId;
+  final int? produtoId; // Agora opcional
+  final String? nomeProduto; // Novo campo para nome do produto
   final int quantidade;
   final int quantidadeMinima;
   final DateTime? dataValidade;
 
   const AdicionarEstoqueDto({
     required this.despensaId,
-    required this.produtoId,
+    this.produtoId,
+    this.nomeProduto,
     required this.quantidade,
     this.quantidadeMinima = 1,
     this.dataValidade,
   });
 
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       'despensaId': despensaId,
-      'produtoId': produtoId,
       'quantidade': quantidade,
       'quantidadeMinima': quantidadeMinima,
-      'dataValidade': dataValidade?.toIso8601String(),
     };
+    
+    if (produtoId != null) {
+      data['produtoId'] = produtoId;
+    }
+    if (nomeProduto != null && nomeProduto!.isNotEmpty) {
+      data['nomeProduto'] = nomeProduto;
+    }
+    if (dataValidade != null) {
+      data['dataValidade'] = dataValidade!.toIso8601String();
+    }
+    
+    return data;
+  }
+
+  // Validação
+  bool get isValid {
+    return (produtoId != null || (nomeProduto != null && nomeProduto!.isNotEmpty)) &&
+           quantidade > 0 &&
+           quantidadeMinima >= 0;
   }
 }
 

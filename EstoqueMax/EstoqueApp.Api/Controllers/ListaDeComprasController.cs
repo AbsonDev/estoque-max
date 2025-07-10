@@ -212,7 +212,7 @@ namespace EstoqueApp.Api.Controllers
 
             if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), estoqueItem.DespensaId))
             {
-                return Forbid("Você não tem permissão para acessar esta despensa.");
+                return Forbid();
             }
 
             // Verificar se já foi adicionado
@@ -399,7 +399,7 @@ namespace EstoqueApp.Api.Controllers
                 // Verificar se o usuário tem permissão para acessar a despensa
                 if (!await _permissionService.PodeAcederDespensa(int.Parse(userId), request.DespensaId.Value))
                 {
-                    return Forbid("Você não tem permissão para acessar a despensa especificada.");
+                    return Forbid();
                 }
 
                 // Procurar se já existe um item do mesmo produto na despensa

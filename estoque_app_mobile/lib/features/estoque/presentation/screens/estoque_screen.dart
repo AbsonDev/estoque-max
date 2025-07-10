@@ -10,7 +10,7 @@ import '../widgets/estoque_item_card.dart';
 import '../widgets/estoque_stats_card.dart';
 import '../widgets/estoque_filter_chips.dart';
 import '../widgets/estoque_sort_dialog.dart';
-import '../widgets/add_item_dialog.dart';
+import '../widgets/adicionar_item_dialog_improved.dart';
 import '../widgets/estoque_empty_state.dart';
 import '../widgets/estoque_loading_skeleton.dart';
 
@@ -26,7 +26,6 @@ class _EstoqueScreenState extends State<EstoqueScreen>
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
   bool _isSearchExpanded = false;
-  int _selectedDespensaId = 1; // TODO: Implementar seleção de despensa
   late AnimationController _fabAnimationController;
 
   @override
@@ -37,8 +36,8 @@ class _EstoqueScreenState extends State<EstoqueScreen>
       vsync: this,
     );
 
-    // Carrega o estoque inicial
-    context.read<EstoqueBloc>().add(LoadEstoque(_selectedDespensaId));
+    // Carrega todos os itens de estoque (de todas as despensas)
+    context.read<EstoqueBloc>().add(const LoadTodosEstoqueItens());
   }
 
   @override
@@ -78,7 +77,7 @@ class _EstoqueScreenState extends State<EstoqueScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Estoque',
+                  'Estoque Geral',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textPrimary,
@@ -86,7 +85,7 @@ class _EstoqueScreenState extends State<EstoqueScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Gerencie seus itens',
+                  'Todos os itens de todas as despensas',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -225,7 +224,7 @@ class _EstoqueScreenState extends State<EstoqueScreen>
           return RefreshIndicator(
             onRefresh: () async {
               context.read<EstoqueBloc>().add(
-                RefreshEstoque(_selectedDespensaId),
+                const RefreshTodosEstoqueItens(),
               );
             },
             child: AnimationLimiter(
@@ -282,7 +281,7 @@ class _EstoqueScreenState extends State<EstoqueScreen>
                 ElevatedButton(
                   onPressed: () {
                     context.read<EstoqueBloc>().add(
-                      LoadEstoque(_selectedDespensaId),
+                      const LoadTodosEstoqueItens(),
                     );
                   },
                   child: const Text('Tentar novamente'),
@@ -348,7 +347,7 @@ class _EstoqueScreenState extends State<EstoqueScreen>
       context: context,
       builder: (context) => BlocProvider.value(
         value: context.read<EstoqueBloc>(),
-        child: AddItemDialog(despensaId: _selectedDespensaId),
+        child: const AdicionarItemDialogImproved(),
       ),
     );
   }

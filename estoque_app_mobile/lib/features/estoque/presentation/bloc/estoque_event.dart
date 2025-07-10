@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../data/services/estoque_service.dart';
+import '../../data/models/estoque_item.dart';
 
 abstract class EstoqueEvent extends Equatable {
   const EstoqueEvent();
@@ -8,6 +8,17 @@ abstract class EstoqueEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+// Carrega todos os itens de estoque (de todas as despensas)
+class LoadTodosEstoqueItens extends EstoqueEvent {
+  const LoadTodosEstoqueItens();
+}
+
+// Atualiza todos os itens de estoque
+class RefreshTodosEstoqueItens extends EstoqueEvent {
+  const RefreshTodosEstoqueItens();
+}
+
+// Carrega itens de uma despensa específica
 class LoadEstoque extends EstoqueEvent {
   final int despensaId;
 
@@ -36,18 +47,17 @@ class SearchProdutos extends EstoqueEvent {
 }
 
 class AddItemToEstoque extends EstoqueEvent {
-  final int despensaId;
-  final AdicionarItemRequest request;
+  final AdicionarEstoqueDto request;
 
-  const AddItemToEstoque(this.despensaId, this.request);
+  const AddItemToEstoque(this.request);
 
   @override
-  List<Object?> get props => [despensaId, request];
+  List<Object?> get props => [request];
 }
 
 class UpdateEstoqueItem extends EstoqueEvent {
   final int itemId;
-  final AtualizarItemRequest request;
+  final AtualizarEstoqueDto request;
 
   const UpdateEstoqueItem(this.itemId, this.request);
 
@@ -57,7 +67,7 @@ class UpdateEstoqueItem extends EstoqueEvent {
 
 class ConsumeEstoqueItem extends EstoqueEvent {
   final int itemId;
-  final ConsumirItemRequest request;
+  final ConsumirEstoqueDto request;
 
   const ConsumeEstoqueItem(this.itemId, this.request);
 
@@ -100,4 +110,8 @@ class SortEstoque extends EstoqueEvent {
 
   @override
   List<Object?> get props => [sortBy, ascending];
+}
+
+class LoadDespensas extends EstoqueEvent {
+  const LoadDespensas();
 } 

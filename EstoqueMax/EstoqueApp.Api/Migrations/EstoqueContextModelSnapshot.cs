@@ -61,7 +61,7 @@ namespace EstoqueApp.Api.Migrations
                         .IsUnique()
                         .HasFilter("\"Estado\" = 0");
 
-                    b.ToTable("ConvitesDespensa");
+                    b.ToTable("ConvitesDespensa", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.Despensa", b =>
@@ -81,7 +81,7 @@ namespace EstoqueApp.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Despensas");
+                    b.ToTable("Despensas", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.EstoqueItem", b =>
@@ -119,7 +119,7 @@ namespace EstoqueApp.Api.Migrations
 
                     b.HasIndex("ProdutoId");
 
-                    b.ToTable("EstoqueItens");
+                    b.ToTable("EstoqueItens", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.HistoricoConsumo", b =>
@@ -161,7 +161,7 @@ namespace EstoqueApp.Api.Migrations
                     b.HasIndex("EstoqueItemId", "DataDoConsumo")
                         .HasDatabaseName("IX_HistoricoConsumo_EstoqueItem_Data");
 
-                    b.ToTable("HistoricosDeConsumo");
+                    b.ToTable("HistoricosDeConsumo", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.ListaDeComprasItem", b =>
@@ -208,7 +208,7 @@ namespace EstoqueApp.Api.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("ListaDeComprasItens");
+                    b.ToTable("ListaDeComprasItens", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.MembroDespensa", b =>
@@ -229,7 +229,7 @@ namespace EstoqueApp.Api.Migrations
 
                     b.HasIndex("DespensaId");
 
-                    b.ToTable("MembrosDespensa");
+                    b.ToTable("MembrosDespensa", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.PagamentoHistorico", b =>
@@ -300,7 +300,7 @@ namespace EstoqueApp.Api.Migrations
                     b.HasIndex("SubscricaoStripeId", "DataPagamento")
                         .HasDatabaseName("IX_PagamentoHistorico_Subscricao_Data");
 
-                    b.ToTable("PagamentosHistorico");
+                    b.ToTable("PagamentosHistorico", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.Produto", b =>
@@ -319,6 +319,9 @@ namespace EstoqueApp.Api.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Marca")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -328,12 +331,18 @@ namespace EstoqueApp.Api.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("UsuarioCriadorId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Visibilidade")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CodigoBarras")
                         .IsUnique();
 
-                    b.ToTable("Produtos");
+                    b.ToTable("Produtos", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.SubscricaoStripe", b =>
@@ -406,7 +415,7 @@ namespace EstoqueApp.Api.Migrations
                     b.HasIndex("UsuarioId", "Status")
                         .HasDatabaseName("IX_SubscricaoStripe_Usuario_Status");
 
-                    b.ToTable("AssinaturasStripe");
+                    b.ToTable("AssinaturasStripe", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.Usuario", b =>
@@ -442,7 +451,7 @@ namespace EstoqueApp.Api.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Usuarios");
+                    b.ToTable("Usuarios", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.WebhookEvent", b =>
@@ -487,7 +496,7 @@ namespace EstoqueApp.Api.Migrations
                     b.HasIndex("EventType", "ProcessadoEm")
                         .HasDatabaseName("IX_WebhookEvent_Type_Processed");
 
-                    b.ToTable("WebhookEvents");
+                    b.ToTable("WebhookEvents", (string)null);
                 });
 
             modelBuilder.Entity("EstoqueApp.Api.Models.ConviteDespensa", b =>
