@@ -112,7 +112,9 @@ class EstoqueService {
     try {
       final response = await _apiService.get(
         '/produtos/buscar', // Endpoint correto
-        queryParameters: query != null ? {'query': query} : null, // Parâmetro correto
+        queryParameters: query != null
+            ? {'query': query}
+            : null, // Parâmetro correto
       );
 
       if (response.statusCode == 200) {
@@ -229,7 +231,8 @@ class EstoqueService {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 400) {
-        final errorMessage = e.response?.data?['message'] ?? 'Quantidade inválida';
+        final errorMessage =
+            e.response?.data?['message'] ?? 'Quantidade inválida';
         throw Exception(errorMessage);
       } else if (e.response?.statusCode == 403) {
         throw Exception('Você não tem permissão para acessar esta despensa');
@@ -273,6 +276,31 @@ class EstoqueService {
         return EstoqueItem.fromJson(response.data);
       } else {
         throw Exception('Erro ao carregar item: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw Exception('Item não encontrado');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Acesso negado');
+      } else {
+        throw Exception('Erro de conexão: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Erro inesperado: $e');
+    }
+  }
+
+  // Obtém detalhes completos de um item específico (com estatísticas e histórico)
+  Future<EstoqueItemDetalhes> getItemDetalhesCompletos(int itemId) async {
+    try {
+      final response = await _apiService.get('/estoque/$itemId');
+
+      if (response.statusCode == 200) {
+        return EstoqueItemDetalhes.fromJson(response.data);
+      } else {
+        throw Exception(
+          'Erro ao carregar detalhes do item: ${response.statusMessage}',
+        );
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {

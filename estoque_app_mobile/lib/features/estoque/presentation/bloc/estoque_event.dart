@@ -114,4 +114,19 @@ class SortEstoque extends EstoqueEvent {
 
 class LoadDespensas extends EstoqueEvent {
   const LoadDespensas();
-} 
+}
+
+// Carrega detalhes completos de um item específico
+class LoadEstoqueItemDetalhes extends EstoqueEvent {
+  final int itemId;
+
+  const LoadEstoqueItemDetalhes(this.itemId);
+
+  @override
+  List<Object?> get props => [itemId];
+}
+
+// Limpa os detalhes do item carregado
+class ClearEstoqueItemDetalhes extends EstoqueEvent {
+  const ClearEstoqueItemDetalhes();
+}

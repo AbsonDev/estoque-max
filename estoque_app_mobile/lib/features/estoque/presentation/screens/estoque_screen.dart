@@ -223,9 +223,7 @@ class _EstoqueScreenState extends State<EstoqueScreen>
 
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<EstoqueBloc>().add(
-                const RefreshTodosEstoqueItens(),
-              );
+              context.read<EstoqueBloc>().add(const RefreshTodosEstoqueItens());
             },
             child: AnimationLimiter(
               child: ListView.builder(
@@ -242,7 +240,6 @@ class _EstoqueScreenState extends State<EstoqueScreen>
                       child: FadeInAnimation(
                         child: EstoqueItemCard(
                           item: item,
-                          onTap: () => _showItemDetails(item),
                           onEdit: () => _showEditItemDialog(item),
                           onConsume: () => _showConsumeItemDialog(item),
                           onDelete: () => _showDeleteConfirmDialog(item),
