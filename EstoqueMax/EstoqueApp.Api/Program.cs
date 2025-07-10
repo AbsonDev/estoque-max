@@ -71,7 +71,8 @@ builder.Services.AddCors(options =>
                         "https://estoque-max.vercel.app",
                         "https://estoque-max-git-main.vercel.app",
                         "https://estoque-max-git-develop.vercel.app",
-                        "https://thankful-pebble-0ab32d00f.2.azurestaticapps.net"
+                        "https://thankful-pebble-0ab32d00f.2.azurestaticapps.net",
+                        "https://estoquemaxapi-acfwdye6g0bbdwb5.brazilsouth-01.azurewebsites.net"
                     )
                     .AllowAnyMethod()
                     .AllowAnyHeader()
