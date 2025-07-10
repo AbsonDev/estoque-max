@@ -267,16 +267,15 @@ class _AdicionarItemDialogState extends State<AdicionarItemDialog> {
         _isLoading = true;
       });
 
-      final request = AdicionarItemRequest(
-        produtoId: _produtoSelecionado!.id,
-        quantidade: double.parse(_quantidadeController.text),
-        observacoes: null,
+      final request = AdicionarEstoqueDto(
+        despensaId: widget.despensaId!,
+        produtoId: _produtoSelecionado?.id,
+        quantidade: int.parse(_quantidadeController.text),
+        quantidadeMinima: int.parse(_quantidadeMinimaController.text),
         dataValidade: _dataValidade,
       );
 
-      context.read<EstoqueBloc>().add(
-        AddItemToEstoque(widget.despensaId!, request),
-      );
+      context.read<EstoqueBloc>().add(AddItemToEstoque(request));
     }
   }
 }

@@ -4,14 +4,12 @@ import '../../../../core/theme/app_theme.dart';
 import '../bloc/estoque_bloc.dart';
 import '../bloc/estoque_event.dart';
 import '../../data/services/estoque_service.dart';
+import '../../data/models/estoque_item.dart';
 
 class AddItemDialog extends StatefulWidget {
   final int despensaId;
 
-  const AddItemDialog({
-    super.key,
-    required this.despensaId,
-  });
+  const AddItemDialog({super.key, required this.despensaId});
 
   @override
   State<AddItemDialog> createState() => _AddItemDialogState();
@@ -22,10 +20,10 @@ class _AddItemDialogState extends State<AddItemDialog> {
   final _nomeController = TextEditingController();
   final _quantidadeController = TextEditingController();
   final _observacoesController = TextEditingController();
-  
+
   DateTime? _dataValidade;
   String _unidadeMedida = 'unidades';
-  
+
   static const List<String> _unidadesMedida = [
     'unidades',
     'kg',
@@ -70,9 +68,9 @@ class _AddItemDialogState extends State<AddItemDialog> {
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Quantidade e unidade
               Row(
                 children: [
@@ -101,9 +99,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                     flex: 1,
                     child: DropdownButtonFormField<String>(
                       value: _unidadeMedida,
-                      decoration: const InputDecoration(
-                        labelText: 'Unidade',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Unidade'),
                       items: _unidadesMedida.map((unidade) {
                         return DropdownMenuItem(
                           value: unidade,
@@ -121,9 +117,9 @@ class _AddItemDialogState extends State<AddItemDialog> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Data de validade
               InkWell(
                 onTap: _selectDate,
@@ -144,9 +140,9 @@ class _AddItemDialogState extends State<AddItemDialog> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Observações
               TextFormField(
                 controller: _observacoesController,
@@ -165,10 +161,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        ElevatedButton(
-          onPressed: _addItem,
-          child: const Text('Adicionar'),
-        ),
+        ElevatedButton(onPressed: _addItem, child: const Text('Adicionar')),
       ],
     );
   }
@@ -180,7 +173,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    
+
     if (picked != null) {
       setState(() {
         _dataValidade = picked;
@@ -192,17 +185,16 @@ class _AddItemDialogState extends State<AddItemDialog> {
     if (_formKey.currentState!.validate()) {
       // TODO: Primeiro criar o produto se não existir
       // Por enquanto, vamos usar um produto fictício
-      final request = AdicionarItemRequest(
-        produtoId: 1, // TODO: Implementar busca/criação de produto
-        quantidade: double.parse(_quantidadeController.text),
-        observacoes: _observacoesController.text.isNotEmpty 
-            ? _observacoesController.text 
-            : null,
+      final request = AdicionarEstoqueDto(
+        despensaId: widget.despensaId,
+        nomeProduto: _nomeController.text,
+        quantidade: int.parse(_quantidadeController.text),
+        quantidadeMinima: 1,
         dataValidade: _dataValidade,
       );
 
-      context.read<EstoqueBloc>().add(AddItemToEstoque(widget.despensaId, request));
+      context.read<EstoqueBloc>().add(AddItemToEstoque(request));
       Navigator.of(context).pop();
     }
   }
-} 
+}

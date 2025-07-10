@@ -222,9 +222,8 @@ class _ConsumirItemDialogState extends State<ConsumirItemDialog> {
 
   void _consumirItem() {
     if (_formKey.currentState!.validate()) {
-      final request = ConsumirItemRequest(
-        quantidadeConsumida: double.parse(_quantidadeController.text),
-        observacoes: null,
+      final request = ConsumirEstoqueDto(
+        quantidadeConsumida: int.parse(_quantidadeController.text),
       );
 
       context.read<EstoqueBloc>().add(
