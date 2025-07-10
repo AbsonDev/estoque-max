@@ -21,7 +21,8 @@ class EstoqueLoaded extends EstoqueState {
   final String currentSort;
   final bool sortAscending;
   final int? currentDespensaId;
-  final bool isShowingAllItems; // Flag para indicar se está mostrando todos os itens
+  final bool
+  isShowingAllItems; // Flag para indicar se está mostrando todos os itens
 
   const EstoqueLoaded({
     required this.items,
@@ -198,6 +199,27 @@ class DespensasError extends EstoqueState {
   final String message;
 
   const DespensasError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+// Estados para detalhes de item específico
+class EstoqueItemDetalhesLoading extends EstoqueState {}
+
+class EstoqueItemDetalhesLoaded extends EstoqueState {
+  final EstoqueItemDetalhes itemDetalhes;
+
+  const EstoqueItemDetalhesLoaded(this.itemDetalhes);
+
+  @override
+  List<Object?> get props => [itemDetalhes];
+}
+
+class EstoqueItemDetalhesError extends EstoqueState {
+  final String message;
+
+  const EstoqueItemDetalhesError(this.message);
 
   @override
   List<Object?> get props => [message];

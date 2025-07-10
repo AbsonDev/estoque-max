@@ -4,10 +4,11 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/models/estoque_item.dart';
+import '../screens/estoque_item_detalhes_screen.dart';
 
 class EstoqueItemCard extends StatelessWidget {
   final EstoqueItem item;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final VoidCallback onEdit;
   final VoidCallback onConsume;
   final VoidCallback onDelete;
@@ -15,7 +16,7 @@ class EstoqueItemCard extends StatelessWidget {
   const EstoqueItemCard({
     super.key,
     required this.item,
-    required this.onTap,
+    this.onTap,
     required this.onEdit,
     required this.onConsume,
     required this.onDelete,
@@ -54,7 +55,7 @@ class EstoqueItemCard extends StatelessWidget {
           ],
         ),
         child: GestureDetector(
-          onTap: onTap,
+          onTap: onTap ?? () => _navegarParaDetalhes(context),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -336,5 +337,14 @@ class EstoqueItemCard extends StatelessWidget {
     if (item.isVencido) return AppTheme.error;
     if (item.isVencendoEm7Dias) return Colors.orange;
     return AppTheme.textSecondary;
+  }
+
+  void _navegarParaDetalhes(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EstoqueItemDetalhesScreen(itemId: item.id),
+      ),
+    );
   }
 }

@@ -22,6 +22,8 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     on<FilterEstoque>(_onFilterEstoque);
     on<SortEstoque>(_onSortEstoque);
     on<LoadDespensas>(_onLoadDespensas);
+    on<LoadEstoqueItemDetalhes>(_onLoadEstoqueItemDetalhes);
+    on<ClearEstoqueItemDetalhes>(_onClearEstoqueItemDetalhes);
   }
 
   Future<void> _onLoadTodosEstoqueItens(
@@ -38,7 +40,8 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
         EstoqueLoaded(
           items: items,
           produtos: produtos,
-          isShowingAllItems: true, // Flag para indicar que mostra todos os itens
+          isShowingAllItems:
+              true, // Flag para indicar que mostra todos os itens
         ),
       );
     } catch (e) {
@@ -56,12 +59,7 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
       try {
         final items = await _estoqueService.getTodosEstoqueItens();
 
-        emit(
-          currentState.copyWith(
-            items: items,
-            isShowingAllItems: true,
-          ),
-        );
+        emit(currentState.copyWith(items: items, isShowingAllItems: true));
       } catch (e) {
         emit(EstoqueError(e.toString()));
       }
@@ -85,7 +83,8 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
           items: items,
           produtos: produtos,
           currentDespensaId: event.despensaId,
-          isShowingAllItems: false, // Flag para indicar que mostra apenas uma despensa
+          isShowingAllItems:
+              false, // Flag para indicar que mostra apenas uma despensa
         ),
       );
     } catch (e) {
@@ -305,5 +304,26 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     } catch (e) {
       emit(DespensasError(e.toString()));
     }
+  }
+
+  Future<void> _onLoadEstoqueItemDetalhes(
+    LoadEstoqueItemDetalhes event,
+    Emitter<EstoqueState> emit,
+  ) async {
+    emit(EstoqueItemDetalhesLoading());
+
+    try {
+      final item = await _estoqueService.getItemDetalhesCompletos(event.itemId);
+      emit(EstoqueItemDetalhesLoaded(item));
+    } catch (e) {
+      emit(EstoqueItemDetalhesError(e.toString()));
+    }
+  }
+
+  Future<void> _onClearEstoqueItemDetalhes(
+    ClearEstoqueItemDetalhes event,
+    Emitter<EstoqueState> emit,
+  ) async {
+    emit(EstoqueInitial());
   }
 }
