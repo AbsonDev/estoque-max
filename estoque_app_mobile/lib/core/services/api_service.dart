@@ -20,7 +20,7 @@ class AuthResponse {
 }
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:5265/api';
+  static const String baseUrl = 'estoquemaxapi-acfwdye6g0bbdwb5.brazilsouth-01.azurewebsites.net/api';
   static const String tokenKey = 'auth_token';
 
   late final Dio _dio;
