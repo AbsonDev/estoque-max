@@ -9,6 +9,8 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
   final EstoqueService _estoqueService;
 
   EstoqueBloc(this._estoqueService) : super(EstoqueInitial()) {
+    on<LoadTodosEstoqueItens>(_onLoadTodosEstoqueItens);
+    on<RefreshTodosEstoqueItens>(_onRefreshTodosEstoqueItens);
     on<LoadEstoque>(_onLoadEstoque);
     on<RefreshEstoque>(_onRefreshEstoque);
     on<SearchProdutos>(_onSearchProdutos);
@@ -19,6 +21,53 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     on<EstoqueItemUpdatedRealTime>(_onEstoqueItemUpdatedRealTime);
     on<FilterEstoque>(_onFilterEstoque);
     on<SortEstoque>(_onSortEstoque);
+    on<LoadDespensas>(_onLoadDespensas);
+  }
+
+  Future<void> _onLoadTodosEstoqueItens(
+    LoadTodosEstoqueItens event,
+    Emitter<EstoqueState> emit,
+  ) async {
+    emit(EstoqueLoading());
+
+    try {
+      final items = await _estoqueService.getTodosEstoqueItens();
+      final produtos = await _estoqueService.buscarProdutos();
+
+      emit(
+        EstoqueLoaded(
+          items: items,
+          produtos: produtos,
+          isShowingAllItems: true, // Flag para indicar que mostra todos os itens
+        ),
+      );
+    } catch (e) {
+      emit(EstoqueError(e.toString()));
+    }
+  }
+
+  Future<void> _onRefreshTodosEstoqueItens(
+    RefreshTodosEstoqueItens event,
+    Emitter<EstoqueState> emit,
+  ) async {
+    if (state is EstoqueLoaded) {
+      final currentState = state as EstoqueLoaded;
+
+      try {
+        final items = await _estoqueService.getTodosEstoqueItens();
+
+        emit(
+          currentState.copyWith(
+            items: items,
+            isShowingAllItems: true,
+          ),
+        );
+      } catch (e) {
+        emit(EstoqueError(e.toString()));
+      }
+    } else {
+      add(const LoadTodosEstoqueItens());
+    }
   }
 
   Future<void> _onLoadEstoque(
@@ -36,6 +85,7 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
           items: items,
           produtos: produtos,
           currentDespensaId: event.despensaId,
+          isShowingAllItems: false, // Flag para indicar que mostra apenas uma despensa
         ),
       );
     } catch (e) {
@@ -59,6 +109,7 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
           currentState.copyWith(
             items: items,
             currentDespensaId: event.despensaId,
+            isShowingAllItems: false,
           ),
         );
       } catch (e) {
@@ -90,10 +141,20 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
     emit(const EstoqueOperationInProgress('Adicionando item...'));
 
     try {
-      await _estoqueService.adicionarItem(event.despensaId, event.request);
+      await _estoqueService.adicionarItem(event.request);
 
       // Após adicionar o item, recarrega a lista de estoque
-      add(RefreshEstoque(event.despensaId));
+      // Verifica se está mostrando todos os itens ou apenas uma despensa
+      if (state is EstoqueLoaded) {
+        final currentState = state as EstoqueLoaded;
+        if (currentState.isShowingAllItems) {
+          add(const RefreshTodosEstoqueItens());
+        } else {
+          add(RefreshEstoque(event.request.despensaId));
+        }
+      } else {
+        add(const RefreshTodosEstoqueItens());
+      }
       emit(const EstoqueOperationSuccess('Item adicionado com sucesso!'));
     } catch (e) {
       emit(EstoqueError(e.toString()));
@@ -112,7 +173,9 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
       // Após atualizar o item, recarrega a lista de estoque
       if (state is EstoqueLoaded) {
         final currentState = state as EstoqueLoaded;
-        if (currentState.currentDespensaId != null) {
+        if (currentState.isShowingAllItems) {
+          add(const RefreshTodosEstoqueItens());
+        } else if (currentState.currentDespensaId != null) {
           add(RefreshEstoque(currentState.currentDespensaId!));
         }
       }
@@ -135,7 +198,9 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
       // Após consumir o item, recarrega a lista de estoque
       if (state is EstoqueLoaded) {
         final currentState = state as EstoqueLoaded;
-        if (currentState.currentDespensaId != null) {
+        if (currentState.isShowingAllItems) {
+          add(const RefreshTodosEstoqueItens());
+        } else if (currentState.currentDespensaId != null) {
           add(RefreshEstoque(currentState.currentDespensaId!));
         }
       }
@@ -225,6 +290,20 @@ class EstoqueBloc extends Bloc<EstoqueEvent, EstoqueState> {
           sortAscending: event.ascending,
         ),
       );
+    }
+  }
+
+  Future<void> _onLoadDespensas(
+    LoadDespensas event,
+    Emitter<EstoqueState> emit,
+  ) async {
+    emit(DespensasLoading());
+
+    try {
+      final despensas = await _estoqueService.buscarDespensas();
+      emit(DespensasLoaded(despensas));
+    } catch (e) {
+      emit(DespensasError(e.toString()));
     }
   }
 }

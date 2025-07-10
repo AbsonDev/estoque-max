@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EstoqueApp.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f24fa5336a41d964ce9a43e1d2276da12eca2ff3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d69ad3db93d20ffd33e26d813f83354b1a1f4e12")]
 [assembly: System.Reflection.AssemblyProductAttribute("EstoqueApp.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EstoqueApp.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

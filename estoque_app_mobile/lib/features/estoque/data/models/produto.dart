@@ -1,18 +1,19 @@
 import 'package:equatable/equatable.dart';
 
+enum TipoVisibilidadeProduto {
+  publico,
+  privado,
+}
+
 class Produto extends Equatable {
   final int id;
   final String nome;
   final String? marca;
   final String? categoria;
   final String? codigoBarras;
-  final String unidadeMedida;
-  final double? precoMedio;
-  final String? descricao;
-  final String? imagemUrl;
-  final bool ativo;
+  final TipoVisibilidadeProduto visibilidade;
+  final int? usuarioCriadorId;
   final DateTime dataCriacao;
-  final DateTime ultimaAtualizacao;
 
   const Produto({
     required this.id,
@@ -20,13 +21,9 @@ class Produto extends Equatable {
     this.marca,
     this.categoria,
     this.codigoBarras,
-    required this.unidadeMedida,
-    this.precoMedio,
-    this.descricao,
-    this.imagemUrl,
-    required this.ativo,
+    this.visibilidade = TipoVisibilidadeProduto.privado,
+    this.usuarioCriadorId,
     required this.dataCriacao,
-    required this.ultimaAtualizacao,
   });
 
   factory Produto.fromJson(Map<String, dynamic> json) {
@@ -36,19 +33,13 @@ class Produto extends Equatable {
       marca: json['marca'] as String?,
       categoria: json['categoria'] as String?,
       codigoBarras: json['codigoBarras'] as String?,
-      unidadeMedida: json['unidadeMedida'] as String? ?? 'un',
-      precoMedio: json['precoMedio'] != null
-          ? (json['precoMedio'] as num?)?.toDouble()
-          : null,
-      descricao: json['descricao'] as String?,
-      imagemUrl: json['imagemUrl'] as String?,
-      ativo: json['ativo'] as bool? ?? true,
+      visibilidade: TipoVisibilidadeProduto.values.firstWhere(
+        (e) => e.name == json['visibilidade'],
+        orElse: () => TipoVisibilidadeProduto.privado,
+      ),
+      usuarioCriadorId: json['usuarioCriadorId'] as int?,
       dataCriacao: json['dataCriacao'] != null
           ? DateTime.tryParse(json['dataCriacao'] as String) ?? DateTime.now()
-          : DateTime.now(),
-      ultimaAtualizacao: json['ultimaAtualizacao'] != null
-          ? DateTime.tryParse(json['ultimaAtualizacao'] as String) ??
-                DateTime.now()
           : DateTime.now(),
     );
   }
@@ -60,13 +51,9 @@ class Produto extends Equatable {
       'marca': marca,
       'categoria': categoria,
       'codigoBarras': codigoBarras,
-      'unidadeMedida': unidadeMedida,
-      'precoMedio': precoMedio,
-      'descricao': descricao,
-      'imagemUrl': imagemUrl,
-      'ativo': ativo,
+      'visibilidade': visibilidade.name,
+      'usuarioCriadorId': usuarioCriadorId,
       'dataCriacao': dataCriacao.toIso8601String(),
-      'ultimaAtualizacao': ultimaAtualizacao.toIso8601String(),
     };
   }
 
@@ -76,13 +63,9 @@ class Produto extends Equatable {
     String? marca,
     String? categoria,
     String? codigoBarras,
-    String? unidadeMedida,
-    double? precoMedio,
-    String? descricao,
-    String? imagemUrl,
-    bool? ativo,
+    TipoVisibilidadeProduto? visibilidade,
+    int? usuarioCriadorId,
     DateTime? dataCriacao,
-    DateTime? ultimaAtualizacao,
   }) {
     return Produto(
       id: id ?? this.id,
@@ -90,13 +73,9 @@ class Produto extends Equatable {
       marca: marca ?? this.marca,
       categoria: categoria ?? this.categoria,
       codigoBarras: codigoBarras ?? this.codigoBarras,
-      unidadeMedida: unidadeMedida ?? this.unidadeMedida,
-      precoMedio: precoMedio ?? this.precoMedio,
-      descricao: descricao ?? this.descricao,
-      imagemUrl: imagemUrl ?? this.imagemUrl,
-      ativo: ativo ?? this.ativo,
+      visibilidade: visibilidade ?? this.visibilidade,
+      usuarioCriadorId: usuarioCriadorId ?? this.usuarioCriadorId,
       dataCriacao: dataCriacao ?? this.dataCriacao,
-      ultimaAtualizacao: ultimaAtualizacao ?? this.ultimaAtualizacao,
     );
   }
 
@@ -155,6 +134,18 @@ class Produto extends Equatable {
     }
   }
 
+  // Helper para verificar se é produto próprio do usuário
+  bool isOwnedByUser(int? currentUserId) {
+    return visibilidade == TipoVisibilidadeProduto.privado && 
+           usuarioCriadorId == currentUserId;
+  }
+
+  // Helper para verificar se pode ser editado pelo usuário
+  bool canBeEditedByUser(int? currentUserId) {
+    return visibilidade == TipoVisibilidadeProduto.publico ||
+           isOwnedByUser(currentUserId);
+  }
+
   @override
   List<Object?> get props => [
     id,
@@ -162,13 +153,9 @@ class Produto extends Equatable {
     marca,
     categoria,
     codigoBarras,
-    unidadeMedida,
-    precoMedio,
-    descricao,
-    imagemUrl,
-    ativo,
+    visibilidade,
+    usuarioCriadorId,
     dataCriacao,
-    ultimaAtualizacao,
   ];
 }
 
@@ -177,14 +164,12 @@ class CriarProdutoDto {
   final String? marca;
   final String? codigoBarras;
   final String? categoria;
-  final String? descricao;
 
   const CriarProdutoDto({
     required this.nome,
     this.marca,
     this.codigoBarras,
     this.categoria,
-    this.descricao,
   });
 
   Map<String, dynamic> toJson() {
@@ -193,7 +178,6 @@ class CriarProdutoDto {
       'marca': marca,
       'codigoBarras': codigoBarras,
       'categoria': categoria,
-      'descricao': descricao,
     };
   }
 }
@@ -203,14 +187,12 @@ class AtualizarProdutoDto {
   final String? marca;
   final String? codigoBarras;
   final String? categoria;
-  final String? descricao;
 
   const AtualizarProdutoDto({
     required this.nome,
     this.marca,
     this.codigoBarras,
     this.categoria,
-    this.descricao,
   });
 
   Map<String, dynamic> toJson() {
@@ -219,7 +201,6 @@ class AtualizarProdutoDto {
       'marca': marca,
       'codigoBarras': codigoBarras,
       'categoria': categoria,
-      'descricao': descricao,
     };
   }
 }

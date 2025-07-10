@@ -8,6 +8,7 @@ using EstoqueApp.Api.Hubs;
 using EstoqueApp.Api.Services.AI;
 using EstoqueApp.Api.Services.Analytics;
 using Microsoft.OpenApi.Models;
+using EstoqueApp.Api.Models;
 
 // GitHub Action trigger test - workflow correction applied
 var builder = WebApplication.CreateBuilder(args);
@@ -196,6 +197,11 @@ try
         END $$;
     ";
     await command.ExecuteNonQueryAsync();
+    
+    // Criar dados de teste após as migrações
+    Console.WriteLine("Criando dados de teste...");
+    await SeedTestData(context);
+    
     await connection.CloseAsync();
     Console.WriteLine("✅ All database fields corrected successfully!");
 }
@@ -250,6 +256,149 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast");
 
 app.Run();
+
+// Método para criar dados de teste
+static async Task SeedTestData(EstoqueContext context)
+{
+    try
+    {
+        // Verificar se já existem dados de teste
+        if (await context.EstoqueItens.AnyAsync())
+        {
+            Console.WriteLine("Dados de teste já existem. Pulando seed...");
+            return;
+        }
+
+        // Buscar usuário existente (você deve estar logado com este usuário)
+        var usuario = await context.Usuarios.FirstOrDefaultAsync();
+        if (usuario == null)
+        {
+            Console.WriteLine("Nenhum usuário encontrado. Criando usuário de teste...");
+            usuario = new Usuario
+            {
+                Nome = "Abson",
+                Email = "abson@test.com",
+                SenhaHash = "hash_placeholder", // Você deve ajustar para o hash correto
+                Plano = TipoDePlano.Free
+            };
+            context.Usuarios.Add(usuario);
+            await context.SaveChangesAsync();
+        }
+
+        // Buscar ou criar despensa
+        var despensa = await context.Despensas.FirstOrDefaultAsync();
+        if (despensa == null)
+        {
+            Console.WriteLine("Criando despensa de teste...");
+            despensa = new Despensa
+            {
+                Nome = "Cozinha Principal",
+                DataCriacao = DateTime.UtcNow
+            };
+            context.Despensas.Add(despensa);
+            await context.SaveChangesAsync();
+
+            // Adicionar usuário como membro da despensa
+            var membro = new MembroDespensa
+            {
+                UsuarioId = usuario.Id,
+                DespensaId = despensa.Id,
+                Papel = PapelDespensa.Dono,
+                DataAcesso = DateTime.UtcNow
+            };
+            context.MembrosDespensa.Add(membro);
+            await context.SaveChangesAsync();
+        }
+
+        // Criar ou buscar produtos
+        var produtoLeite = await context.Produtos.FirstOrDefaultAsync(p => p.Nome == "Leite Integral");
+        if (produtoLeite == null)
+        {
+            produtoLeite = new Produto
+            {
+                Nome = "Leite Integral",
+                Marca = "Parmalat",
+                CodigoBarras = "7891234567890",
+                Categoria = "Laticínios",
+                Visibilidade = TipoVisibilidadeProduto.Publico,
+                DataCriacao = DateTime.UtcNow
+            };
+            context.Produtos.Add(produtoLeite);
+        }
+
+        var produtoPao = await context.Produtos.FirstOrDefaultAsync(p => p.Nome == "Pão de Forma");
+        if (produtoPao == null)
+        {
+            produtoPao = new Produto
+            {
+                Nome = "Pão de Forma",
+                Marca = "Wickbold",
+                CodigoBarras = "7891234567891",
+                Categoria = "Padaria",
+                Visibilidade = TipoVisibilidadeProduto.Publico,
+                DataCriacao = DateTime.UtcNow
+            };
+            context.Produtos.Add(produtoPao);
+        }
+
+        var produtoArroz = await context.Produtos.FirstOrDefaultAsync(p => p.Nome == "Arroz Branco");
+        if (produtoArroz == null)
+        {
+            produtoArroz = new Produto
+            {
+                Nome = "Arroz Branco",
+                Marca = "Tio João",
+                CodigoBarras = "7891234567892",
+                Categoria = "Grãos",
+                Visibilidade = TipoVisibilidadeProduto.Publico,
+                DataCriacao = DateTime.UtcNow
+            };
+            context.Produtos.Add(produtoArroz);
+        }
+
+        await context.SaveChangesAsync();
+
+        // Criar itens de estoque
+        var estoqueItens = new List<EstoqueItem>
+        {
+            new EstoqueItem
+            {
+                DespensaId = despensa.Id,
+                ProdutoId = produtoLeite.Id,
+                Quantidade = 3,
+                QuantidadeMinima = 1,
+                DataValidade = DateTime.UtcNow.AddDays(7),
+                DataAdicao = DateTime.UtcNow
+            },
+            new EstoqueItem
+            {
+                DespensaId = despensa.Id,
+                ProdutoId = produtoPao.Id,
+                Quantidade = 2,
+                QuantidadeMinima = 1,
+                DataValidade = DateTime.UtcNow.AddDays(3),
+                DataAdicao = DateTime.UtcNow
+            },
+            new EstoqueItem
+            {
+                DespensaId = despensa.Id,
+                ProdutoId = produtoArroz.Id,
+                Quantidade = 5,
+                QuantidadeMinima = 2,
+                DataAdicao = DateTime.UtcNow
+            }
+        };
+
+        context.EstoqueItens.AddRange(estoqueItens);
+        await context.SaveChangesAsync();
+
+        Console.WriteLine($"✅ Dados de teste criados: {estoqueItens.Count} itens de estoque");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Erro ao criar dados de teste: {ex.Message}");
+    }
+}
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
