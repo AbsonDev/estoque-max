@@ -59,10 +59,10 @@ builder.Services.AddCors(options =>
         {
             // Em produção, especifique apenas as origens permitidas
             if (configuration["ASPNETCORE_ENVIRONMENT"] == "Development")
-            {
-                builder.AllowAnyOrigin()
-                       .AllowAnyMethod()
-                       .AllowAnyHeader();
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
             }
             else
             {

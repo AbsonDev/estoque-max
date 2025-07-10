@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/responsive/responsive_utils.dart';
+import '../../../../core/widgets/web_layout.dart';
+import '../../../../core/design_system/app_colors.dart';
 
 class EstoqueStatsCard extends StatelessWidget {
   final int totalItems;
@@ -20,10 +23,14 @@ class EstoqueStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (ResponsiveUtils.isWebLayout(context)) {
+      return _buildWebStats(context);
+    }
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -41,7 +48,7 @@ class EstoqueStatsCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.analytics_outlined,
-                color: AppTheme.primaryColor,
+                color: AppColors.primary,
                 size: 24,
               ),
               const SizedBox(width: 8),
@@ -49,7 +56,7 @@ class EstoqueStatsCard extends StatelessWidget {
                 'Resumo do Estoque',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
@@ -90,7 +97,7 @@ class EstoqueStatsCard extends StatelessWidget {
                         icon: Icons.warning,
                         label: 'Vencidos',
                         value: itensVencidos,
-                        color: AppTheme.error,
+                        color: AppColors.error,
                       ),
                     if (itensVencendo > 0)
                       _buildAlertChip(
@@ -98,7 +105,7 @@ class EstoqueStatsCard extends StatelessWidget {
                         icon: Icons.schedule,
                         label: 'Vencendo',
                         value: itensVencendo,
-                        color: Colors.orange,
+                        color: AppColors.warning,
                       ),
                     if (itensBaixoEstoque > 0)
                       _buildAlertChip(
@@ -106,7 +113,7 @@ class EstoqueStatsCard extends StatelessWidget {
                         icon: Icons.trending_down,
                         label: 'Baixo Estoque',
                         value: itensBaixoEstoque,
-                        color: AppTheme.warning,
+                        color: AppColors.warning,
                       ),
                     if (itensEmFalta > 0)
                       _buildAlertChip(
@@ -114,7 +121,7 @@ class EstoqueStatsCard extends StatelessWidget {
                         icon: Icons.remove_circle,
                         label: 'Em Falta',
                         value: itensEmFalta,
-                        color: AppTheme.error,
+                        color: AppColors.error,
                       ),
                   ],
                 ),
@@ -154,7 +161,7 @@ class EstoqueStatsCard extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -192,10 +199,54 @@ class EstoqueStatsCard extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWebStats(BuildContext context) {
+    final stats = [
+      WebStatCard(
+        title: 'Total de Itens',
+        value: totalItems.toString(),
+        icon: Icons.inventory_2,
+        color: AppColors.primary,
+      ),
+      WebStatCard(
+        title: 'Itens Vencidos',
+        value: itensVencidos.toString(),
+        icon: Icons.warning,
+        color: AppColors.error,
+        subtitle: itensVencidos > 0 ? 'Atenção necessária' : null,
+      ),
+      WebStatCard(
+        title: 'Vencendo Soon',
+        value: itensVencendo.toString(),
+        icon: Icons.schedule,
+        color: AppColors.warning,
+        subtitle: itensVencendo > 0 ? 'Próximos 7 dias' : null,
+      ),
+      WebStatCard(
+        title: 'Baixo Estoque',
+        value: itensBaixoEstoque.toString(),
+        icon: Icons.trending_down,
+        color: AppColors.info,
+        subtitle: itensBaixoEstoque > 0 ? 'Reabastecer' : null,
+      ),
+      WebStatCard(
+        title: 'Em Falta',
+        value: itensEmFalta.toString(),
+        icon: Icons.remove_circle,
+        color: AppColors.error,
+        subtitle: itensEmFalta > 0 ? 'Comprar urgente' : null,
+      ),
+    ];
+
+    return WebStatsGrid(
+      stats: stats,
+      crossAxisCount: ResponsiveUtils.isLargeDesktop(context) ? 5 : 4,
     );
   }
 }

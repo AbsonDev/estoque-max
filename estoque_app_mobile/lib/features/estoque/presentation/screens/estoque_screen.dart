@@ -3,6 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/responsive/responsive_utils.dart';
+import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/widgets/web_layout.dart';
+import '../../../../core/design_system/app_colors.dart';
+import '../../../../core/design_system/design_tokens.dart';
 import '../bloc/estoque_bloc.dart';
 import '../bloc/estoque_event.dart';
 import '../bloc/estoque_state.dart';
@@ -50,6 +55,12 @@ class _EstoqueScreenState extends State<EstoqueScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isWebLayout = ResponsiveUtils.isWebLayout(context);
+    
+    if (isWebLayout) {
+      return _buildWebLayout(context);
+    }
+    
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
@@ -63,6 +74,44 @@ class _EstoqueScreenState extends State<EstoqueScreen>
         ),
       ),
       floatingActionButton: _buildFloatingActionButton(),
+    );
+  }
+
+  Widget _buildWebLayout(BuildContext context) {
+    return WebPageLayout(
+      title: 'Estoque Geral',
+      subtitle: 'Gerencie todos os itens de todas as suas despensas',
+      actions: [
+        WebSearchBar(
+          controller: _searchController,
+          hintText: 'Buscar itens no estoque...',
+          onChanged: (value) {
+            // TODO: Implementar busca
+          },
+        ),
+        const SizedBox(width: 16),
+        WebActionButton(
+          onPressed: _showSortDialog,
+          icon: Icon(Icons.sort),
+          label: 'Ordenar',
+          isPrimary: false,
+        ),
+        const SizedBox(width: 16),
+        WebActionButton(
+          onPressed: _showAddItemDialog,
+          icon: Icon(Icons.add),
+          label: 'Adicionar Item',
+        ),
+      ],
+      child: Column(
+        children: [
+          _buildWebStats(context),
+          const SizedBox(height: 24),
+          _buildWebFilters(context),
+          const SizedBox(height: 24),
+          Expanded(child: _buildWebContent(context)),
+        ],
+      ),
     );
   }
 
@@ -80,14 +129,14 @@ class _EstoqueScreenState extends State<EstoqueScreen>
                   'Estoque Geral',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Todos os itens de todas as despensas',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -110,7 +159,7 @@ class _EstoqueScreenState extends State<EstoqueScreen>
                         onPressed: _toggleSearch,
                       ),
                       filled: true,
-                      fillColor: AppTheme.surface,
+                      fillColor: AppColors.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
@@ -124,8 +173,8 @@ class _EstoqueScreenState extends State<EstoqueScreen>
                     onPressed: _toggleSearch,
                     icon: const Icon(Icons.search),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppTheme.surface,
-                      foregroundColor: AppTheme.textPrimary,
+                      backgroundColor: AppColors.surface,
+                      foregroundColor: AppColors.textPrimary,
                     ),
                   ),
           ),
@@ -137,8 +186,8 @@ class _EstoqueScreenState extends State<EstoqueScreen>
             onPressed: _showSortDialog,
             icon: const Icon(Icons.sort),
             style: IconButton.styleFrom(
-              backgroundColor: AppTheme.surface,
-              foregroundColor: AppTheme.textPrimary,
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.textPrimary,
             ),
           ),
         ],
@@ -418,11 +467,280 @@ class _EstoqueScreenState extends State<EstoqueScreen>
               Navigator.of(context).pop();
               context.read<EstoqueBloc>().add(RemoveEstoqueItem(item.id));
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Remover'),
           ),
         ],
       ),
+    );
+  }
+
+  // Métodos específicos para layout web
+
+  Widget _buildWebHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Row(
+        children: [
+          // Título
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Estoque Geral',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    fontSize: ResponsiveUtils.getFontSize(context, 32),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Gerencie todos os itens de todas as suas despensas',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: ResponsiveUtils.getFontSize(context, 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Busca e ações para web
+          Row(
+            children: [
+              Container(
+                width: 350,
+                height: 56,
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar itens no estoque...',
+                    prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.close, color: AppColors.textSecondary),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.primary, width: 2),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {});
+                    // TODO: Implementar busca
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: _showSortDialog,
+                  icon: Icon(Icons.sort, color: AppColors.textPrimary),
+                  label: Text('Ordenar', style: TextStyle(color: AppColors.textPrimary)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: _showAddItemDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar Item'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebStats(BuildContext context) {
+    return BlocBuilder<EstoqueBloc, EstoqueState>(
+      builder: (context, state) {
+        if (state is EstoqueLoaded) {
+          return Container(
+            child: EstoqueStatsCard(
+              totalItems: state.totalItems,
+              itensVencidos: state.itensVencidos,
+              itensVencendo: state.itensVencendo,
+              itensBaixoEstoque: state.itensBaixoEstoque,
+              itensEmFalta: state.itensEmFalta,
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildWebFilters(BuildContext context) {
+    return BlocBuilder<EstoqueBloc, EstoqueState>(
+      builder: (context, state) {
+        if (state is EstoqueLoaded) {
+          return Container(
+            child: EstoqueFilterChips(
+              currentFilter: state.currentFilter,
+              onFilterChanged: (filter) {
+                context.read<EstoqueBloc>().add(FilterEstoque(filter));
+              },
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildWebContent(BuildContext context) {
+    return BlocConsumer<EstoqueBloc, EstoqueState>(
+      listener: (context, state) {
+        if (state is EstoqueError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else if (state is EstoqueOperationSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is EstoqueLoading) {
+          return const EstoqueLoadingSkeleton();
+        }
+
+        if (state is EstoqueLoaded) {
+          final items = state.filteredItems;
+
+          if (items.isEmpty) {
+            return EstoqueEmptyState(
+              filter: state.currentFilter,
+              onAddItem: _showAddItemDialog,
+            );
+          }
+
+          final columns = ResponsiveUtils.getGridColumnsForCards(context);
+          final spacing = ResponsiveUtils.getWebCardSpacing(context);
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<EstoqueBloc>().add(const RefreshTodosEstoqueItens());
+            },
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: AnimationLimiter(
+                child: WebGrid(
+                  crossAxisCount: columns,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: items.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    
+                    return AnimationConfiguration.staggeredGrid(
+                      position: index,
+                      duration: const Duration(milliseconds: 375),
+                      columnCount: columns,
+                      child: SlideAnimation(
+                        verticalOffset: 50.0,
+                        child: FadeInAnimation(
+                          child: EstoqueItemCard(
+                            item: item,
+                            onEdit: () => _showEditItemDialog(item),
+                            onConsume: () => _showConsumeItemDialog(item),
+                            onDelete: () => _showDeleteConfirmDialog(item),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (state is EstoqueError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                const SizedBox(height: 16),
+                Text(
+                  'Erro ao carregar estoque',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.message,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<EstoqueBloc>().add(
+                      const LoadTodosEstoqueItens(),
+                    );
+                  },
+                  child: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
     );
   }
 }

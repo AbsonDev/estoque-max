@@ -8,9 +8,9 @@ enum ScreenType {
 }
 
 class ResponsiveUtils {
-  static const double _mobileBreakpoint = 600;
-  static const double _tabletBreakpoint = 900;
-  static const double _desktopBreakpoint = 1200;
+  static const double _mobileBreakpoint = 768;
+  static const double _tabletBreakpoint = 1024;
+  static const double _desktopBreakpoint = 1440;
 
   static ScreenType getScreenType(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -75,11 +75,11 @@ class ResponsiveUtils {
       case ScreenType.mobile:
         return const EdgeInsets.all(16);
       case ScreenType.tablet:
-        return const EdgeInsets.all(24);
+        return const EdgeInsets.symmetric(horizontal: 32, vertical: 24);
       case ScreenType.desktop:
-        return const EdgeInsets.all(32);
+        return const EdgeInsets.symmetric(horizontal: 48, vertical: 32);
       case ScreenType.largeDesktop:
-        return const EdgeInsets.all(40);
+        return const EdgeInsets.symmetric(horizontal: 64, vertical: 40);
     }
   }
 
@@ -129,9 +129,9 @@ class ResponsiveUtils {
       case ScreenType.tablet:
         return 0; // No sidebar on tablet
       case ScreenType.desktop:
-        return 280;
-      case ScreenType.largeDesktop:
         return 320;
+      case ScreenType.largeDesktop:
+        return 360;
     }
   }
 
@@ -140,11 +140,11 @@ class ResponsiveUtils {
       case ScreenType.mobile:
         return double.infinity;
       case ScreenType.tablet:
-        return double.infinity;
+        return 768;
       case ScreenType.desktop:
         return 1200;
       case ScreenType.largeDesktop:
-        return 1400;
+        return 1600;
     }
   }
 
@@ -217,6 +217,18 @@ class ResponsiveUtils {
 
   static bool shouldShowFab(BuildContext context) {
     return isMobile(context) || isTablet(context);
+  }
+
+  static bool isWebLayout(BuildContext context) {
+    return isDesktop(context) || isLargeDesktop(context);
+  }
+
+  static double getWebContentSpacing(BuildContext context) {
+    return isWebLayout(context) ? 32.0 : 16.0;
+  }
+
+  static double getWebCardSpacing(BuildContext context) {
+    return isWebLayout(context) ? 24.0 : 12.0;
   }
 
   static CrossAxisAlignment getMainAxisAlignment(BuildContext context) {

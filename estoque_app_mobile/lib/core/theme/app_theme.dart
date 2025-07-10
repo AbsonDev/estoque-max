@@ -85,7 +85,10 @@ class AppTheme {
             ResponsiveUtils.getCardBorderRadius(context),
           ),
         ),
-        textStyle: AppTypography.buttonMedium(context),
+        textStyle: AppTypography.buttonMedium(context).copyWith(
+          color: AppColors.white, // Força cor branca no texto
+          fontWeight: FontWeight.w600,
+        ),
         minimumSize: Size(0, DesignTokens.buttonHeightMedium),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
@@ -106,9 +109,10 @@ class AppTheme {
             ResponsiveUtils.getCardBorderRadius(context),
           ),
         ),
-        textStyle: AppTypography.buttonMedium(
-          context,
-        ).copyWith(color: AppColors.textPrimary),
+        textStyle: AppTypography.buttonMedium(context).copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
         minimumSize: Size(0, DesignTokens.buttonHeightMedium),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),

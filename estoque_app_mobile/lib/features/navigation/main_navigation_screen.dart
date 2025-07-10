@@ -325,25 +325,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                   const SizedBox(height: DesignTokens.spacing16),
                 ],
                 Expanded(
-                  child: AnimatedSwitcher(
-                    duration: DesignTokens.animationMedium,
-                    transitionBuilder:
-                        (Widget child, Animation<double> animation) {
-                          return SlideTransition(
-                            position: animation.drive(
-                              Tween<Offset>(
-                                begin: const Offset(0.1, 0.0),
-                                end: Offset.zero,
-                              ),
-                            ),
-                            child: FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            ),
-                          );
-                        },
-                    child: _buildCurrentPage(),
-                  ),
+                  child: ResponsiveUtils.isWebLayout(context)
+                      ? _buildWebContent(context)
+                      : AnimatedSwitcher(
+                          duration: DesignTokens.animationMedium,
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                                return SlideTransition(
+                                  position: animation.drive(
+                                    Tween<Offset>(
+                                      begin: const Offset(0.1, 0.0),
+                                      end: Offset.zero,
+                                    ),
+                                  ),
+                                  child: FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                          child: _buildCurrentPage(),
+                        ),
                 ),
               ],
             ),
@@ -492,6 +494,48 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWebContent(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(
+          ResponsiveUtils.getCardBorderRadius(context),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.withOpacity(AppColors.black, 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: AnimatedSwitcher(
+            duration: DesignTokens.animationMedium,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: animation.drive(
+                    Tween<Offset>(
+                      begin: const Offset(0.05, 0.0),
+                      end: Offset.zero,
+                    ),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+            child: _buildCurrentPage(),
+          ),
+        ),
       ),
     );
   }
