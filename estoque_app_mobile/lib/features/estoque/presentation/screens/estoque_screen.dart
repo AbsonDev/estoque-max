@@ -85,32 +85,46 @@ class _EstoqueScreenState extends State<EstoqueScreen>
         WebSearchBar(
           controller: _searchController,
           hintText: 'Buscar itens no estoque...',
+          width: 280,
+          height: 48,
           onChanged: (value) {
             // TODO: Implementar busca
           },
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         WebActionButton(
           onPressed: _showSortDialog,
-          icon: Icon(Icons.sort),
+          icon: Icon(Icons.sort, size: 18),
           label: 'Ordenar',
           isPrimary: false,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         WebActionButton(
           onPressed: _showAddItemDialog,
-          icon: Icon(Icons.add),
-          label: 'Adicionar Item',
+          icon: Icon(Icons.add, size: 18),
+          label: 'Adicionar',
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ],
-      child: Column(
-        children: [
-          _buildWebStats(context),
-          const SizedBox(height: 24),
-          _buildWebFilters(context),
-          const SizedBox(height: 24),
-          Expanded(child: _buildWebContent(context)),
-        ],
+      child: RefreshIndicator(
+        onRefresh: () async {
+          context.read<EstoqueBloc>().add(const RefreshTodosEstoqueItens());
+        },
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              _buildWebStats(context),
+              const SizedBox(height: 12),
+              _buildWebFilters(context),
+              const SizedBox(height: 12),
+              _buildWebContent(context),
+              const SizedBox(height: 20), // Espaçamento extra no final
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -662,44 +676,36 @@ class _EstoqueScreenState extends State<EstoqueScreen>
           }
 
           final columns = ResponsiveUtils.getGridColumnsForCards(context);
-          final spacing = ResponsiveUtils.getWebCardSpacing(context);
+          final spacing = ResponsiveUtils.getCompactSpacing(context);
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<EstoqueBloc>().add(const RefreshTodosEstoqueItens());
-            },
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: AnimationLimiter(
-                child: WebGrid(
-                  crossAxisCount: columns,
-                  mainAxisSpacing: spacing,
-                  crossAxisSpacing: spacing,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: items.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    
-                    return AnimationConfiguration.staggeredGrid(
-                      position: index,
-                      duration: const Duration(milliseconds: 375),
-                      columnCount: columns,
-                      child: SlideAnimation(
-                        verticalOffset: 50.0,
-                        child: FadeInAnimation(
-                          child: EstoqueItemCard(
-                            item: item,
-                            onEdit: () => _showEditItemDialog(item),
-                            onConsume: () => _showConsumeItemDialog(item),
-                            onDelete: () => _showDeleteConfirmDialog(item),
-                          ),
-                        ),
+          return AnimationLimiter(
+            child: WebGrid(
+              crossAxisCount: columns,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: items.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                
+                return AnimationConfiguration.staggeredGrid(
+                  position: index,
+                  duration: const Duration(milliseconds: 375),
+                  columnCount: columns,
+                  child: SlideAnimation(
+                    verticalOffset: 50.0,
+                    child: FadeInAnimation(
+                      child: EstoqueItemCard(
+                        item: item,
+                        onEdit: () => _showEditItemDialog(item),
+                        onConsume: () => _showConsumeItemDialog(item),
+                        onDelete: () => _showDeleteConfirmDialog(item),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           );
         }

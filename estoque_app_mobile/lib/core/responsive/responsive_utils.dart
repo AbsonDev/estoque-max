@@ -75,11 +75,11 @@ class ResponsiveUtils {
       case ScreenType.mobile:
         return const EdgeInsets.all(16);
       case ScreenType.tablet:
-        return const EdgeInsets.symmetric(horizontal: 32, vertical: 24);
+        return const EdgeInsets.symmetric(horizontal: 28, vertical: 20);
       case ScreenType.desktop:
-        return const EdgeInsets.symmetric(horizontal: 48, vertical: 32);
+        return const EdgeInsets.symmetric(horizontal: 36, vertical: 24);
       case ScreenType.largeDesktop:
-        return const EdgeInsets.symmetric(horizontal: 64, vertical: 40);
+        return const EdgeInsets.symmetric(horizontal: 48, vertical: 28);
     }
   }
 
@@ -224,11 +224,28 @@ class ResponsiveUtils {
   }
 
   static double getWebContentSpacing(BuildContext context) {
-    return isWebLayout(context) ? 32.0 : 16.0;
+    return isWebLayout(context) ? 20.0 : 16.0;
   }
 
   static double getWebCardSpacing(BuildContext context) {
-    return isWebLayout(context) ? 24.0 : 12.0;
+    return isWebLayout(context) ? 16.0 : 12.0;
+  }
+
+  static double getCompactSpacing(BuildContext context) {
+    return isWebLayout(context) ? 12.0 : 8.0;
+  }
+
+  static EdgeInsets getCompactPadding(BuildContext context) {
+    switch (getScreenType(context)) {
+      case ScreenType.mobile:
+        return const EdgeInsets.all(12);
+      case ScreenType.tablet:
+        return const EdgeInsets.all(16);
+      case ScreenType.desktop:
+        return const EdgeInsets.all(20);
+      case ScreenType.largeDesktop:
+        return const EdgeInsets.all(24);
+    }
   }
 
   static CrossAxisAlignment getMainAxisAlignment(BuildContext context) {
