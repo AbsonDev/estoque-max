@@ -13,6 +13,8 @@ import '../auth/data/auth_bloc.dart';
 import '../auth/data/auth_event.dart';
 import '../auth/data/auth_state.dart';
 import '../despensas/presentation/screens/despensas_screen.dart';
+import '../despensas/presentation/bloc/despensas_bloc.dart';
+import '../despensas/presentation/bloc/despensas_event.dart';
 import '../estoque/presentation/screens/estoque_screen.dart';
 import '../lista_compras/presentation/screens/lista_compras_screen.dart';
 import '../analytics/presentation/screens/analytics_screen.dart';
@@ -97,6 +99,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       _currentIndex = index;
       _initializeNavigationItems();
     });
+    
+    // Recarrega dados ao retornar para a tela de despensas
+    if (index == 0) {
+      context.read<DespensasBloc>().add(const RefreshDespensas());
+    }
   }
 
   @override
